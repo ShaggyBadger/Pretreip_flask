@@ -1,0 +1,36 @@
+# Ignore the virtual environment directory
+venvFiles/
+
+# Ignore vs code settings
+.vscode
+
+# Ignore Python bytecode
+*.pyc
+__pycache__/
+
+# Ignore local environment settings
+*.env
+
+# Ignore system files (e.g., macOS, Windows)
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# ignore db and csv files and images
+*.db
+*.csv
+*.xlsx
+# Ignore all image files
+*.png
+*.jpg
+*.jpeg
+*.pdf
+/data/misc/temp.py
+*xlsx
+
+
+
+
