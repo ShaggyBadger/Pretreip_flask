@@ -1,0 +1,28 @@
+pretrip_app/               # Root directory of your app
+│
+├── app/                   # Main application package
+│   ├── __init__.py        # Initializes Flask app, config, blueprints,
+│   ├── models.py          # Database models (User, Inspection, etc.)
+│   ├── routes/            # Route definitions (split by feature)
+│   │   ├── __init__.py    
+│   │   ├── auth.py        # Login, logout, register
+│   │   ├── main.py        # Homepage, dashboard, general routes
+│   │   └── inspections.py # Submit/view inspection routes
+│   ├── templates/         # Jinja2 HTML templates
+│   │   ├── base.html      # Base layout for reuse
+│   │   ├── home.html      # Homepage
+│   │   ├── login.html     # Login page
+│   │   └── ...            # Other pages (register, dashboard, etc.)
+│   └── static/            # Static assets (CSS, JS, images)
+│       ├── style.css
+│       └── ...
+│
+├── migrations/            # Auto-created by Flask-Migrate (optional)
+│
+├── instance/              # Local config (optional)
+│   └── config.py          # Config values not in source control
+│
+├── config.py              # App-wide configuration (production/dev, keys)
+├── requirements.txt       # Packages to install
+├── run.py                 # Entry point: runs the app
+└── README.md
