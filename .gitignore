@@ -1,3 +1,6 @@
+# secret key stuff
+secretKey.py
+
 # Ignore the virtual environment directory
 venvFiles/
 
