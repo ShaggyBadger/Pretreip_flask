@@ -2,7 +2,30 @@
 
 {% block content %}
 
-<p>Welcome to the Pre-Trip Inspection App!</p>
-<a href="/login">Login</a>
+<div class="container">
+	<div class="row">
+		<div class="col-12 col-md-6">
+			<h1 class="mb-4">Welcome to the pretrip inspection app
+			</h1>
+			<p class="lead">
+				Log that pretrip inspection. DO IT NOWWWWW
+			</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12 col-md-4 mt-5">
+			<!-- First Button -->
+      <div class="d-grid mb-3">
+      	<a href="{{ url_for('login') }}"><button class="btn btn-primary" type="button">Log In</button></a>
+      </div>
+
+      <!-- Second Button -->
+      <div class="d-grid">
+        <a href="{{ url_for('register') }}"><button class="btn btn-secondary" type="button">Register</button></a>
+      </div>
+    </div>
+	</div>
+</div>
+
 
 {% endblock %}
