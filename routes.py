@@ -11,7 +11,7 @@ def refresh_session():
 	'''
 	set this to True if you want to allow users to remain signed in for 7 days
 	'''
-	session.permanent = False
+	session.permanent = True
 
 @app.route('/')
 def home():
@@ -80,4 +80,9 @@ def register():
 @app.route('/failed_register')
 def failed_register():
 	return render_template('failed_register.html')
+
+@app.route('/logout')
+def logout():
+	session.clear()  # This clears all session data
+	return redirect(url_for('home'))
 
