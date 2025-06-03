@@ -86,3 +86,11 @@ def logout():
 	session.clear()  # This clears all session data
 	return redirect(url_for('home'))
 
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+	if request.method == 'POST':
+		settings_data = request.form.to_dict()
+
+		
+	return render_template('settings.html')
+
