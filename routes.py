@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
 import models
+import utilities
 from datetime import timedelta
 
 app.permanent_session_lifetime = timedelta(days=7)
@@ -90,6 +91,8 @@ def logout():
 def settings():
 	if request.method == 'POST':
 		settings_data = request.form.to_dict()
+		utils_obj = models.Utils()
+		update_status = utilities.process_settings_update(utils_obj, settings_data)
 
 		
 	return render_template('settings.html')

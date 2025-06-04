@@ -2,6 +2,107 @@
 {% block content %}
 {% include 'nav_menu.html' %}
 
+<div class="container my-5">
+  <form method="POST" onsubmit="return validatePasswords()">
+    <div class="accordion" id="settingsAccordion">
 
+      <!-- Email Settings -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingEmail">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseEmail" aria-expanded="false" aria-controls="collapseEmail">
+            Email Settings
+          </button>
+        </h2>
+        <div id="collapseEmail" class="accordion-collapse collapse" aria-labelledby="headingEmail"
+             data-bs-parent="#settingsAccordion">
+          <div class="accordion-body">
+            <div class="mb-3 row align-items-center">
+              <label for="email_address" class="col-sm-3 col-form-label">Email Address</label>
+              <div class="col-sm-9">
+                <input type="email" class="form-control" name="email_address" id="email_address" required>
+              </div>
+            </div>
+
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications">
+              <label class="form-check-label" for="email_notifications">Enable Email Notifications</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password Settings -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingPassword">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapsePassword" aria-expanded="false" aria-controls="collapsePassword">
+            Change Password
+          </button>
+        </h2>
+        <div id="collapsePassword" class="accordion-collapse collapse" aria-labelledby="headingPassword"
+             data-bs-parent="#settingsAccordion">
+          <div class="accordion-body">
+           <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="pass_reset" name="pass_reset">
+              <label class="form-check-label" for="pass_reset">Reset Password</label>
+            </div>
+
+            <!-- Current Password -->
+            <div class="mb-3 row align-items-center">
+              <label for="current_password" class="col-sm-3 col-form-label">Current Password</label>
+              <div class="col-sm-9">
+                <input type="password" class="form-control" name="current_password" id="current_password" required>
+              </div>
+            </div>
+
+            <!-- New Password -->
+            <div class="mb-3 row align-items-center">
+              <label for="new_password" class="col-sm-3 col-form-label">New Password</label>
+              <div class="col-sm-9">
+                <input type="password" class="form-control" name="new_password" id="new_password" required>
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-3 row align-items-center">
+              <label for="confirm_password" class="col-sm-3 col-form-label">Confirm Password</label>
+              <div class="col-sm-9">
+                <input type="password" class="form-control" name="confirm_password" id="confirm_password" required>
+              </div>
+            </div>
+
+            <!-- Password Mismatch Warning -->
+            <div id="passwordError" class="text-danger ps-3 d-none">
+              New passwords do not match.
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="text-end mt-4">
+      <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function validatePasswords() {
+  const newPassword = document.getElementById('new_password').value;
+  const confirmPassword = document.getElementById('confirm_password').value;
+  const errorMessage = document.getElementById('passwordError');
+
+  if (newPassword !== confirmPassword) {
+    errorMessage.classList.remove('d-none');
+    return false;
+  }
+
+  errorMessage.classList.add('d-none');
+  return true;
+}
+</script>
 
 {% endblock %}

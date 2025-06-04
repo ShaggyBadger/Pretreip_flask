@@ -61,6 +61,25 @@ class Utils():
 		return user_id
 	
 	def check_password(self, username, password):
+		"""
+		Verifies a user's password against the stored hash in the database.
+		
+		Args:
+			username (str): The username of the account to check.
+			
+			password (str): The plain-text password to verify.
+			
+		Returns:
+			tuple | None: Returns a tuple containing the user ID and hashed password if the credentials are valid, or None if authentication fails.
+		
+		Example:
+			user = utils_obj.check_password("driver01", "mypassword123")
+			
+			if user:
+				print("Login successful!")
+			else:
+				print("Invalid credentials.")
+		"""
 		conn = self.db_connection()
 		c = conn.cursor()
 		
@@ -83,6 +102,31 @@ class Utils():
 			
 		else:
 			return None
+	
+	def update_password(self, session, old_pass, new_pass):
+		user_id = session['user_id']
+		username = session['username']
+		
+		valid_password = self.check_password(username, old_pass)
+		
+		if valid_password:
+			hashed_password = generate_password_hash(str(new_pass))
+			
+			conn = self.db_connection()
+			c = conn.cursor()
+			
+			sql = '''
+			UPDATE users
+			SET password = ?
+			WHERE id = ?
+			'''
+			values = (hashed_password, user_id)
+			c.execute(sql, values)
+			conn.commit()
+			conn.close()
+			return True
+		else:
+			return False
 	
 	def build_db(self):
 		conn = self.db_connection()
