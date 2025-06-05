@@ -22,7 +22,7 @@ class Utils():
 		timestamp = datetime.now().isoformat()
 		
 		# check for existing user
-		sql = f'''
+		sql = '''
 		SELECT id
 		FROM users
 		WHERE username = ?
@@ -35,7 +35,7 @@ class Utils():
 			return None
 		
 		# if username doesnt exist, go ahead and register user
-		sql = f'''
+		sql = '''
 		INSERT INTO users(
 			username,
 			password,
