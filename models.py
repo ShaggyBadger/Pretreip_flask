@@ -175,6 +175,8 @@ class CLI_Utils():
 	
 	def enter_users_from_json(self, json_file):
 		utils_obj = Utils()
+		utils_obj.build_db()
+		self.clear_users()
 		
 		with open(json_file, 'r') as file:
 			dict_list = json.load(file)
@@ -209,6 +211,5 @@ class CLI_Utils():
 
 if __name__ == '__main__':
 	a = CLI_Utils()
-	a.clear_users()
 	file_path = settings.DATABASE_DIR / 'drivers.json'
 	a.enter_users_from_json(file_path)
