@@ -1,3 +1,5 @@
+from rich.traceback import install
+install()
 from flask import render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
@@ -16,6 +18,7 @@ def refresh_session():
 
 @app.route('/')
 def home():
+	f
 	if 'user_id' in session:
 		return render_template('dashboard.html')
 	return render_template('home_guest.html')

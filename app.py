@@ -1,3 +1,5 @@
+from rich.traceback import install
+install()
 from flask import Flask
 #from models import db
 import os

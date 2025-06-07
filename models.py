@@ -207,9 +207,10 @@ class CLI_Utils():
 		conn.close()
 			
 			
-		
-
-if __name__ == '__main__':
+def initialize_db():
 	a = CLI_Utils()
 	file_path = settings.DATABASE_DIR / 'drivers.json'
 	a.enter_users_from_json(file_path)
+
+if __name__ == '__main__':
+	initialize_db()

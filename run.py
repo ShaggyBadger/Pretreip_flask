@@ -1,3 +1,5 @@
+from rich.traceback import install
+install()
 from app import app
 
 if __name__ == "__main__":
