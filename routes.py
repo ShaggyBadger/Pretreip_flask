@@ -18,7 +18,6 @@ def refresh_session():
 
 @app.route('/')
 def home():
-	f
 	if 'user_id' in session:
 		return render_template('dashboard.html')
 	return render_template('home_guest.html')
