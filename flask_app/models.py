@@ -1,5 +1,5 @@
 import sqlite3
-import settings
+from flask_app import settings
 import json
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash

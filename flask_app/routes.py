@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import app
-import models
+from flask_app.app_constructor import app
+import flask_app.models
 from datetime import timedelta
 
 app.permanent_session_lifetime = timedelta(days=7)

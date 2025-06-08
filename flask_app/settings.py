@@ -1,4 +1,4 @@
-import secretKey
+import flask_app.secretKey as secretKey
 from pathlib import Path
 
 SECRET_KEY = secretKey.SECRET_KEY
