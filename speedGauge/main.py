@@ -143,32 +143,7 @@ def run_program():
 		weekly_analysis()
 	
 	elif str(selection) == str(3):
-		ids = {
-			1201619: 'rodrick',
-			30199025: 'perkins',
-			30072074: 'jesse',
-			5055241: 'brent',
-			30188814: 'jamie',
-			1110492: 'danny',
-			30069398: 'ron',
-			1152694: 'charles',
-			30202984: 'john r',
-			30190385: 'travis',
-			5019067: 'Pete',
-			5000688: 'billy',
-			30219248: 'mike_Russ',
-			30115589: 'john clayton',
-			30186215: 'ibraham',
-			30150643: 'me',
-			30135448: 'carmello',
-			30186711: 'ingram',
-			30055670: 'david heath',
-			30110871: 'Donald Howell',
-			30227642: 'Oscar',
-			5053272: 'David Thompson',
-			32010202: 'amber shepp',
-			30097394: 'Jayson Ruiz'
-		}
+		
 		
 		stats = analysis.build_analysis()
 		for i in ids:

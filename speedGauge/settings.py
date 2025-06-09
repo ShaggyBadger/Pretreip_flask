@@ -1,16 +1,35 @@
-# settings.py
-import os
-import sys
-import importlib
-import sqlite3
-import re
-import math
 from pathlib import Path
 
 
 '''
 establish paths to various  directories for use in other parts of da program
 '''
+ids = {
+	1201619: 'rodrick',
+	30199025: 'perkins',
+	30072074: 'jesse',
+	5055241: 'brent',
+	30188814: 'jamie',
+	1110492: 'danny',
+	30069398: 'ron',
+	1152694: 'charles',
+	30202984: 'john r',
+	30190385: 'travis',
+	5019067: 'Pete',
+	5000688: 'billy',
+	30219248: 'mike_Russ',
+	30115589: 'john clayton',
+	30186215: 'ibraham',
+	30150643: 'me',
+	30135448: 'carmello',
+	30186711: 'ingram',
+	30055670: 'david heath',
+	30110871: 'Donald Howell',
+	30227642: 'Oscar',
+	5053272: 'David Thompson',
+	32010202: 'amber shepp',
+	30097394: 'Jayson Ruiz'
+}
 
 # root directory
 BASE_DIR = Path(__file__).parent
@@ -123,58 +142,3 @@ speedGaugeData = 'speedGaugeData'
 driverInfo = 'driverInfo'
 imgStorage = 'imgStorage'
 analysisStorage = 'analysisStorage'
-
-# super common call. put this here so everyone can use it
-# km2 lat and lon
-km2_coords = 36.0750039, -79.9345196
-
-
-# super common call. put this here so everyone can use it
-def db_connection():
-	# returns a db connection
-	dbName = DB_PATH
-	conn = sqlite3.connect(dbName)
-	return conn
-
-def haversine(lat1, lon1, lat2, lon2):
-	"""
-	Calculates the great-circle distance between two points on the Earth 
-	using the Haversine formula.
-	
-	Args:
-		lat1, lon1: Latitude and longitude of the first point in decimal degrees.
-		lat2, lon2: Latitude and longitude of the second point in decimal degrees.
-		
-	Returns:
-		Distance between the two points in kilometers.
-		"""
-	R = 6371  # Radius of Earth in kilometers
-	
-	# Convert latitude and longitude from degrees to radians
-	lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-	
-	# Haversine formula
-	dlat = lat2 - lat1
-	dlon = lon2 - lon1
-	a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-	c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-	
-	distance_km = R * c
-	distance_miles = distance_km * 0.621371
-	
-	return distance_miles
-
-def extract_coordinates(url):
-	pattern = r"la=([-.\d]+)&lo=([-.\d]+)"
-	match = re.search(pattern, url)
-	if match:
-		lat = float(match.group(1))
-		lon = float(match.group(2))
-		return lat, lon
-	
-	else:
-		return None
-
-# auto-reload settings module to prevent cache issues
-if 'settings' in sys.modules:
-	importlib.reload(sys.modules['settings'])

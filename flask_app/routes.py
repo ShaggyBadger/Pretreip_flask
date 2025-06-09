@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, session
+from flask import render_template, request, redirect, url_for, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_app.app_constructor import app
 import flask_app.models
@@ -86,3 +86,12 @@ def logout():
 	session.clear()  # This clears all session data
 	return redirect(url_for('home'))
 
+@app.route('/speedgauge')
+def speedGauge():
+	if 'user_id' in session:
+		sg_inter = current_app.sg_inter
+
+		return  render_template('speedgauge.html')
+	else:
+		url = url_for('home')
+		return redirect(url)
