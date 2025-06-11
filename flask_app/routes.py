@@ -89,7 +89,12 @@ def logout():
 @app.route('/speedgauge')
 def speedGauge():
 	if 'user_id' in session:
+		user_id = session['user_id']
+		print(user_id)
+		db_model = current_app.db_model
 		sg_inter = current_app.sg_inter
+		driver_id = db_model.retrieve_driver_id(user_id)
+		print(driver_id)
 
 		return  render_template('speedgauge.html')
 	else:

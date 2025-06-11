@@ -8,8 +8,7 @@ class Utils():
 	def __init__(self):
 		self.user_exists = None
 	
-	def db_connection(self):
-		db_name = settings.db_name
+	def db_connection(self, db_name=settings.db_name):
 		conn = sqlite3.connect(db_name)
 		return conn
 	
@@ -107,12 +106,33 @@ class Utils():
 			first_name
 				TEXT,
 			last_name
-				TEXT
+				TEXT,
+			driver_id
+			  INTEGER
 			)
 		'''
 		c.execute(sql)
 		conn.commit()
 		conn.close()
+	
+	def retrieve_driver_id(self, user_id):
+		conn = self.db_connection()
+		c = conn.cursor()
+		
+		sql = '''
+		SELECT driver_id
+		FROM users
+		WHERE id = ?
+		'''
+		value = (user_id,)
+		c.execute(sql, value)
+		result = c.fetchone()
+		conn.close()
+		
+		if result:
+			return result[0]
+		else:
+			return None
 
 class CLI_Utils():
 	def __init__(self):
@@ -137,8 +157,6 @@ class CLI_Utils():
 
 		for d in dict_list:
 			driver_id = d['driver_id']
-			first_name = d['first_name']
-			last_name = d['last_name']
 			
 			user_id = utils_obj.register_user(driver_id, driver_id)
 		
@@ -146,15 +164,20 @@ class CLI_Utils():
 		c = conn.cursor()
 		for d in dict_list:
 			driver_id = d['driver_id']
+			first_name = d['first_name']
+			last_name = d['last_name']
+			
 			
 			sql = f'''
 			UPDATE users
 			SET
 				first_name = ?,
-				last_name = ?
+				last_name = ?,
+				driver_id = ?
 			WHERE username = ?
 			'''
-			values = (first_name, last_name, driver_id)
+			values = (first_name, last_name, driver_id, driver_id)
+			print(sql, values)
 			
 			c.execute(sql, values)
 		conn.commit()
@@ -164,7 +187,18 @@ class CLI_Utils():
 		
 
 if __name__ == '__main__':
+	from pathlib import Path
+	BASE_DIR = Path(__file__).resolve().parent
+
+	# Main directories inside root
+	DATA_DIR = BASE_DIR / 'data'
+	DATABASE_DIR = DATA_DIR / 'database'
+	
+	db_name = DATABASE_DIR / 'site_database.db'
 	a = CLI_Utils()
+	b = Utils()
+	
+	b.build_db(db_name=db_name)
 	a.clear_users()
-	file_path = settings.DATABASE_DIR / 'drivers.json'
+	file_path = DATABASE_DIR / 'drivers.json'
 	a.enter_users_from_json(file_path)

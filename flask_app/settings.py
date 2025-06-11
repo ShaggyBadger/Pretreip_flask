@@ -19,5 +19,10 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / 'data'
 DATABASE_DIR = DATA_DIR / 'database'
 
+SPEEDGAUGE_DIR = DATA_DIR / 'speedGauge_files'
+
 db_name = DATABASE_DIR / 'site_database.db'
 
+PROCESSED_SPEEDGAUGE_PATH = SPEEDGAUGE_DIR / 'processed'
+		
+UNPROCESSED_SPEEDGAUGE_PATH = SPEEDGAUGE_DIR / 'unprocessed'
