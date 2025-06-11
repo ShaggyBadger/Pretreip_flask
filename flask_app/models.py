@@ -148,7 +148,8 @@ class Utils:
 			return None
 
 class CLI_Utils:
-	def __init__(self):
+	def __init__(self, debug_mode=False):
+		self.debug_mode = debug_mode
 		self.users_json = settings.DATABASE_DIR / 'drivers.json'
 	
 	def clear_users(self):
@@ -163,7 +164,7 @@ class CLI_Utils:
 		print('Table *user* has been reset')
 	
 	def enter_users_from_json(self):
-		utils_obj = Utils()
+		utils_obj = Utils(debug_mode=self.debug_mode)
 		
 		with open(self.users_json, 'r') as file:
 			dict_list = json.load(file)
