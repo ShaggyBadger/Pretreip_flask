@@ -1,6 +1,8 @@
 {
     "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
     "driver_name": "TEXT",
+    "first_name": "TEXT",
+    "last_name": "TEXT",
     "driver_id": "INTEGER",
     "vehicle_type": "TEXT",
     "percent_speeding": "REAL",
@@ -16,6 +18,7 @@
     "custom_speed_restriction": "TEXT",
     "distance_driven": "INTEGER",
     "url": "TEXT",
+    "url_coords": "TEXT",
     "location": "TEXT",
     "percent_speeding_numerator": "REAL",
     "percent_speeding_denominator": "REAL",
@@ -34,12 +37,5 @@
     "difference": "INTEGER",
     "start_date": "TEXT",
     "end_date": "TEXT",
-    "formated_start_date": "TEXT",
-    "formated_end_date": "TEXT",
-    "human_readable_start_date": "TEXT",
-    "human_readable_end_date": "TEXT",
-    "data_processed_timestamp": "TEXT",
-    "percent_speeding_source": "TEXT",
-    "speed_map": "BLOB",
-    "full_speed_map": "BLOB"
+    "raw_json": "TEXT"
 }
