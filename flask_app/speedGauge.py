@@ -1,7 +1,7 @@
-import pandas as pd
-import re
 import sqlite3
 import json
+import pandas as pd
+import re
 from datetime import datetime
 from pathlib import Path
 from flask_app import settings
@@ -12,42 +12,11 @@ class Processor():
 		pass
 	
 	def standard_flow(self):
-		self.create_table_from_json()
-		
-	def create_table_from_json(self, json_file=None, table_name='speedGauge', debug=False):
-		# default to the pre_made json file if none is provided
-		if json_file is None:
-			json_file = settings.SPEEDGAUGE_DIR / 'speedGauge_table.json'
-			
-		# Load JSON data from file
-		with open(json_file, 'r') as file:
-			column_info = json.load(file)
-			
-			# Construct SQL CREATE TABLE statement
-			columns_sql = ",\n    ".join([f'"{column}" {datatype}' for column, datatype in column_info.items()])
-			
-			create_table_sql = f'''
-			CREATE TABLE IF NOT EXISTS "{table_name}" (
-				{columns_sql}
-				);
-			'''
-			
-			# Print the SQL for debugging
-			if debug is True:
-				print("Executing SQL:\n", create_table_sql)
-			
-			# Connect to the database and execute SQL
-			conn = self.db_conn()
-			c = conn.cursor()
-			c.execute(create_table_sql)
-			
-			if self.check_tbl_exists(table_name):
-				print('Table already exists\n')
-			else:
-				conn.commit()
-				print('Table is constructed in the database. yw\n')
-			
-			conn.close()
+		'''Method that will process the csv files in an orderly manner'''
+		files = self.find_unprocessed_files()
+		for csv_file in files:
+			extracted_data = self.extract_data(csv_file)
+			date_info = self.extract_date(csv_file)
 	
 	def find_unprocessed_files(self):
 		'''
@@ -60,8 +29,64 @@ class Processor():
 				file_list.append(file)
 		
 		return file_list
+	def extract_date(self, csv_file):
+		'''
+		this is chatGPT wizardry. idk how it works, but it does so dont mess with it
+		'''
+		df = pd.read_csv(csv_file)
+		# Find the index of the row with '---'
+		separator_index = df[df.iloc[:, 0] == '---'].index[0]
 	
-	
+		# Date is 3ish rows below the
+		# separator
+		date_range = df.iloc[separator_index + 3, 0]
+		print(date_range)
+		print(type(date_range))
+		input('stop here')
+		
+		# send the string to a cleaning
+		# function
+		date_string = self.parse_timestamp(date_range)
+		
+		# Define a regex to capture the two date components
+		date_pattern = r"(\w+, \w+ \d{1,2}, \d{4}, \d{2}:\d{2})"
+		matches = re.findall(date_pattern, date_string)
+		
+		if len(matches) == 2:
+			# Parse the matched date strings
+			start_date_str, end_date_str = matches
+			
+			# Define the format matching the date string
+			date_format = "%A, %B %d, %Y, %H:%M"
+			
+			# Convert to datetime objects
+			start_date = datetime.strptime(start_date_str, date_format)
+			end_date = datetime.strptime(end_date_str, date_format)
+			
+			# Format as "YYYY-MM-DD HH:MM" for storage in SQL
+			start_date_formatted = start_date.strftime("%Y-%m-%d %H:%M")
+			end_date_formatted = end_date.strftime("%Y-%m-%d %H:%M")
+			
+			# Format it into "12Dec2024"
+			human_readable_start_date = start_date.strftime("%d%b%Y").upper()
+			formatted_start_date = start_date.strftime("%Y%m%d").upper()
+			
+			human_readable_end_date = end_date.strftime("%d%b%Y").upper()
+			formated_end_date = end_date.strftime("%Y%m%d").upper()
+			
+			return (
+				start_date,
+				end_date,
+				start_date_formatted,
+				end_date_formatted,
+				formatted_start_date,
+				formated_end_date,
+				human_readable_start_date,
+				human_readable_end_date
+				)
+			
+		else:
+			raise ValueError("Date string format did not match expected pattern.")
 	def extract_data(self, csv_file):
 		df = pd.read_csv(csv_file)
 		
@@ -91,8 +116,11 @@ class Processor():
 		
 		return dict_list
 	
-	def parse_timestamp(self, date):
-		print(date)
+	def parse_timestamp(self, extracted_data):
+		for d in extracted_data:
+			print(d)
+
+		return extracted_data
 	
 	def check_tbl_exists(self, tbl_name):
 		conn = self.db_conn()
@@ -116,4 +144,6 @@ class Processor():
 		conn = sqlite3.connect(settings.db_name)
 		
 		return conn
-		
+
+	def update_drivers_json(self, d):
+		pass

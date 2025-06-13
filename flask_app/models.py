@@ -14,19 +14,9 @@ class Utils:
 		return conn
 	
 	def register_user(self, username, password):
-		print(self.debug_mode)
-		print('registering user')
-		if self.debug_mode is True:
-			print(f'Hashing password: {password}')
-		hashed_password = generate_password_hash(str(password))
-		if self.debug_mode is True:
-			print(f'Hashed Password: {hashed_password}')
-		
 		conn = self.db_connection()
 		c = conn.cursor()
-		
-		timestamp = datetime.now().isoformat()
-		
+
 		# check for existing user
 		sql = '''
 		SELECT id
@@ -41,36 +31,56 @@ class Utils:
 			if self.debug_mode is True:
 				print('User already exists in the database.')
 			return None
-		
-		# if username doesnt exist, go ahead and register user
-		if self.debug_mode is True:
-			print('Entering user into the database...')
-		sql = '''
-		INSERT INTO users(
-			username,
-			password,
-			creation_timestamp
-			)
-		VALUES (
-			?,
-			?,
-			?
-			)
-		'''
-		
-		values = (
-			username,
-			hashed_password,
-			timestamp
-			)
-		c.execute(sql, values)
-		user_id = c.lastrowid
-		conn.commit()
-		conn.close()
-		
-		if self.debug_mode is True:
-			print(f'User {username} has been entered into the database.\n')
-		return user_id
+		else:
+			print('registering user')
+			if self.debug_mode is True:
+				print(f'Hashing password: {password}')
+			hashed_password = generate_password_hash(str(password))
+			if self.debug_mode is True:
+				print(f'Hashed Password: {hashed_password}')
+			
+			timestamp = datetime.now().isoformat()
+			
+			# check for existing user
+			sql = '''
+			SELECT id
+			FROM users
+			WHERE username = ?
+			'''
+			value = (username,)
+			c.execute(sql, value)
+			user = c.fetchone()
+				
+			
+			# if username doesnt exist, go ahead and register user
+			if self.debug_mode is True:
+				print('Entering user into the database...')
+			sql = '''
+			INSERT INTO users(
+				username,
+				password,
+				creation_timestamp
+				)
+			VALUES (
+				?,
+				?,
+				?
+				)
+			'''
+			
+			values = (
+				username,
+				hashed_password,
+				timestamp
+				)
+			c.execute(sql, values)
+			user_id = c.lastrowid
+			conn.commit()
+			conn.close()
+			
+			if self.debug_mode is True:
+				print(f'User {username} has been entered into the database.\n')
+			return user_id
 	
 	def check_password(self, username, password):
 		conn = self.db_connection()
