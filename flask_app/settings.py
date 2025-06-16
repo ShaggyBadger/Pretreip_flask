@@ -22,3 +22,4 @@ PROCESSED_SPEEDGAUGE_PATH = SPEEDGAUGE_DIR / 'processed'
 UNPROCESSED_SPEEDGAUGE_PATH = SPEEDGAUGE_DIR / 'unprocessed'
 
 db_name = DATABASE_DIR / 'site_database.db'
+speedGuage_data_tbl_name = 'speedGauge_data'

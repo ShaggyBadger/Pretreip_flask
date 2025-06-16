@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, session, current_
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_app.app_constructor import app
 from flask_app import models
+from flask_app import sgInterface
 from datetime import timedelta
 
 app.permanent_session_lifetime = timedelta(days=7)
@@ -86,15 +87,32 @@ def logout():
 	session.clear()  # This clears all session data
 	return redirect(url_for('home'))
 
-@app.route('/speedgauge')
+@app.route('/speedgauge', methods=['GET', 'POST'])
 def speedGauge():
 	if 'user_id' in session:
 		user_id = session['user_id']
-		print(user_id)
 		db_model = current_app.db_model
-		sg_inter = current_app.sg_inter
+		
+		# use the user id from this session to locate driver_id
 		driver_id = db_model.retrieve_driver_id(user_id)
-		print(driver_id)
+		
+		if request.method == 'POST':
+			pass
+		else:
+			# build api object
+			sg_api = sgInterface.speedGaugeApi(driver_id)
+			
+			# get list of dates
+			dates = sg_api.get_dates()
+			
+			# get latest date
+			display_date = dates[-1]
+			
+			# get row data for display date
+			row_data = sg_api.get_speedGauge_row(display_date)
+			
+			return render_template('speedgauge.html', info=row_data)
+			
 
 		return  render_template('speedgauge.html')
 	else:

@@ -1,11 +1,8 @@
 from flask import Flask
 from flask_app.settings import SECRET_KEY, SQLALCHEMY_DATABASE_URI
-from speedGauge.sg_inter import Controller as Controller
 from flask_app import models
 
 app = Flask(__name__)
-sg_inter = Controller()
-app.sg_inter = sg_inter
 
 db_model = models.Utils()
 app.db_model = db_model

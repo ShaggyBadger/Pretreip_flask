@@ -1,12 +1,10 @@
-from flask_app import speedGauge, models, settings
+from flask_app import sgInterface, models, settings
 from pathlib import Path
 from rich.traceback import install
 from rich import print
 install()
 import json
 import sqlite3
-
-#processor = speedGauge.Processor()
 
 class Initialize:
   '''
@@ -23,15 +21,15 @@ class Initialize:
       self.standard_flow()
   def standard_flow(self):
     '''General controller method that will automatically flow through and set everything up'''
-    self.initialize_db()
     self.construct_dirs()
+    self.initialize_db()
     self.processess_speedgauge()
   def initialize_db(self):
     '''automated database creation. This will populate the users table with all the id's from my
     company. Later on anyone can register to use the program as well.'''
     print('Initializing the database...')
-    models_util = models.Utils(debug_mode=True)
-    models_cli_util = models.CLI_Utils(debug_mode=True)
+    models_util = models.Utils(debug_mode=False)
+    models_cli_util = models.CLI_Utils(debug_mode=False)
     speedgauge_util = speedGauge.Processor()
 
     # build the database
@@ -104,4 +102,11 @@ class Initialize:
 
 
 if __name__ == '__main__':
-  initializer = Initialize(automatic_mode=True)
+  db_manager = sgInterface.DbAudit()
+  #db_manager.chk_num_entries()
+  #initializer = Initialize(automatic_mode=True)
+  speedGauge_api = sgInterface.speedGaugeApi(30150643)
+  dates = speedGauge_api.get_dates()
+  
+  row_info = speedGauge_api.get_speedGauge_row(dates[-1])
+

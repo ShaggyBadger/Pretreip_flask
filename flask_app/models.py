@@ -32,8 +32,8 @@ class Utils:
 				print('User already exists in the database.')
 			return None
 		else:
-			print('registering user')
 			if self.debug_mode is True:
+				print('registering user')
 				print(f'Hashing password: {password}')
 			hashed_password = generate_password_hash(str(password))
 			if self.debug_mode is True:

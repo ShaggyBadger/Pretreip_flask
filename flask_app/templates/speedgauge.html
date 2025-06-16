@@ -1,17 +1,16 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>Title</title>
-	<style type="text/css">
-	/* CSS styles here... */
-	</style>
-	</head>
-	
-	<body>
-	
-	<h1>Hello</h1>
-	
-	</body>
-	
-</html>
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container info-container mt-5">
+    <div class="row text-center mb-4">
+        <h2>Driver Details</h2>
+    </div>
+    {% for key, value in info.items() %}
+        <div class="row info-row py-2 border-bottom {% if loop.index is even %}bg-light{% endif %}">
+    <div class="col-6 text-end fw-bold text-wrap text-break">{{ key }}</div>
+    <div class="col-6 text-start text-wrap text-break">{{ value }}</div>
+</div>
+    {% endfor %}
+
+
+{% endblock %}
