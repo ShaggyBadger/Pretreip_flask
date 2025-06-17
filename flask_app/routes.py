@@ -4,6 +4,7 @@ from flask_app.app_constructor import app
 from flask_app import models
 from flask_app import sgInterface
 from datetime import timedelta
+import speedGauge_app as sga
 
 app.permanent_session_lifetime = timedelta(days=7)
 
@@ -100,7 +101,7 @@ def speedGauge():
 			pass
 		else:
 			# build api object
-			sg_api = sgInterface.speedGaugeApi(driver_id)
+			sg_api = sga.SpeedgaugeApi.Api(driver_id)
 			
 			# get list of dates
 			dates = sg_api.get_dates()
