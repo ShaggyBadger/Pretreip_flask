@@ -1,4 +1,6 @@
-from flask_app import sgInterface, models, settings
+from flask_app import models, settings
+import speedGauge_app
+
 from pathlib import Path
 from rich.traceback import install
 from rich import print
@@ -65,7 +67,7 @@ class Initialize:
         print(f"Error creating directory {directory}: {e}")
   def processess_speedgauge(self):
     '''stick all speedguage files into the database for initial setup'''
-    processor = speedGauge.Processor()
+    processor = speedGauge_app.sgProcessor.Processor()
     processor.standard_flow()
   def create_table_from_json(self, json_file=None, table_name='speedGauge', debug=False):
     '''create table to hold speedGauge data'''
@@ -102,11 +104,5 @@ class Initialize:
 
 
 if __name__ == '__main__':
-  db_manager = sgInterface.DbAudit()
-  #db_manager.chk_num_entries()
-  #initializer = Initialize(automatic_mode=True)
-  speedGauge_api = sgInterface.speedGaugeApi(30150643)
-  dates = speedGauge_api.get_dates()
-  
-  row_info = speedGauge_api.get_speedGauge_row(dates[-1])
-
+  dbManager = speedGauge_app.dbManagement.DbManagement()
+  dbManager.gen_interpolated_speeds()
