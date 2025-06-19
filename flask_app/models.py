@@ -8,12 +8,12 @@ class Utils:
 	def __init__(self, debug_mode=False):
 		self.user_exists = None
 		self.debug_mode = debug_mode
-	
 	def db_connection(self, db_name=settings.db_name):
-		conn = sqlite3.connect(db_name)
+		'''Easy way to establish db connection'''
+		conn = sqlite3.connect(db_name, timeout=10)
 		return conn
-	
 	def register_user(self, username, password):
+		'''Automated way to register users from a json file'''
 		conn = self.db_connection()
 		c = conn.cursor()
 
@@ -81,8 +81,8 @@ class Utils:
 			if self.debug_mode is True:
 				print(f'User {username} has been entered into the database.\n')
 			return user_id
-	
 	def check_password(self, username, password):
+		'''This checks the password and hash and all that from the database'''
 		conn = self.db_connection()
 		c = conn.cursor()
 		
@@ -105,8 +105,8 @@ class Utils:
 			
 		else:
 			return None
-	
 	def build_db(self):
+		'''Used to automate creating the database'''
 		conn = self.db_connection()
 		c = conn.cursor()
 		
@@ -137,8 +137,8 @@ class Utils:
 		c.execute(sql)
 		conn.commit()
 		conn.close()
-	
 	def retrieve_driver_id(self, user_id):
+		'''Takes in the user id from session and finds driver_id'''
 		conn = self.db_connection()
 		c = conn.cursor()
 		

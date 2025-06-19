@@ -1,18 +1,18 @@
 import sqlite3
 import json
-import pandas as pd
 import re
 import shutil
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
+import pandas as pd
 from flask_app import settings
 
 
 class Processor():
+	'''This class chomps through the speedGauge csv, extracts the data, and stores it in db'''
 	def __init__(self):
 		# make sure table is built
 		self.build_speedGauge_table()
-		
+	
 		# get some useful data together
 		self.tbl_col_names = self.get_columns_in_table()
 	def standard_flow(self):
@@ -76,16 +76,16 @@ class Processor():
 				# i guess the actual final step is to run the analytics and store that in db as well
 				pass
 				
-			self.move_csv_to_proccessed(csv_file)
-				
-				
+			self.move_csv_to_proccessed(csv_file)		
 	def move_csv_to_proccessed(self, csv_file):
+		'''Moves the csv file around'''
 		# make a destination path object
 		destination = settings.PROCESSED_SPEEDGAUGE_PATH / csv_file.name
 		
 		# use shutil to move the file
 		shutil.move(str(csv_file), str(destination))
 	def build_speedGauge_table(self):
+		'''ensures the table is created for our data'''
 		# get data from json file
 		with open(settings.SPEEDGAUGE_DIR / 'speedGauge_table.json', 'r') as f:
 			table_schema_dict = json.load(f)
@@ -106,6 +106,7 @@ class Processor():
 		conn.commit()
 		conn.close()
 	def sanitize_dict(self, driver_dict):
+		'''cleans up the info to prepare for database insertion'''
 		sanitized_dict = {}
 		
 		# clean column names
@@ -121,6 +122,7 @@ class Processor():
 			sanitized_dict[sanitized_key] = value		
 		return sanitized_dict
 	def store_row_in_db(self, driver_dict):
+		'''stores row into the database'''
 		# update db with any new columns
 		dict_keys = [
 			key for key
@@ -142,9 +144,24 @@ class Processor():
 		else:
 			# if doesnt exist, just add row
 			self.enter_row_into_db(driver_dict)
+	def add_col(self, column_name):
+		'''Adds a column to the database if there is a new column in the speedgauge CSV that does not have a
+		corresopnding column in my database. Default to TEXT and i can clean it up in processing later'''
+		conn = self.db_conn()
+		c = conn.cursor()
+
+		sql = f'''
+		ALTER speedgauge_data
+		ADD COLUMN {column_name} TEXT
+		'''
+		c.execute(sql)
+		conn.commit()
+		conn.close()
 	def update_row_in_db(self, driver_dict):
+		'''updates an existing row with fresh (possible more accurate) data'''
 		pass
 	def enter_row_into_db(self, driver_data):
+		'''Enters driver data row into the database'''
 		columns = ', '.join(
 			driver_data.keys()
 			)
@@ -166,6 +183,7 @@ class Processor():
 		conn.commit()
 		conn.close()
 	def chk_row_exists(self, driver_id, start_date, end_date):
+		'''Checks if a row of data already exists in the database'''
 		conn = self.db_conn()
 		c = conn.cursor()
 		
@@ -187,6 +205,7 @@ class Processor():
 		else:
 			return False
 	def get_columns_in_table(self):
+		'''Returns a list of column names in database table'''
 		conn = self.db_conn()
 		c = conn.cursor()
 		
@@ -322,11 +341,8 @@ class Processor():
 			
 			if valid_name is True:
 				dict_list.append(row_dict)
-		
+
 		return dict_list
-
-
-		return extracted_data
 	def check_tbl_exists(self, tbl_name):
 		'''Might not need this method. Returns true if a table exists already'''
 		conn = self.db_conn()
@@ -384,9 +400,7 @@ class Processor():
 				with open(json_file, 'w') as f:
 					json.dump(json_dict_list, f, indent=4)
 			except:
-				print(f'idk. something went wrong adding this to the json file:\n{driver_info_dict}')
-						
-					
+				print(f'idk. something went wrong adding this to the json file:\n{driver_info_dict}')			
 	def locate_missing_driver_number(self, driver_dict):
 		'''search through the driver_info table and locate driver number based on driver_name?'''
 		first_name = driver_dict['first_name']

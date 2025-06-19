@@ -1,12 +1,11 @@
+import json
+import sqlite3
 from flask_app import models, settings
 import speedGauge_app
 
-from pathlib import Path
 from rich.traceback import install
 from rich import print
 install()
-import json
-import sqlite3
 
 class Initialize:
   '''
@@ -32,7 +31,7 @@ class Initialize:
     print('Initializing the database...')
     models_util = models.Utils(debug_mode=False)
     models_cli_util = models.CLI_Utils(debug_mode=False)
-    speedgauge_util = speedGauge.Processor()
+    sgProcessor = speedGauge_app.sgProcessor.Processor()
 
     # build the database
     print('Building the Database....')
@@ -48,8 +47,7 @@ class Initialize:
 
     # Populate the speedGauge table with all the files we have
     print('Populating the speedGauge table...')
-    speedgauge_util.standard_flow()
-
+    sgProcessor.standard_flow()
   def construct_dirs(self):
     '''Method to build necessary directories'''
     dirs_to_construct = [
@@ -99,7 +97,7 @@ class Initialize:
     conn.close()
   def db_conn(self):
     '''Just an easy way to get database connection'''
-    conn = sqlite3.connect(settings.db_name)
+    conn = sqlite3.connect(settings.db_name, timeout=10)
     return conn
 
 
