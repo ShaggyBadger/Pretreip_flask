@@ -1,10 +1,11 @@
-from flask_app import sgInterface, models, settings
-from pathlib import Path
+import json
+import sqlite3
+from flask_app import models, settings
+import speedGauge_app
+
 from rich.traceback import install
 from rich import print
 install()
-import json
-import sqlite3
 
 class Initialize:
   '''
@@ -23,14 +24,13 @@ class Initialize:
     '''General controller method that will automatically flow through and set everything up'''
     self.construct_dirs()
     self.initialize_db()
-    self.processess_speedgauge()
   def initialize_db(self):
     '''automated database creation. This will populate the users table with all the id's from my
     company. Later on anyone can register to use the program as well.'''
     print('Initializing the database...')
     models_util = models.Utils(debug_mode=False)
     models_cli_util = models.CLI_Utils(debug_mode=False)
-    speedgauge_util = speedGauge.Processor()
+    sgProcessor = speedGauge_app.sgProcessor.Processor()
 
     # build the database
     print('Building the Database....')
@@ -46,8 +46,7 @@ class Initialize:
 
     # Populate the speedGauge table with all the files we have
     print('Populating the speedGauge table...')
-    speedgauge_util.standard_flow()
-
+    sgProcessor.standard_flow()
   def construct_dirs(self):
     '''Method to build necessary directories'''
     dirs_to_construct = [
@@ -65,7 +64,7 @@ class Initialize:
         print(f"Error creating directory {directory}: {e}")
   def processess_speedgauge(self):
     '''stick all speedguage files into the database for initial setup'''
-    processor = speedGauge.Processor()
+    processor = speedGauge_app.sgProcessor.Processor()
     processor.standard_flow()
   def create_table_from_json(self, json_file=None, table_name='speedGauge', debug=False):
     '''create table to hold speedGauge data'''
@@ -97,16 +96,9 @@ class Initialize:
     conn.close()
   def db_conn(self):
     '''Just an easy way to get database connection'''
-    conn = sqlite3.connect(settings.db_name)
+    conn = sqlite3.connect(settings.db_name, timeout=10)
     return conn
 
 
 if __name__ == '__main__':
-  db_manager = sgInterface.DbAudit()
-  #db_manager.chk_num_entries()
-  #initializer = Initialize(automatic_mode=True)
-  speedGauge_api = sgInterface.speedGaugeApi(30150643)
-  dates = speedGauge_api.get_dates()
-  
-  row_info = speedGauge_api.get_speedGauge_row(dates[-1])
-
+  initializer = Initialize(automatic_mode=True)
