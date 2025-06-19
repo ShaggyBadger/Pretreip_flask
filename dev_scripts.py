@@ -24,7 +24,6 @@ class Initialize:
     '''General controller method that will automatically flow through and set everything up'''
     self.construct_dirs()
     self.initialize_db()
-    self.processess_speedgauge()
   def initialize_db(self):
     '''automated database creation. This will populate the users table with all the id's from my
     company. Later on anyone can register to use the program as well.'''
@@ -102,5 +101,4 @@ class Initialize:
 
 
 if __name__ == '__main__':
-  dbManager = speedGauge_app.dbManagement.DbManagement()
-  dbManager.gen_interpolated_speeds()
+  initializer = Initialize(automatic_mode=True)
