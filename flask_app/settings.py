@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
-import flask_app.secretKey as secretKey
 
-SECRET_KEY = secretKey.SECRET_KEY or os.environ.get('FLASK_SECRET_KEY')
+SECRET_KEY = os.environ.get('FLASK_SECRET_KEY')
+if SECRET_KEY is None:
+  import flask_app.secretKey as secretKey
+  SECRET_KEY = secretKey.SECRET_KEY
+print(SECRET_KEY)
 
 SQLALCHEMY_DATABASE_URI = None
 
