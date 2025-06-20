@@ -11,7 +11,6 @@ SQLALCHEMY_DATABASE_URI = None
 '''
 establish paths to various  directories for use in other parts of da program
 '''
-
 # root directory
 BASE_DIR = Path(__file__).resolve().parent
 

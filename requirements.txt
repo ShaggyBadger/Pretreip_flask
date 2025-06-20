@@ -8,6 +8,7 @@ mdurl==0.1.2
 numpy==2.3.0
 pandas==2.3.0
 Pygments==2.19.1
+PyMySQL==1.1.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 pytz==2025.2

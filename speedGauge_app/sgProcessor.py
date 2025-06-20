@@ -119,7 +119,8 @@ class Processor():
 				value = int(float(str(value)))
 			
 			# build the dict entry
-			sanitized_dict[sanitized_key] = value		
+			sanitized_dict[sanitized_key] = value
+
 		return sanitized_dict
 	def store_row_in_db(self, driver_dict):
 		'''stores row into the database'''
