@@ -257,6 +257,8 @@ class Processor():
     c.execute(sql)
     columns_info = c.fetchall()
     conn.close()
+    print(columns_info)
+    input('pausing to see columns')
     
     column_names = [
       col[1] for col
