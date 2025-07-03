@@ -10,7 +10,7 @@
     "max_speed_non_interstate_freeway": "DECIMAL(6, 2)",
     "percent_speeding_non_interstate_freeway": "DECIMAL(5, 2)",
     "worst_incident_date": "DATETIME",
-    "incident_location": "VARCHAR(255)",
+    "incident_location": "TEXT",
     "speed_limit": "INT",
     "speed": "INT",
     "speed_cap": "VARCHAR(255)",

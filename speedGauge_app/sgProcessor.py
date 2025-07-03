@@ -131,6 +131,15 @@ class Processor():
       if key == 'driver_id':
         value = int(float(str(value)))
       
+      # Handle date fields that might contain '-' or empty strings
+      date_fields = ['worst_incident_date', 'start_date', 'end_date']
+      if key in date_fields:
+        if value == '-' or value == '':
+          value = None # Convert to None for NULL in database
+        # else: # If it's not '-' or empty, assume it's a valid date string and let pymysql handle it
+        #   # You might need to parse and reformat date strings here if they are not in a standard format
+        #   # For example: value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+      
       # build the dict entry
       sanitized_dict[sanitized_key] = value
 
