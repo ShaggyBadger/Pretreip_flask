@@ -73,7 +73,7 @@ class Api:
     filtered_list = []
     
     for date in datelist:
-      start_date = datetime.fromisoformat(date['start_date'])
+      start_date = date['start_date']
       
       if start_date >= cuttoff_date:
         filtered_list.append(date[0])
