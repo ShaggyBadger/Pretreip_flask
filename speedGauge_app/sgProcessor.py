@@ -71,12 +71,16 @@ class Processor():
         sanitized_dict = self.sanitize_dict(driver_dict)
 
         # add raw_json of all this stuff to the dict
+        # Convert datetime objects to string for JSON serialization
+        for k, v in sanitized_dict.items():
+            if isinstance(v, datetime):
+                sanitized_dict[k] = v.isoformat()
+
         driver_dict_json_string = json.dumps(sanitized_dict)
         sanitized_dict['raw_json'] = driver_dict_json_string
         
         # final step! everything is cleaned up and processed. Now 
         # send it to the database for storage
-        print(f"Sanitized dict before storing: {sanitized_dict}") # Debugging line
         self.store_row_in_db(sanitized_dict)
         
         # i guess the actual final step is to run the analytics and store that in db as well
