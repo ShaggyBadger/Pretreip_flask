@@ -143,7 +143,4 @@ class TempTester:
 
 if __name__ == '__main__':
 
-  #initializer = Initialize(automatic_mode=True)
-  a = TempTester()
-  a.print_db_info()
-  
+  initializer = Initialize(automatic_mode=False)
