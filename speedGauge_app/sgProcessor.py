@@ -100,12 +100,17 @@ class Processor():
     c = conn.cursor()
     
     table_name = settings.speedGuage_data_tbl_name
+    
+    # Extract table options before processing columns
+    table_options = table_schema_dict.pop('table_options', '')
+
     columns_sql = ",\n    ".join(
       f'{column} {data_type}' for column, data_type in table_schema_dict.items()
       )
     create_table_sql = f'''
     CREATE TABLE IF NOT EXISTS  {table_name} (
-      {columns_sql});
+      {columns_sql}
+    ) {table_options};
     '''
     
     c.execute(create_table_sql)
