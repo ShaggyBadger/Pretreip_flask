@@ -235,8 +235,8 @@ class Processor():
       driver_id = %s
       AND start_date = %s 
       AND end_date = %s
-    ''' % settings.speedGuage_data_tbl_name
-    values = (driver_id, start_date, end_date)
+    '''
+    values = (settings.speedGuage_data_tbl_name, driver_id, start_date, end_date)
     c.execute(sql, values)
     result = c.fetchone()
     conn.close()
