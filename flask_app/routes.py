@@ -100,7 +100,7 @@ def speedGauge():
       pass
     else:
       # build api object
-      sg_api = sga.SpeedgaugeApi.Api(driver_id)
+      sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
       
       # get list of dates
       dates = sg_api.get_dates()
