@@ -75,10 +75,9 @@ class Api:
     print('printing dates from db')
     print(datelist)
     for date in datelist:
-      print(date)
       start_date = date['start_date']
       
-      if start_date >= cuttoff_date:
-        filtered_list.append(date[0])
+      if start_date is not None and start_date >= cuttoff_date:
+        filtered_list.append(start_date.isoformat())
      
     return filtered_list
