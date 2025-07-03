@@ -1,5 +1,4 @@
 import pymysql
-import math
 import json
 import re
 import shutil
@@ -138,6 +137,13 @@ class Processor():
 
 
     for key, value in driver_dict.items():
+      # Debugging: Print key, value, and type before sanitization
+      print(f"Sanitizing: Key={key}, Value={value}, Type={type(value)}")
+
+      # Convert NaN to None for any field first
+      if pd.isna(value):
+        value = None
+
       # Sanitize key (column name)
       sanitized_key = re.sub(r"[-/]", "_", key)
 
@@ -232,12 +238,20 @@ class Processor():
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
 
+    # Create a copy to modify without affecting the original dict
+    sanitized_driver_data = {}
+    for k, v in driver_dict.items():
+        if isinstance(v, float) and math.isnan(v):
+            sanitized_driver_data[k] = None # Replace NaN with None
+        else:
+            sanitized_driver_data[k] = v
+
     # Prepare the SET part of the SQL statement
-    set_clause = ", ".join([f"{key} = %s" for key in driver_dict.keys()])
+    set_clause = ", ".join([f"{key} = %s" for key in sanitized_driver_data.keys()])
 
     # Prepare the values for the SET part and the WHERE part
-    values = list(driver_dict.values())
-    values.extend([driver_dict['driver_id'], driver_dict['start_date'], driver_dict['end_date']])
+    values = list(sanitized_driver_data.values())
+    values.extend([sanitized_driver_data['driver_id'], sanitized_driver_data['start_date'], sanitized_driver_data['end_date']])
 
     sql = f'''
     UPDATE {settings.speedGuage_data_tbl_name}
