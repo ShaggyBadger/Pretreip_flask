@@ -72,7 +72,10 @@ class Api:
     
     filtered_list = []
     
+    print('printing dates from db')
+    print(datelist)
     for date in datelist:
+      print(date)
       start_date = date['start_date']
       
       if start_date >= cuttoff_date:
