@@ -6,8 +6,6 @@ if SECRET_KEY is None:
   import flask_app.secretKey as secretKey
   SECRET_KEY = secretKey.SECRET_KEY
 
-SQLALCHEMY_DATABASE_URI = None
-
 '''
 establish paths to various  directories for use in other parts of da program
 '''
@@ -23,5 +21,4 @@ SPEEDGAUGE_DIR = DATA_DIR / 'speedGauge_files'
 PROCESSED_SPEEDGAUGE_PATH = SPEEDGAUGE_DIR / 'processed'
 UNPROCESSED_SPEEDGAUGE_PATH = SPEEDGAUGE_DIR / 'unprocessed'
 
-db_name = DATABASE_DIR / 'site_database.db'
 speedGuage_data_tbl_name = 'speedGauge_data'

@@ -1,22 +1,19 @@
-import sqlite3
+import pymysql
 import pandas as pd
-from flask_app import settings
+from flask_app import settings, models
 from datetime import datetime
 
 class DbManagement:
   def __init__(self):
-    pass
-  def db_conn(self):
-    '''easy way to establish a db connection inside this class'''
-    conn = sqlite3.connect(settings.db_name, timeout=10)
-    return conn
+    self.models_utils = models.Utils()
+  
   def get_dates(self):
     '''
     Returns a list full of  start_date in ASC order. oldest date is first, newest date is index[-1]
     
     the date is str from db, it can be used for query and also turned into datetime object later
     '''  
-    conn = self.db_conn()
+    conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
     sql = '''
@@ -34,7 +31,7 @@ class DbManagement:
     
     return datelist
   def get_all_driver_id(self):
-    conn = self.db_conn()
+    conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
     sql = '''
@@ -57,7 +54,7 @@ class DbManagement:
     datelist = self.get_dates()
     id_list = self.get_all_driver_id()    
     
-    conn = self.db_conn()
+    conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
     sql = '''

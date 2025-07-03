@@ -1,34 +1,32 @@
-import sqlite3
+import pymysql
 import json
 import pandas as pd
 import re
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from flask_app import settings
+from flask_app import settings, models
 
 class Api:
   '''
   this is the main way to get the data for a user. should return dicts and stuff
   '''
-  def __init__(self, driver_id):
+  def __init__(self, driver_id, models_utils):
     self.driver_id = driver_id
-  def db_conn(self):
-    '''easy way to establish a db connection inside this class'''
-    conn = sqlite3.connect(settings.db_name, timeout=10)
-    return conn
+    self.models_utils = models_utils
+  
   def get_speedGauge_row(self, start_date):
     '''
     this takes in the start_date and returns the row of data in dict form from the db
     '''
-    conn = self.db_conn()
+    conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
     sql = '''
     SELECT *
     FROM speedGauge_data
-    WHERE driver_id = ? AND
-    start_date = ?;
+    WHERE driver_id = %s AND
+    start_date = %s;
     '''
     values = (self.driver_id, start_date)
     
@@ -60,7 +58,7 @@ class Api:
     '''
     cuttoff_date = datetime.now() - timedelta(days=cuttoff_time)
     
-    conn = self.db_conn()
+    conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
     sql = '''

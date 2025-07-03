@@ -20,43 +20,35 @@ class Utils:
   def get_db_connection(self):
     """
     Establishes and returns a MySQL database connection.
-    Reads connection details from environment variables.
+    Reads connection details securely from environment variables.
     """
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
     MYSQL_USER = os.environ.get('MYSQL_USER')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
     MYSQL_DB = os.environ.get('MYSQL_DB')
-    
+
+    # Ensure all required environment variables are set
     if not all([MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB]):
-      try:
-        from flask_app.secretKey import db_pass
-        MYSQL_HOST = '45.79.212.144'
-        MYSQL_USER = 'pretrip_user'
-        MYSQL_PASSWORD = db_pass
-        MYSQL_DB = 'pretrip_db'
-        MYSQL_PORT = 3306
-      
-      except:
         raise ValueError(
-          "MySQL environment variables (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB) "
-          "must be set for the application to connect to the database."
-          )
-    try:
-      # print("Attempting to connect to MySQL...") # Uncomment for debugging
-      conn = pymysql.connect(
-        host=MYSQL_HOST,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        database=MYSQL_DB,
-        port=3306,
-        cursorclass=pymysql.cursors.DictCursor # Returns rows as dictionaries
+            "Missing one or more required MySQL environment variables. "
+            "Please set MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, and MYSQL_DB."
         )
-      # print("Successfully connected to MySQL.") # Uncomment for debugging
-      return conn
-      
+
+    try:
+        conn = pymysql.connect(
+            host=MYSQL_HOST,
+            user=MYSQL_USER,
+            password=MYSQL_PASSWORD,
+            database=MYSQL_DB,
+            port=3306,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        return conn
     except pymysql.Error as e:
-      print(f"ERROR: Could not connect to MySQL database: {e}")
-      raise ConnectionError("Failed to connect to MySQL database.") from e
+        # Log the error for debugging purposes without exposing sensitive details.
+        print(f"ERROR: Could not connect to MySQL database: {e}")
+        # Raise a generic error to the caller.
+        raise ConnectionError("Failed to connect to the database.") from e
   
   def register_user(self, username, password):
     '''Automated way to register users from a json file'''

@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 import json
 import re
 import shutil
@@ -99,12 +99,12 @@ class Processor():
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
-    table_name = 'speedGauge_data'
+    table_name = settings.speedGuage_data_tbl_name
     columns_sql = ",\n    ".join(
-      f'"{column}" {data_type}' for column, data_type in table_schema_dict.items()
+      f'{column} {data_type}' for column, data_type in table_schema_dict.items()
       )
     create_table_sql = f'''
-    CREATE TABLE IF NOT EXISTS  "{table_name}" (
+    CREATE TABLE IF NOT EXISTS  {table_name} (
       {columns_sql});
     '''
     
@@ -161,7 +161,7 @@ class Processor():
     c = conn.cursor()
 
     sql = f'''
-    ALTER speedgauge_data
+    ALTER TABLE {settings.speedGuage_data_tbl_name}
     ADD COLUMN {column_name} TEXT
     '''
     c.execute(sql)
@@ -169,8 +169,31 @@ class Processor():
     conn.close()
   
   def update_row_in_db(self, driver_dict):
-    '''updates an existing row with fresh (possible more accurate) data'''
-    pass
+    """updates an existing row with fresh (possible more accurate) data"""
+    conn = self.models_utils.get_db_connection()
+    c = conn.cursor()
+
+    # Prepare the SET part of the SQL statement
+    set_clause = ", ".join([f"{key} = %s" for key in driver_dict.keys()])
+
+    # Prepare the values for the SET part and the WHERE part
+    values = list(driver_dict.values())
+    values.extend([driver_dict['driver_id'], driver_dict['start_date'], driver_dict['end_date']])
+
+    sql = f'''
+    UPDATE {settings.speedGuage_data_tbl_name}
+    SET {set_clause}
+    WHERE driver_id = %s AND start_date = %s AND end_date = %s
+    '''
+
+    try:
+        c.execute(sql, tuple(values))
+        conn.commit()
+    except pymysql.Error as e:
+        print(f"Error updating row: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
   
   def enter_row_into_db(self, driver_data):
     '''Enters driver data row into the database'''
@@ -178,11 +201,11 @@ class Processor():
       driver_data.keys()
       )
     placeholders = ', '.join(
-      ['?'] * len(driver_data)
+      ['%s'] * len(driver_data)
       )
     values = tuple(driver_data.values())
     
-    sql = f'INSERT INTO speedGauge_data ({columns}) VALUES ({placeholders})'
+    sql = f'INSERT INTO {settings.speedGuage_data_tbl_name} ({columns}) VALUES ({placeholders})'
     
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
@@ -202,12 +225,12 @@ class Processor():
     
     sql = '''
     SELECT *
-    FROM speedGauge_data
+    FROM %s
     WHERE
-      driver_id = ?
-      AND start_date = ? 
-      AND end_date = ?
-    '''
+      driver_id = %s
+      AND start_date = %s 
+      AND end_date = %s
+    ''' % settings.speedGuage_data_tbl_name
     values = (driver_id, start_date, end_date)
     c.execute(sql, values)
     result = c.fetchone()
@@ -223,8 +246,8 @@ class Processor():
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
-    sql = '''
-    PRAGMA table_info(speedGauge_data);
+    sql = f'''
+    DESCRIBE {settings.speedGuage_data_tbl_name};
     '''
     c.execute(sql)
     columns_info = c.fetchall()
@@ -363,30 +386,7 @@ class Processor():
 
     return dict_list
   
-  def check_tbl_exists(self, tbl_name):
-    '''Might not need this method. Returns true if a table exists already'''
-    conn = self.db_conn()
-    c = conn.cursor()
-    
-    sql = '''
-    SELECT * FROM sqlite_master WHERE type='table' AND name=?
-    '''
-    value = (tbl_name,)
-    c.execute(sql, value)
-    result = c.fetchone()
-    conn.close()
-    
-    if result:
-      return True
-    
-    else:
-      return False
   
-  def db_conn(self):
-    '''easy way to establish a db connection inside this class'''
-    conn = sqlite3.connect(settings.db_name, timeout=10)
-    
-    return conn
   
   def update_drivers_json(self, drivers_dict):
     '''i have no idea what we are doing here. Probably updating the json file with any new driver info we

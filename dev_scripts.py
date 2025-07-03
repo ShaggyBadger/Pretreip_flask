@@ -1,5 +1,5 @@
 import json
-import sqlite3
+import pymysql
 from flask_app import models, settings
 import speedGauge_app
 
