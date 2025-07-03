@@ -37,7 +37,7 @@ def login():
       )
     
     if user:    
-      session['user_id'] = user[0]
+      session['user_id'] = user['id']
       session['username'] = username
       url = url_for('home')
       
