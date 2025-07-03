@@ -3,6 +3,7 @@ import math
 import json
 import re
 import shutil
+import math
 from datetime import datetime
 import pandas as pd
 from flask_app import settings
@@ -121,25 +122,42 @@ class Processor():
   def sanitize_dict(self, driver_dict):
     '''cleans up the info to prepare for database insertion'''
     sanitized_dict = {}
-    
+
     # clean column names
     for key, value in driver_dict.items():
       # Replace / and - with _
-      sanitized_key = re.sub(r"[/-]", "_", key)
-      
+      sanitized_key = re.sub(r"[-/]", "_", key)
+
       # fix driver_id to int
       if key == 'driver_id':
         value = int(float(str(value)))
-      
+
       # Handle date fields that might contain '-' or empty strings
       date_fields = ['worst_incident_date', 'start_date', 'end_date']
       if key in date_fields:
         if value == '-' or value == '':
           value = None # Convert to None for NULL in database
-        # else: # If it's not '-' or empty, assume it's a valid date string and let pymysql handle it
-        #   # You might need to parse and reformat date strings here if they are not in a standard format
-        #   # For example: value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
-      
+
+      # Handle numeric and boolean fields that might contain NaN, '-' or empty strings
+      numeric_and_boolean_fields = [
+          'percent_speeding', 'is_interpolated', 'max_speed_non_interstate_freeway',
+          'percent_speeding_non_interstate_freeway', 'speed_limit', 'speed',
+          'distance_driven', 'url_lat', 'url_lon', 'percent_speeding_numerator',
+          'percent_speeding_denominator', 'max_speed_interstate_freeway',
+          'percent_speeding_interstate_freeway', 'incidents_interstate_freeway',
+          'observations_interstate_freeway', 'incidents_non_interstate_freeway',
+          'observations_non_interstate_freeway', 'difference'
+      ]
+      if key in numeric_and_boolean_fields:
+          if isinstance(value, float) and math.isnan(value):
+              value = None
+          elif isinstance(value, str) and (value == '-' or value == ''):
+              value = None
+          # For boolean field 'is_interpolated', ensure it's True/False/None
+          if key == 'is_interpolated':
+              if value is not None:
+                  value = bool(value) # Convert to boolean if not None
+
       # build the dict entry
       sanitized_dict[sanitized_key] = value
 
