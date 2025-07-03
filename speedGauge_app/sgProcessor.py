@@ -76,6 +76,7 @@ class Processor():
         
         # final step! everything is cleaned up and processed. Now 
         # send it to the database for storage
+        print(f"Sanitized dict before storing: {sanitized_dict}") # Debugging line
         self.store_row_in_db(sanitized_dict)
         
         # i guess the actual final step is to run the analytics and store that in db as well
@@ -137,9 +138,6 @@ class Processor():
 
 
     for key, value in driver_dict.items():
-      # Debugging: Print key, value, and type before sanitization
-      print(f"Sanitizing: Key={key}, Value={value}, Type={type(value)}")
-
       # Convert NaN to None for any field first
       if pd.isna(value):
         value = None
@@ -158,13 +156,14 @@ class Processor():
       elif key in date_fields:
         if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
           value = None # Convert to None for NULL in database
-        # If it's a string that's not '-' or empty, assume it's a date string
-        # and let pymysql handle it, or add specific date parsing if needed.
-        # For example, if dates are not in ISO format, you'd need:
-        # try:
-        #   value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
-        # except ValueError:
-        #   value = None
+        else:
+          # Attempt to parse the date string if it's not None
+          try:
+            # Assuming the format is 'MM/DD/YYYY HH:MM'
+            value = datetime.strptime(str(value), '%m/%d/%Y %H:%M')
+          except ValueError:
+            # If parsing fails, set to None or handle as appropriate
+            value = None
 
       # Handle boolean fields
       elif key in boolean_fields:
