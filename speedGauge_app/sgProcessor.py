@@ -261,7 +261,7 @@ class Processor():
     input('pausing to see columns')
     
     column_names = [
-      col[1] for col
+      col['Field'] for col
       in columns_info
       ]
     
