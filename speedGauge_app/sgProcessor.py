@@ -228,15 +228,15 @@ class Processor():
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
-    sql = '''
+    sql = f'''
     SELECT *
-    FROM %s
+    FROM {settings.speedGuage_data_tbl_name}
     WHERE
       driver_id = %s
-      AND start_date = %s 
+      AND start_date = %s
       AND end_date = %s
     '''
-    values = (settings.speedGuage_data_tbl_name, driver_id, start_date, end_date)
+    values = (driver_id, start_date, end_date)
     c.execute(sql, values)
     result = c.fetchone()
     conn.close()
