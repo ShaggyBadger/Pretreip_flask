@@ -123,40 +123,66 @@ class Processor():
     '''cleans up the info to prepare for database insertion'''
     sanitized_dict = {}
 
-    # clean column names
+    # Define numeric and boolean fields based on your schema for robust handling
+    numeric_fields = [
+        'percent_speeding', 'max_speed_non_interstate_freeway',
+        'percent_speeding_non_interstate_freeway', 'speed_limit', 'speed',
+        'distance_driven', 'url_lat', 'url_lon', 'percent_speeding_numerator',
+        'percent_speeding_denominator', 'max_speed_interstate_freeway',
+        'percent_speeding_interstate_freeway', 'incidents_interstate_freeway',
+        'observations_interstate_freeway', 'incidents_non_interstate_freeway',
+        'observations_non_interstate_freeway', 'difference'
+    ]
+    boolean_fields = ['is_interpolated']
+    date_fields = ['worst_incident_date', 'start_date', 'end_date']
+
+
     for key, value in driver_dict.items():
-      # Replace / and - with _
+      # Sanitize key (column name)
       sanitized_key = re.sub(r"[-/]", "_", key)
 
-      # fix driver_id to int
+      # Handle driver_id specifically as it's an INT
       if key == 'driver_id':
-        value = int(float(str(value)))
+        try:
+          value = int(float(str(value))) # Robust conversion to int
+        except (ValueError, TypeError):
+          value = None # Set to None if conversion fails
 
-      # Handle date fields that might contain '-' or empty strings
-      date_fields = ['worst_incident_date', 'start_date', 'end_date']
-      if key in date_fields:
-        if value == '-' or value == '':
+      # Handle date fields
+      elif key in date_fields:
+        if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
           value = None # Convert to None for NULL in database
+        # If it's a string that's not '-' or empty, assume it's a date string
+        # and let pymysql handle it, or add specific date parsing if needed.
+        # For example, if dates are not in ISO format, you'd need:
+        # try:
+        #   value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+        # except ValueError:
+        #   value = None
 
-      # Handle numeric and boolean fields that might contain NaN, '-' or empty strings
-      numeric_and_boolean_fields = [
-          'percent_speeding', 'is_interpolated', 'max_speed_non_interstate_freeway',
-          'percent_speeding_non_interstate_freeway', 'speed_limit', 'speed',
-          'distance_driven', 'url_lat', 'url_lon', 'percent_speeding_numerator',
-          'percent_speeding_denominator', 'max_speed_interstate_freeway',
-          'percent_speeding_interstate_freeway', 'incidents_interstate_freeway',
-          'observations_interstate_freeway', 'incidents_non_interstate_freeway',
-          'observations_non_interstate_freeway', 'difference'
-      ]
-      if key in numeric_and_boolean_fields:
-          if isinstance(value, float) and math.isnan(value):
-              value = None
-          elif isinstance(value, str) and (value == '-' or value == ''):
-              value = None
-          # For boolean field 'is_interpolated', ensure it's True/False/None
-          if key == 'is_interpolated':
-              if value is not None:
-                  value = bool(value) # Convert to boolean if not None
+      # Handle boolean fields
+      elif key in boolean_fields:
+        if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
+          value = None
+        elif isinstance(value, str):
+          value = value.lower() == 'true' # Convert 'True'/'False' strings to boolean
+        else:
+          value = bool(value) # Convert other types to boolean (e.g., 0/1)
+
+      # Handle numeric fields
+      elif key in numeric_fields:
+        if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
+          value = None
+        elif isinstance(value, str):
+          try:
+            # Attempt conversion to float first, then int if applicable
+            if '.' in value: # Heuristic for float
+                value = float(value)
+            else:
+                value = int(value)
+          except ValueError:
+            value = None # If conversion fails, set to None
+        # If it's already a number (int/float), keep it as is.
 
       # build the dict entry
       sanitized_dict[sanitized_key] = value
