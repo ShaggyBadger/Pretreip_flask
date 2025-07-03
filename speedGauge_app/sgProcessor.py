@@ -1,4 +1,5 @@
 import pymysql
+import math
 import json
 import re
 import shutil
@@ -202,13 +203,20 @@ class Processor():
   
   def enter_row_into_db(self, driver_data):
     '''Enters driver data row into the database'''
+    # Create a copy to modify without affecting the original dict if it's used elsewhere
+    sanitized_driver_data = {}
+    for k, v in driver_data.items():
+        if isinstance(v, float) and math.isnan(v):
+            sanitized_driver_data[k] = None # Replace NaN with None
+        else:
+            sanitized_driver_data[k] = v
     columns = ', '.join(
-      driver_data.keys()
+      sanitized_driver_data.keys()
       )
     placeholders = ', '.join(
-      ['%s'] * len(driver_data)
+      ['%s'] * len(sanitized_driver_data)
       )
-    values = tuple(driver_data.values())
+    values = tuple(sanitized_driver_data.values())
     
     sql = f'INSERT INTO {settings.speedGuage_data_tbl_name} ({columns}) VALUES ({placeholders})'
     
@@ -216,10 +224,18 @@ class Processor():
     c = conn.cursor()
     try:
       c.execute(sql, values)
-    except:
-      for i in values:
-        print(f'{i}\n{type(i)}\n\n')
-      input('pausing')
+    except Exception as e: # Catch the specific exception
+      print(f"Error inserting row: {e}") # Print the actual error
+      # You can still print values for debugging if needed, but the 'e' is key
+      # for i in values:
+      #   print(f'{i}\n{type(i)}\n\n')
+      user_input = input('pausing due to error. Enter "y" to get info on the insertion: ') # Better message for clarity
+      if user_input == 'y':
+        print(f"SQL: {sql}")
+        print(f"Values: {values}")
+        print(f"Driver Data: {sanitized_driver_data}")
+        print(f"Error: {e}")
+        input('Press Enter to continue...')
     conn.commit()
     conn.close()
   
