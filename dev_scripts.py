@@ -125,5 +125,25 @@ class Initialize:
       if conn: # Ensure connection is closed even if an error occurs
         conn.close()
 
+class TempTester:
+  def __init__(self):
+    self.models_util = models.Utils(debug_mode=False)
+  
+  def print_db_info(self):
+    conn = self.models_util.get_db_connection()
+    print(conn)
+    c = conn.cursor()
+    
+    pass
+    
+    conn.close()
+
+
+
+
 if __name__ == '__main__':
-  initializer = Initialize(automatic_mode=True)
+
+  #initializer = Initialize(automatic_mode=True)
+  a = TempTester()
+  a.print_db_info()
+  
