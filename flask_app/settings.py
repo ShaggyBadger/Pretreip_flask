@@ -2,9 +2,7 @@ import os
 from pathlib import Path
 
 SECRET_KEY = os.environ.get('FLASK_SECRET_KEY')
-if SECRET_KEY is None:
-  import flask_app.secretKey as secretKey
-  SECRET_KEY = secretKey.SECRET_KEY
+
 
 '''
 establish paths to various  directories for use in other parts of da program
