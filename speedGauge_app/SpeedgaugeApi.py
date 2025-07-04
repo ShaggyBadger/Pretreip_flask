@@ -32,21 +32,10 @@ class Api:
     
     c.execute(sql, values)
     
-    # get columns names
-    col_names = [
-      i[0] for i
-      in c.description
-      ]
-    
-    # get row info for columns
-    row_data = [
-      i for i
-      in c.fetchone()
-    ]
+    row_dict = c.fetchone()
     
     conn.close()
     
-    row_dict = dict(zip(col_names, row_data))
     return row_dict
   def get_dates(self, cuttoff_time=365):
     '''
@@ -72,8 +61,6 @@ class Api:
     
     filtered_list = []
     
-    print('printing dates from db')
-    print(datelist)
     for date in datelist:
       start_date = date['start_date']
       

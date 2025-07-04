@@ -23,7 +23,7 @@ class DbManagement:
     '''
     c.execute(sql)
     datelist = [
-      date[0] for date
+      date['start_date'] for date
       in c.fetchall()
       ]
     c.fetchall()
@@ -40,7 +40,7 @@ class DbManagement:
     '''
     c.execute(sql)
     id_list = [
-      id[0] for id
+      id['driver_id'] for id
       in c.fetchall()
       ]
     
@@ -71,12 +71,12 @@ class DbManagement:
     main_dict = {}
     
     for row in all_rows:
-      if row[0] in main_dict:
-        sub_dict = main_dict[row[0]]
-        sub_dict[row[1]] = row[2]
+      if row['driver_id'] in main_dict:
+        sub_dict = main_dict[row['driver_id']]
+        sub_dict[row['start_date']] = row['percent_speeding']
       else:
-        main_dict[row[0]] = {
-          row[1]: row[2]
+        main_dict[row['driver_id']] = {
+          row['start_date']: row['percent_speeding']
         }
     
     for driver in main_dict:
