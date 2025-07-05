@@ -15,15 +15,35 @@ class Api:
     self.driver_id = driver_id
     self.models_utils = models_utils
   
-  def build_spedgauge_report(self):
+  def build_speedgauge_report(self):
   	'''
   	returns a dict:
   		key: start_date
   		value: speedgauge rows for that date
   	'''
   	date_list = self.get_dates()
-  	for i in date_list:
-  		print(type(i), ': ', i)
+  	
+  	conn = self.models_utils.get_db_connection()
+  	c = conn.cursor()
+  	
+  	sql = '''
+  	SELECT DISTINCT *
+    FROM speedGauge_data
+    WHERE driver_id = %s
+  	'''
+  	value = (self.driver_id,)
+  	c.execute(sql, value)
+  	row_dicts = c.fetchall()
+  	conn.close()
+  	
+  	driver_intel = {}
+  	for date in date_list:
+  		for dict in row_dicts:
+  			if dict.get('start_date') == date:
+  				driver_intel[date] = dict
+  				break
+  	
+  	return driver_intel
   
   def get_speedGauge_row(self, start_date):
     '''

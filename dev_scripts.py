@@ -128,19 +128,31 @@ class Initialize:
 class TempTester:
   def __init__(self):
     self.models_util = models.Utils(debug_mode=False)
+    self.models_cli_util = models.CLI_Utils(debug_mode=False)
+    self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
+    self.sga = speedGauge_app.SpeedgaugeApi
   
   def print_db_info(self):
-    conn = self.models_util.get_db_connection()
-    print(conn)
-    c = conn.cursor()
-    
-    pass
-    
-    conn.close()
-
-
+  	conn = self.models_util.get_db_connection()
+  	c = conn.cursor()
+  	sql = '''
+  	SHOW DATABASES;
+  	'''
+  	c.exectute(sql)
+  	
+  	conn.close()
+  
+  def test_api(self):
+  	a = self.sga.build_speedgauge_report()
+  	
+  	print(type(a))
+  	print(a)
+  	print('\n********')
+  	for i in a:
+  		print(i)
 
 
 if __name__ == '__main__':
 
-  initializer = Initialize(automatic_mode=True)
+  t = TempTester()
+  TempTester.print_db_info()
