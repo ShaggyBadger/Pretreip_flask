@@ -146,7 +146,8 @@ class TempTester:
   	conn.close()
   
   def test_api(self):
-  	a = self.sga.build_speedgauge_report()
+  	api = speedGauge_app.SpeedgaugeApi.SpeedgaugeApi(30150643)
+  	a = api.build_speedgauge_report()
   	
   	print(type(a))
   	print(a)
@@ -156,7 +157,7 @@ class TempTester:
 
 
 if __name__ == '__main__':
-
+	print('Running dev_scripts\n**********\n\n')
   t = TempTester()
   t.print_db_info()
   t.test_api()
