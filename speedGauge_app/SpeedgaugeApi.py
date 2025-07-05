@@ -23,7 +23,7 @@ class Api:
   	'''
   	date_list = self.get_dates()
   	for i in date_list:
-  		print(i)
+  		print(type(i), ': ', i)
   
   def get_speedGauge_row(self, start_date):
     '''
