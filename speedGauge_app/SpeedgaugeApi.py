@@ -15,6 +15,16 @@ class Api:
     self.driver_id = driver_id
     self.models_utils = models_utils
   
+  def build_spedgauge_report(self):
+  	'''
+  	returns a dict:
+  		key: start_date
+  		value: speedgauge rows for that date
+  	'''
+  	date_list = self.get_dates()
+  	for i in date_list:
+  		print(i)
+  
   def get_speedGauge_row(self, start_date):
     '''
     this takes in the start_date and returns the row of data in dict form from the db

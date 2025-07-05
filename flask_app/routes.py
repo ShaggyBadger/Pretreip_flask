@@ -102,6 +102,9 @@ def speedGauge():
       # build api object
       sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
       
+      # get material to test
+      a = sg_api.build_spedgauge_report()
+      
       # get list of dates
       dates = sg_api.get_dates()
       
