@@ -139,6 +139,9 @@ class TempTester:
   	SHOW DATABASES;
   	'''
   	c.execute(sql)
+  	results = c.fetchall()
+  	for dict in results:
+  		print(dict)
   	
   	conn.close()
   
@@ -156,3 +159,4 @@ if __name__ == '__main__':
 
   t = TempTester()
   t.print_db_info()
+  t.test_api()
