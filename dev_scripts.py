@@ -138,7 +138,7 @@ class TempTester:
   	sql = '''
   	SHOW DATABASES;
   	'''
-  	c.exectute(sql)
+  	c.execute(sql)
   	
   	conn.close()
   
