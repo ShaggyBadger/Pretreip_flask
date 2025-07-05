@@ -133,31 +133,31 @@ class TempTester:
     self.sga = speedGauge_app.SpeedgaugeApi
   
   def print_db_info(self):
-  	conn = self.models_util.get_db_connection()
-  	c = conn.cursor()
-  	sql = '''
-  	SHOW DATABASES;
-  	'''
-  	c.execute(sql)
-  	results = c.fetchall()
-  	for dict in results:
-  		print(dict)
-  	
-  	conn.close()
+    conn = self.models_util.get_db_connection()
+    c = conn.cursor()
+    sql = '''
+    SHOW DATABASES;
+    '''
+    c.execute(sql)
+    results = c.fetchall()
+    for dict in results:
+      print(dict)
+    
+    conn.close()
   
   def test_api(self):
-  	api = speedGauge_app.SpeedgaugeApi.SpeedgaugeApi(30150643)
-  	a = api.build_speedgauge_report()
-  	
-  	print(type(a))
-  	print(a)
-  	print('\n********')
-  	for i in a:
-  		print(i)
+    api = speedGauge_app.SpeedgaugeApi.SpeedgaugeApi(30150643)
+    a = api.build_speedgauge_report()
+    
+    print(type(a))
+    print(a)
+    print('\n********')
+    for i in a:
+      print(i)
 
 
 if __name__ == '__main__':
-	print('Running dev_scripts\n**********\n\n')
+  print('Running dev_scripts\n**********\n\n')
   t = TempTester()
   t.print_db_info()
   t.test_api()
