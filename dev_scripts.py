@@ -155,4 +155,4 @@ class TempTester:
 if __name__ == '__main__':
 
   t = TempTester()
-  t..print_db_info()
+  t.print_db_info()
