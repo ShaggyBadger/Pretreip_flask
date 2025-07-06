@@ -159,6 +159,8 @@ class Processor():
       # Handle date fields
       elif key in date_fields:
         if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
+        	print(f"Date parsing failed for key '{key}': {value}")
+        	input('press enter to continue...')
           value = None # Convert to None for NULL in database
         else:
           # Attempt to parse the date string if it's not None
@@ -167,6 +169,8 @@ class Processor():
             value = datetime.strptime(str(value), '%m/%d/%Y %H:%M')
           except ValueError:
             # If parsing fails, set to None or handle as appropriate
+            print(f"Date parsing failed for key '{key}': {value}")
+            input('press enter to continue')
             value = None
 
       # Handle boolean fields
@@ -445,6 +449,7 @@ class Processor():
       
     else:
       raise ValueError("Date string format did not match expected pattern.")
+      input('Press any key to continue....')
   
   def extract_data(self, csv_file):
     '''Pulls the data from the csv. Takes each row and makes a dictionary, then stores the dictionaries
