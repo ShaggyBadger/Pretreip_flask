@@ -2,6 +2,7 @@ import json
 import pymysql
 from flask_app import models, settings
 import speedGauge_app
+from speedGauge_app import SpeedgaugeApi as sga
 
 from rich.traceback import install
 from rich import print
@@ -130,7 +131,7 @@ class TempTester:
     self.models_util = models.Utils(debug_mode=False)
     self.models_cli_util = models.CLI_Utils(debug_mode=False)
     self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
-    self.sga = speedGauge_app.SpeedgaugeApi
+    self.sga = sga.Api(30159643)
   
   def print_db_info(self):
     conn = self.models_util.get_db_connection()
@@ -146,8 +147,7 @@ class TempTester:
     conn.close()
   
   def test_api(self):
-    api = speedGauge_app.SpeedgaugeApi.SpeedgaugeApi(30150643)
-    a = api.build_speedgauge_report()
+    a = self.sga.build_speedgauge_report()
     
     print(type(a))
     print(a)
