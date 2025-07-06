@@ -131,7 +131,7 @@ class TempTester:
     self.models_util = models.Utils(debug_mode=False)
     self.models_cli_util = models.CLI_Utils(debug_mode=False)
     self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
-    self.sga = sga.Api(30159643)
+    self.sga = sga.Api(30159643, self.models_util)
   
   def print_db_info(self):
     conn = self.models_util.get_db_connection()
