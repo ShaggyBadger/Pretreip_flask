@@ -42,6 +42,8 @@ class Api:
         if dict.get('start_date') == date:
           driver_intel[date] = dict
           break
+    print(date_list)
+    print(row_dicts)
     
     return driver_intel
   
