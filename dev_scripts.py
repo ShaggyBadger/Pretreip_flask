@@ -130,8 +130,11 @@ class TempTester:
   def __init__(self):
     self.models_util = models.Utils(debug_mode=False)
     self.models_cli_util = models.CLI_Utils(debug_mode=False)
-    self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
+    self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util, initialize=False)
     self.sga = sga.Api(30159643, self.models_util)
+  
+  def print_dicts(self):
+  	self.sgProcessor.standard_flow()
   
   def print_db_info(self):
     conn = self.models_util.get_db_connection()
@@ -154,10 +157,27 @@ class TempTester:
     print('\n********')
     for i in a:
       print(i)
+  
+  def reload_processed_csv(self):
+    file_list = []
+    
+    for file in settings.PROCESSED_SPEEDGAUGE_PATH.iterdir():
+      if file.is_file():
+        file_list.append(file)
+    
+    for file in file_list:
+      date_tuple = self.sgProcessor.extract_date(file)
+      for d in date_tuple:
+      	print(f'type: {type(d)}')
+      	print(f'value: {d}')
+      	print('')
+      print('******\n')
 
 
 if __name__ == '__main__':
   print('Running dev_scripts\n**********\n\n')
   t = TempTester()
-  t.print_db_info()
-  t.test_api()
+  t.print_dicts()
+  #t.reload_processed_csv()
+  # t.print_db_info()
+  # t.test_api()
