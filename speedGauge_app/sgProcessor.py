@@ -161,8 +161,6 @@ class Processor():
       # Handle date fields
       elif key in date_fields:
         if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
-          print(f"Date parsing failed for key '{key}': {value}")
-          input('press enter to continue... also, setting date to None')
           value = None # Convert to None for NULL in database
         else:
           # Attempt to parse the date string if it's not None
