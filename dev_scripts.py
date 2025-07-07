@@ -134,7 +134,7 @@ class TempTester:
     self.sga = sga.Api(30159643, self.models_util)
   
   def print_dicts(self):
-  	self.sgProcessor.standard_flow()
+    self.sgProcessor.standard_flow()
   
   def print_db_info(self):
     conn = self.models_util.get_db_connection()
@@ -168,16 +168,13 @@ class TempTester:
     for file in file_list:
       date_tuple = self.sgProcessor.extract_date(file)
       for d in date_tuple:
-      	print(f'type: {type(d)}')
-      	print(f'value: {d}')
-      	print('')
+        print(f'type: {type(d)}')
+        print(f'value: {d}')
+        print('')
       print('******\n')
 
 
 if __name__ == '__main__':
   print('Running dev_scripts\n**********\n\n')
-  t = TempTester()
-  t.print_dicts()
-  #t.reload_processed_csv()
-  # t.print_db_info()
-  # t.test_api()
+  initialization = Initialize(automatic_mode=True)
+  

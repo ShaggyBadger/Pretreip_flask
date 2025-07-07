@@ -16,11 +16,11 @@ class Processor():
     self.models_utils = models_utils
     
     if initialize is True:
-	    # make sure table is built
-	    self.build_speedgauge_table()
-	  
-	    # get some useful data together
-	    self.tbl_col_names = self.get_columns_in_table()
+      # make sure table is built
+      self.build_speedgauge_table()
+    
+      # get some useful data together
+      self.tbl_col_names = self.get_columns_in_table()
   
   def standard_flow(self):
     '''Method that will process the csv files in an orderly manner'''
@@ -162,7 +162,7 @@ class Processor():
       elif key in date_fields:
         if pd.isna(value) or str(value).strip() == '-' or str(value).strip() == '':
           print(f"Date parsing failed for key '{key}': {value}")
-          input('press enter to continue...')
+          input('press enter to continue... also, setting date to None')
           value = None # Convert to None for NULL in database
         else:
           # Attempt to parse the date string if it's not None
@@ -172,7 +172,7 @@ class Processor():
           except ValueError:
             # If parsing fails, set to None or handle as appropriate
             print(f"Date parsing failed for key '{key}': {value}")
-            input('press enter to continue')
+            input('press enter to continue. this is the value=dateparser portion. setting date to None')
             value = None
 
       # Handle boolean fields
@@ -202,13 +202,6 @@ class Processor():
       # build the dict entry
       sanitized_dict[sanitized_key] = value
     
-    print('\n********')
-    for i in driver_dict:
-    	print(f'{i}: {driver_dict[i]}')
-    print('************\n')
-    for i in sanitized_dict:
-    	print(f'{i}: {sanitized_dict[i]}')
-    input('break point. cancel the program!!!!')
     return sanitized_dict
   
   def store_row_in_db(self, driver_dict):
