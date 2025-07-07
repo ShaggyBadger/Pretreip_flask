@@ -168,7 +168,7 @@ class Processor():
           # Attempt to parse the date string if it's not None
           try:
             # Assuming the format is 'MM/DD/YYYY HH:MM'
-            value = dateparser.parse(str(value)).date()
+            value = dateparser.parse(str(value)).date().isoformat()
           except ValueError:
             # If parsing fails, set to None or handle as appropriate
             print(f"Date parsing failed for key '{key}': {value}")
