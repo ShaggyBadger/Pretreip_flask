@@ -95,3 +95,15 @@ class Api:
         filtered_list.append(start_date.isoformat())
      
     return filtered_list
+    
+  def extraxt_data(self, info):
+  	'''
+  	takes in a dictionary of data from a row in the db and creates a new dict of info for the template to use in making the webpage
+  	'''
+  	extracted_data = {
+  		'fname': info['first_name'],
+  		'lname': info['last_name'],
+  		'driver_id': info['driver_id'],
+  	}
+  	
+  	return extracted_data

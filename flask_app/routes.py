@@ -129,6 +129,38 @@ def speedGauge():
     return  render_template('speedgauge.html')
   else:
     url = url_for('home')
+    return redirect(url
+
+@app.route('/speedgauge2', methods=['GET', 'POST'])
+def speedGauge2():
+  if 'user_id' in session:
+    user_id = session['user_id']
+    db_model = current_app.db_model
+    
+    # use the user id from this session to locate driver_id
+    driver_id = db_model.retrieve_driver_id(user_id)
+    
+    if request.method == 'POST':
+      pass
+    else:
+      # build api object
+      sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
+      
+      # get material to test
+      sg_data = sg_api.build_speedgauge_report()
+      
+      extracted_data = sg_api.extra_data(sg_data[0])
+      
+      return render_template(
+      	'speedgauge2.html', sg_data=row_data,
+      	driver_info = extracted_data
+      	)
+      
+      
+
+    return  render_template('speedgauge2.html')
+  else:
+    url = url_for('home')
     return redirect(url)
 
 @app.route('/routes_debug')
