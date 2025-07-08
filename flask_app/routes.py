@@ -130,3 +130,7 @@ def speedGauge():
   else:
     url = url_for('home')
     return redirect(url)
+
+@app.route('/hello')
+def hello():
+    return "Hello World"
