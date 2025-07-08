@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, session, current_
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_app.app_constructor import app
 from flask_app import models
+from flask_app import settings
 from datetime import timedelta
 import speedGauge_app as sga
 
