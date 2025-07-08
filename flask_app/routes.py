@@ -89,11 +89,11 @@ def logout():
 
 @app.route('/tempUpload', methods=['GET', 'POST'])
 def tempUpload():
-	if request.method == 'POST':
-		file = request.files.get('file')
-		destination = settings.UNPROCESSED_SPEEDGAUGE_PATH / file.filename
-		file.save(desination)
-	return render_template('tempUpload.html')
+  if request.method == 'POST':
+    file = request.files.get('file')
+    destination = settings.UNPROCESSED_SPEEDGAUGE_PATH / file.filename
+    file.save(desination)
+  return render_template('tempUpload.html')
 
 @app.route('/speedgauge', methods=['GET', 'POST'])
 def speedGauge():
