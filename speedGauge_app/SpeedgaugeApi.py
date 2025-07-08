@@ -19,7 +19,7 @@ class Api:
     '''
     returns a dict:
       key: start_date
-      value: speedgauge rows for that date
+      value: speedgauge rows (dicts) for that date
     '''
     date_list = self.get_dates()
     
@@ -69,6 +69,7 @@ class Api:
     conn.close()
     
     return row_dict
+
   def get_dates(self, cuttoff_time=365):
     '''
     default cuttoff time is a year, although you can override if you want. just do it with num days

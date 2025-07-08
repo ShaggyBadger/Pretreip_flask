@@ -176,5 +176,7 @@ class TempTester:
 
 if __name__ == '__main__':
   print('Running dev_scripts\n**********\n\n')
-  initialization = Initialize(automatic_mode=True)
+  #initialization = Initialize(automatic_mode=True)
+  tester = TempTester()
+  a = tester.test_api()
   
