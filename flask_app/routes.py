@@ -134,3 +134,7 @@ def speedGauge():
 @app.route('/hello')
 def hello():
     return "Hello World"
+
+@app.route('/routes_debug')
+def routes_debug():
+    return '<br>'.join(str(rule) for rule in app.url_map.iter_rules())
