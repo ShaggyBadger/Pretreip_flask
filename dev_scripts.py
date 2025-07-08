@@ -152,6 +152,7 @@ class TempTester:
   def test_api(self):
     a = self.sga.build_speedgauge_report()
     
+    print('\nStarting devscript report on sg api query results\n*******')
     print(type(a))
     print(a)
     print('\n********')
