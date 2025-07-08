@@ -152,7 +152,7 @@ def speedGauge2():
       extracted_data = sg_api.extract_data(sg_data[0])
       
       return render_template(
-      	'speedgauge2.html', sg_data=row_data,
+      	'speedgauge2.html', sg_data=sg_data,
       	driver_info = extracted_data
       	)
       
