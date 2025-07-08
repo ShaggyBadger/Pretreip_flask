@@ -96,7 +96,7 @@ class Api:
      
     return filtered_list
     
-  def extraxt_data(self, info):
+  def extrat_data(self, info):
   	'''
   	takes in a dictionary of data from a row in the db and creates a new dict of info for the template to use in making the webpage
   	'''
