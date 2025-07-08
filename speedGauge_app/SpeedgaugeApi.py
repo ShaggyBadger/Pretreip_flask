@@ -21,8 +21,7 @@ class Api:
       key: start_date
       value: speedgauge rows (dicts) for that date
     '''
-    date_list = self.get_dates()
-    
+
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
     
@@ -30,22 +29,16 @@ class Api:
     SELECT DISTINCT *
     FROM speedGauge_data
     WHERE driver_id = %s
+    ORDER BY start_date ASC;
     '''
     value = (self.driver_id,)
     c.execute(sql, value)
     row_dicts = c.fetchall()
     conn.close()
     
-    driver_intel = {}
-    for date in date_list:
-      for dict in row_dicts:
-        if dict.get('start_date') == date:
-          driver_intel[date] = dict
-          break
-    print(date_list)
     print(row_dicts)
     
-    return driver_intel
+    return row_dicts
   
   def get_speedGauge_row(self, start_date):
     '''
