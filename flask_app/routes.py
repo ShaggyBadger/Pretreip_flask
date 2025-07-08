@@ -133,35 +133,29 @@ def speedGauge():
 
 @app.route('/speedgauge2', methods=['GET', 'POST'])
 def speedGauge2():
-  if 'user_id' in session:
+    if 'user_id' not in session:
+        return redirect(url_for('home'))
+
     user_id = session['user_id']
     db_model = current_app.db_model
-    
-    # use the user id from this session to locate driver_id
     driver_id = db_model.retrieve_driver_id(user_id)
-    
-    if request.method == 'POST':
-      pass
-    else:
-      # build api object
-      sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
-      
-      # get material to test
-      sg_data = sg_api.build_speedgauge_report()
-      
-      extracted_data = sg_api.extract_data(sg_data[0])
-      
-      return render_template(
-      	'speedgauge2.html', sg_data=sg_data,
-      	driver_info = extracted_data
-      	)
-      
-      
 
-    return  render_template('speedgauge2.html')
-  else:
-    url = url_for('home')
-    return redirect(url)
+    sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
+    sg_data = sg_api.build_speedgauge_report()
+
+    selected_date = request.args.get('start_date')
+    available_dates = [entry['start_date'] for entry in sg_data]
+
+    selected_data = None
+    if selected_date:
+        selected_data = next((entry for entry in sg_data if entry['start_date'] == selected_date), None)
+
+    return render_template(
+        'speedgauge2.html',
+        available_dates=available_dates,
+        selected_date=selected_date,
+        selected_data=selected_data
+    )
 
 @app.route('/routes_debug')
 def routes_debug():
