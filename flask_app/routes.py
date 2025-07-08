@@ -129,7 +129,7 @@ def speedGauge():
     return  render_template('speedgauge.html')
   else:
     url = url_for('home')
-    return redirect(url
+    return redirect(url)
 
 @app.route('/speedgauge2', methods=['GET', 'POST'])
 def speedGauge2():
