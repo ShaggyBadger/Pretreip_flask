@@ -97,43 +97,10 @@ def tempUpload():
     file.save(destination)
   return render_template('tempUpload.html')
 
+
+
 @app.route('/speedgauge', methods=['GET', 'POST'])
 def speedGauge():
-  if 'user_id' in session:
-    user_id = session['user_id']
-    db_model = current_app.db_model
-    
-    # use the user id from this session to locate driver_id
-    driver_id = db_model.retrieve_driver_id(user_id)
-    
-    if request.method == 'POST':
-      pass
-    else:
-      # build api object
-      sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
-      
-      # get material to test
-      a = sg_api.build_speedgauge_report()
-      
-      # get list of dates
-      dates = sg_api.get_dates()
-      
-      # get latest date
-      display_date = dates[-1]
-      
-      # get row data for display date
-      row_data = sg_api.get_speedGauge_row(display_date)
-      
-      return render_template('speedgauge.html', info=row_data)
-      
-
-    return  render_template('speedgauge.html')
-  else:
-    url = url_for('home')
-    return redirect(url)
-
-@app.route('/speedgauge2', methods=['GET', 'POST'])
-def speedGauge2():
     if 'user_id' not in session:
         return redirect(url_for('home'))
 
@@ -159,10 +126,6 @@ def speedGauge2():
     
     # get selected date if requested
     if selected_date:
-    	print('\n*****\nselected date')
-    	print(f'{type(selected_date)} | {selected_date}')
-    	for i in available_dates:
-    		print(f'{type(i)} | {i}')
     	selected_data = next((entry for entry in sg_data if entry['start_date'] == datetime.fromisoformat(selected_date)), None)
 
     return render_template(
