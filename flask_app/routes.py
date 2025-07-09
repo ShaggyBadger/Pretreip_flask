@@ -101,37 +101,41 @@ def tempUpload():
 
 @app.route('/speedgauge', methods=['GET', 'POST'])
 def speedGauge():
-    if 'user_id' not in session:
-        return redirect(url_for('home'))
+  if 'user_id' not in session:
+    return redirect(url_for('home'))
 
-    user_id = session['user_id']
-    db_model = current_app.db_model
-    driver_id = db_model.retrieve_driver_id(user_id)
+  user_id = session['user_id']
+  db_model = current_app.db_model
+  driver_id = db_model.retrieve_driver_id(user_id)
 
-    sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
-    sg_data = sg_api.build_speedgauge_report()
-    
-    '''gather data for template context'''
-    # store user-requested date
-    selected_date = request.args.get('start_date')
-    
-    # build lost of dates
-    available_dates = [
-      entry['start_date']
-      for entry in sg_data
-      ]
-      
-    # default to most recent date
+  sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
+  sg_data = sg_api.build_speedgauge_report()
+
+  # build list of dates
+  available_dates = [entry['start_date'] for entry in sg_data]
+
+  # store user-requested date
+  selected_date_str = request.args.get('start_date')
+
+  # Convert to datetime if selected, otherwise use most recent
+  if selected_date_str:
+    try:
+      selected_date = datetime.fromisoformat(selected_date_str)
+    except ValueError:
+      selected_date = available_dates[0]
+  else:
     selected_date = available_dates[0]
-    
-    # get selected date if requested
-    if selected_date:
-      selected_data = next((entry for entry in sg_data if entry['start_date'].date() == selected_date.date()),None)
-    return render_template(
-        'speedgauge.html',
-        available_dates=available_dates,
-        selected_date=selected_date,
-        selected_data=selected_data
+
+  # Match data by date (use .date() to ignore time)
+  selected_data = next(
+    (entry for entry in sg_data if entry['start_date'].date() == selected_date.date()), None
+    )
+
+  return render_template(
+    'speedgauge.html',
+    available_dates=available_dates,
+    selected_date=selected_date,
+    selected_data=selected_data
     )
 
 @app.route('/routes_debug')
