@@ -122,7 +122,7 @@ def speedGauge():
     	]
     	
     # default to most recent date
-    selected_data = available_dates[0]
+    selected_date = available_dates[0]
     
     # get selected date if requested
     if selected_date:
