@@ -117,17 +117,16 @@ def speedGauge():
     
     # build lost of dates
     available_dates = [
-    	entry['start_date']
-    	for entry in sg_data
-    	]
-    	
+      entry['start_date']
+      for entry in sg_data
+      ]
+      
     # default to most recent date
     selected_date = available_dates[0]
     
     # get selected date if requested
     if selected_date:
-    	selected_data = next((entry for entry in sg_data if entry['start_date'] == datetime.fromisoformat(selected_date)), None)
-
+      selected_data = next((entry for entry in sg_data if entry['start_date'].date() == selected_date.date()),None)
     return render_template(
         'speedgauge.html',
         available_dates=available_dates,
