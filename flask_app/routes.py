@@ -155,12 +155,14 @@ def speedGauge2():
     	
     # default to most recent date
     selected_data = available_dates[0]
+    input('pause point')
     
     # get selected date if requested
     if selected_date:
     	print('\n*****\nselected date')
     	print(f'type: {type(selected_date)}')
-    	#print(f'content: {selected_date}')
+    	input('pause point')
+    	print(f'content: {selected_date}')
     	selected_data = next((entry for entry in sg_data if entry['start_date'] == selected_date), None)
 
     return render_template(

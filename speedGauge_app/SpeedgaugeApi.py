@@ -37,8 +37,6 @@ class Api:
     row_dicts = c.fetchall()
     conn.close()
     
-    print(row_dicts)
-    
     return row_dicts
   
   def get_speedGauge_row(self, start_date):
