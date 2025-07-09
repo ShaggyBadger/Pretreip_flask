@@ -149,19 +149,19 @@ def speedGauge2():
     
     # build lost of dates
     available_dates = [
-      entry['start_date']
-      for entry in sg_data
-      ]
-      
+    	entry['start_date']
+    	for entry in sg_data
+    	]
+    	
     # default to most recent date
     selected_data = available_dates[0]
     
     # get selected date if requested
     if selected_date:
-      print('\n*****\nselected date')
-      print(f'type: {type(selected_date)}')
-      print(f'content: {selected_date}')
-        selected_data = next((entry for entry in sg_data if entry['start_date'] == selected_date), None)
+    	print('\n*****\nselected date')
+    	print(f'type: {type(selected_date)}')
+    	print(f'content: {selected_date}')
+      selected_data = next((entry for entry in sg_data if entry['start_date'] == selected_date), None)
 
     return render_template(
         'speedgauge2.html',
