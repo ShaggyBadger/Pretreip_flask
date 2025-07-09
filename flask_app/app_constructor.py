@@ -7,7 +7,7 @@ app = Flask(__name__)
 db_model = models.Utils()
 app.db_model = db_model
 
-app.config['SECRET_KEY'] = SECRET_KEY
+app.config["SECRET_KEY"] = SECRET_KEY
 
-# gotta import routes. idk why, you just do. 
+# gotta import routes. idk why, you just do.
 import flask_app.routes

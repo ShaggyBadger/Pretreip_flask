@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+{% include 'nav_menu.html' %}
 
 <div class="container mt-5">
     <h2 class="mb-4">Select a Date Range</h2>
@@ -17,15 +18,68 @@
     </form>
 
     {% if selected_data %}
-        <h4 class="mt-4">Driver Info for {{ selected_date }}</h4>
-        <div class="border p-3 rounded bg-light">
-            {% for key, value in selected_data.items() %}
-                <div class="row py-1 border-bottom">
-                    <div class="col-6 fw-bold text-end text-wrap">{{ key }}</div>
-                    <div class="col-6 text-start text-wrap">{{ value }}</div>
-                </div>
-            {% endfor %}
-        </div>
+        <h4 class="mt-4 text-center">Driver Info for week starting on {{ selected_date.strftime('%B %d, %Y') }}</h4>
+
+<div class="text-center mt-3">
+    {% if selected_data.percent_speeding is defined %}
+        {% set percent_speeding = selected_data.percent_speeding | float %}
+        <p>
+            <strong>Percent Speeding: 
+            {% if percent_speeding > 0.4 %}
+                <span style="color: red;">{{ "%.2f" | format(percent_speeding) }}%</span>
+            {% else %}
+                <span style="color: green;">{{ "%.2f" | format(percent_speeding) }}%</span>
+            {% endif %}
+            </strong>
+        </p>
+    {% endif %}
+
+    {% if selected_data.distance_driven is defined %}
+        <p>
+            <strong>Distance Driven: {{ selected_data.distance_driven }} Miles
+            </strong>
+        </p>
+    {% endif %}
+</div>
+<style>
+    .speedgauge-table tbody tr:nth-child(odd) {
+        background-color: #f8f8f8; /* Very light grey */
+    }
+    .speedgauge-table tbody tr:nth-child(even) {
+        background-color: #f0f0f0; /* Slightly darker light grey */
+    }
+    .speedgauge-table th,
+    .speedgauge-table td {
+        padding: 8px; /* Add some padding for better appearance */
+        vertical-align: top; /* Ensure content aligns to the top */
+    }
+    .speedgauge-table th {
+        white-space: normal; /* Allow text to wrap */
+    }
+    .speedgauge-table td {
+        word-wrap: break-word; /* Ensure long words break */
+        max-width: none; /* Remove max-width constraint if it's causing issues */
+    }
+</style>
+
+<div class="table-responsive">
+  <table class="table table-bordered speedgauge-table">
+    <tbody>
+      {% for key, value in selected_data.items() %}
+        <tr>
+          <th class="text-start align-top" style="width: 200px;">
+            {{ key | replace('_', ' ') | title }}
+          </th>
+          <td class="text-wrap">
+            {{ value | safe }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
     {% elif selected_date %}
         <p class="text-danger">No data found for that date.</p>
     {% endif %}
