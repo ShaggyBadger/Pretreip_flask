@@ -38,6 +38,8 @@ class Api:
     
     return row_dicts
   
+  def clean_dict(self, dict):
+  
   def get_speedGauge_row(self, start_date):
     '''
     this takes in the start_date and returns the row of data in dict form from the db
