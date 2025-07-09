@@ -39,6 +39,7 @@ class Api:
     return row_dicts
   
   def clean_dict(self, dict):
+    pass
   
   def get_speedGauge_row(self, start_date):
     '''
