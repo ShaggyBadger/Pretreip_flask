@@ -4,21 +4,23 @@ import re
 import shutil
 import math
 from datetime import datetime
+from dateutil import parser as dateparser
 import pandas as pd
 from flask_app import settings
 
 
 class Processor():
   '''This class chomps through the speedGauge csv, extracts the data, and stores it in db'''
-  def __init__(self, models_utils):
+  def __init__(self, models_utils, initialize=True):
     # make sure to send models util object here so we can get db connection
     self.models_utils = models_utils
     
-    # make sure table is built
-    self.build_speedgauge_table()
-  
-    # get some useful data together
-    self.tbl_col_names = self.get_columns_in_table()
+    if initialize is True:
+      # make sure table is built
+      self.build_speedgauge_table()
+    
+      # get some useful data together
+      self.tbl_col_names = self.get_columns_in_table()
   
   def standard_flow(self):
     '''Method that will process the csv files in an orderly manner'''
@@ -164,9 +166,11 @@ class Processor():
           # Attempt to parse the date string if it's not None
           try:
             # Assuming the format is 'MM/DD/YYYY HH:MM'
-            value = datetime.strptime(str(value), '%m/%d/%Y %H:%M')
+            value = dateparser.parse(str(value)).date().isoformat()
           except ValueError:
             # If parsing fails, set to None or handle as appropriate
+            print(f"Date parsing failed for key '{key}': {value}")
+            input('press enter to continue. this is the value=dateparser portion. setting date to None')
             value = None
 
       # Handle boolean fields
@@ -195,7 +199,7 @@ class Processor():
 
       # build the dict entry
       sanitized_dict[sanitized_key] = value
-
+    
     return sanitized_dict
   
   def store_row_in_db(self, driver_dict):
@@ -445,6 +449,7 @@ class Processor():
       
     else:
       raise ValueError("Date string format did not match expected pattern.")
+      input('Press any key to continue....')
   
   def extract_data(self, csv_file):
     '''Pulls the data from the csv. Takes each row and makes a dictionary, then stores the dictionaries

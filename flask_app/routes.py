@@ -2,7 +2,9 @@ from flask import render_template, request, redirect, url_for, session, current_
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_app.app_constructor import app
 from flask_app import models
+from flask_app import settings
 from datetime import timedelta
+from datetime import datetime
 import speedGauge_app as sga
 
 app.permanent_session_lifetime = timedelta(days=7)
@@ -87,34 +89,55 @@ def logout():
   session.clear()  # This clears all session data
   return redirect(url_for('home'))
 
+@app.route('/tempUpload', methods=['GET', 'POST'])
+def tempUpload():
+  if request.method == 'POST':
+    file = request.files.get('file')
+    destination = settings.UNPROCESSED_SPEEDGAUGE_PATH / file.filename
+    file.save(destination)
+  return render_template('tempUpload.html')
+
+
+
 @app.route('/speedgauge', methods=['GET', 'POST'])
 def speedGauge():
-  if 'user_id' in session:
-    user_id = session['user_id']
-    db_model = current_app.db_model
-    
-    # use the user id from this session to locate driver_id
-    driver_id = db_model.retrieve_driver_id(user_id)
-    
-    if request.method == 'POST':
-      pass
-    else:
-      # build api object
-      sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
-      
-      # get list of dates
-      dates = sg_api.get_dates()
-      
-      # get latest date
-      display_date = dates[-1]
-      
-      # get row data for display date
-      row_data = sg_api.get_speedGauge_row(display_date)
-      
-      return render_template('speedgauge.html', info=row_data)
-      
+  if 'user_id' not in session:
+    return redirect(url_for('home'))
 
-    return  render_template('speedgauge.html')
+  user_id = session['user_id']
+  db_model = current_app.db_model
+  driver_id = db_model.retrieve_driver_id(user_id)
+
+  sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
+  sg_data = sg_api.build_speedgauge_report()
+
+  # build list of dates
+  available_dates = [entry['start_date'] for entry in sg_data]
+
+  # store user-requested date
+  selected_date_str = request.args.get('start_date')
+
+  # Convert to datetime if selected, otherwise use most recent
+  if selected_date_str:
+    try:
+      selected_date = datetime.fromisoformat(selected_date_str)
+    except ValueError:
+      selected_date = available_dates[0]
   else:
-    url = url_for('home')
-    return redirect(url)
+    selected_date = available_dates[0]
+
+  # Match data by date (use .date() to ignore time)
+  selected_data = next(
+    (entry for entry in sg_data if entry['start_date'].date() == selected_date.date()), None
+    )
+
+  return render_template(
+    'speedgauge.html',
+    available_dates=available_dates,
+    selected_date=selected_date,
+    selected_data=selected_data
+    )
+
+@app.route('/routes_debug')
+def routes_debug():
+    return '<br>'.join(str(rule) for rule in app.url_map.iter_rules())

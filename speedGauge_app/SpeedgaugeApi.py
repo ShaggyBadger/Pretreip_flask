@@ -15,6 +15,31 @@ class Api:
     self.driver_id = driver_id
     self.models_utils = models_utils
   
+  def build_speedgauge_report(self):
+    '''
+    returns a dict:
+      key: start_date
+      value: speedgauge rows (dicts) for that date
+    '''
+
+    conn = self.models_utils.get_db_connection()
+    c = conn.cursor()
+    
+    sql = '''
+    SELECT DISTINCT *
+    FROM speedGauge_data
+    WHERE driver_id = %s
+    ORDER BY start_date DESC;
+    '''
+    value = (self.driver_id,)
+    c.execute(sql, value)
+    row_dicts = c.fetchall()
+    conn.close()
+    
+    return row_dicts
+  
+  def clean_dict(self, dict):
+  
   def get_speedGauge_row(self, start_date):
     '''
     this takes in the start_date and returns the row of data in dict form from the db
@@ -37,6 +62,7 @@ class Api:
     conn.close()
     
     return row_dict
+
   def get_dates(self, cuttoff_time=365):
     '''
     default cuttoff time is a year, although you can override if you want. just do it with num days
@@ -68,3 +94,15 @@ class Api:
         filtered_list.append(start_date.isoformat())
      
     return filtered_list
+    
+  def extract_data(self, info):
+    '''
+    takes in a dictionary of data from a row in the db and creates a new dict of info for the template to use in making the webpage
+    '''
+    extracted_data = {
+      'fname': info['first_name'],
+      'lname': info['last_name'],
+      'driver_id': info['driver_id'],
+    }
+    
+    return extracted_data

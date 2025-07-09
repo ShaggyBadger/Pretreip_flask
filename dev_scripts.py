@@ -2,6 +2,7 @@ import json
 import pymysql
 from flask_app import models, settings
 import speedGauge_app
+from speedGauge_app import SpeedgaugeApi as sga
 
 from rich.traceback import install
 from rich import print
@@ -128,19 +129,55 @@ class Initialize:
 class TempTester:
   def __init__(self):
     self.models_util = models.Utils(debug_mode=False)
+    self.models_cli_util = models.CLI_Utils(debug_mode=False)
+    self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util, initialize=False)
+    self.sga = sga.Api(30150643, self.models_util)
+  
+  def print_dicts(self):
+    self.sgProcessor.standard_flow()
   
   def print_db_info(self):
     conn = self.models_util.get_db_connection()
-    print(conn)
     c = conn.cursor()
-    
-    pass
+    sql = '''
+    SHOW DATABASES;
+    '''
+    c.execute(sql)
+    results = c.fetchall()
+    for dict in results:
+      print(dict)
     
     conn.close()
-
-
+  
+  def test_api(self):
+    a = self.sga.build_speedgauge_report()
+    
+    print('\nStarting devscript report on sg api query results\n*******')
+    print(type(a))
+    print(a)
+    print('\n********')
+    for i in a:
+      print(i)
+  
+  def reload_processed_csv(self):
+    file_list = []
+    
+    for file in settings.PROCESSED_SPEEDGAUGE_PATH.iterdir():
+      if file.is_file():
+        file_list.append(file)
+    
+    for file in file_list:
+      date_tuple = self.sgProcessor.extract_date(file)
+      for d in date_tuple:
+        print(f'type: {type(d)}')
+        print(f'value: {d}')
+        print('')
+      print('******\n')
 
 
 if __name__ == '__main__':
-
-  initializer = Initialize(automatic_mode=True)
+  print('Running dev_scripts\n**********\n\n')
+  #initialization = Initialize(automatic_mode=True)
+  tester = TempTester()
+  a = tester.test_api()
+  
