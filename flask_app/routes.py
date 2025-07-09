@@ -142,12 +142,25 @@ def speedGauge2():
 
     sg_api = sga.SpeedgaugeApi.Api(driver_id, db_model)
     sg_data = sg_api.build_speedgauge_report()
-
+    
+    '''gather data for template context'''
+    # store user-requested date
     selected_date = request.args.get('start_date')
-    available_dates = [entry['start_date'] for entry in sg_data]
-
-    selected_data = None
+    
+    # build lost of dates
+    available_dates = [
+    	entry['start_date']
+    	for entry in sg_data
+    	]
+    	
+    # default to most recent date
+    selected_data = available_dates[0]
+    
+    # get selected date if requested
     if selected_date:
+    	print('\n*****\nselected date')
+    	print(f'type: {type(selected_date)}')
+    	print(f'content: {selected_date}')
         selected_data = next((entry for entry in sg_data if entry['start_date'] == selected_date), None)
 
     return render_template(

@@ -30,7 +30,7 @@ class Api:
     SELECT DISTINCT *
     FROM speedGauge_data
     WHERE driver_id = %s
-    ORDER BY start_date ASC;
+    ORDER BY start_date DESC;
     '''
     value = (self.driver_id,)
     c.execute(sql, value)
