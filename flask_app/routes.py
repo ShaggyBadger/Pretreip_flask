@@ -129,7 +129,7 @@ def speedGauge():
     	selected_data = next((entry for entry in sg_data if entry['start_date'] == datetime.fromisoformat(selected_date)), None)
 
     return render_template(
-        'speedgauge2.html',
+        'speedgauge.html',
         available_dates=available_dates,
         selected_date=selected_date,
         selected_data=selected_data
