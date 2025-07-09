@@ -160,7 +160,7 @@ def speedGauge2():
     if selected_date:
     	print('\n*****\nselected date')
     	print(f'type: {type(selected_date)}')
-    	print(f'content: {selected_date}')
+    	#print(f'content: {selected_date}')
     	selected_data = next((entry for entry in sg_data if entry['start_date'] == selected_date), None)
 
     return render_template(
