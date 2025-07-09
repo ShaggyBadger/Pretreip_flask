@@ -4,6 +4,7 @@ from flask_app.app_constructor import app
 from flask_app import models
 from flask_app import settings
 from datetime import timedelta
+from datetime import datetime
 import speedGauge_app as sga
 
 app.permanent_session_lifetime = timedelta(days=7)
