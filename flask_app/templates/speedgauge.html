@@ -1,16 +1,34 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="container info-container mt-5">
-    <div class="row text-center mb-4">
-        <h2>Driver Details</h2>
-    </div>
-    {% for key, value in info.items() %}
-        <div class="row info-row py-2 border-bottom {% if loop.index is even %}bg-light{% endif %}">
-    <div class="col-6 text-end fw-bold text-wrap text-break">{{ key }}</div>
-    <div class="col-6 text-start text-wrap text-break">{{ value }}</div>
-</div>
-    {% endfor %}
+<div class="container mt-5">
+    <h2 class="mb-4">Select a Date Range</h2>
 
+    <form method="get" action="{{ url_for('speedGauge') }}">
+        <div class="input-group mb-4">
+            <label class="input-group-text" for="start_date">Start Date</label>
+            <select name="start_date" id="start_date" class="form-select" onchange="this.form.submit()">
+                <option disabled selected>-- Choose a date --</option>
+                {% for date in available_dates %}
+                    <option value="{{ date }}" {% if date == selected_date %}selected{% endif %}>{{ date }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    {% if selected_data %}
+        <h4 class="mt-4">Driver Info for {{ selected_date }}</h4>
+        <div class="border p-3 rounded bg-light">
+            {% for key, value in selected_data.items() %}
+                <div class="row py-1 border-bottom">
+                    <div class="col-6 fw-bold text-end text-wrap">{{ key }}</div>
+                    <div class="col-6 text-start text-wrap">{{ value }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif selected_date %}
+        <p class="text-danger">No data found for that date.</p>
+    {% endif %}
+</div>
 
 {% endblock %}
