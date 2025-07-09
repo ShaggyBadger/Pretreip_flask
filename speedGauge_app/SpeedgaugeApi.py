@@ -21,7 +21,6 @@ class Api:
       key: start_date
       value: speedgauge rows (dicts) for that date
     '''
-    print(self.driver_id)
 
     conn = self.models_utils.get_db_connection()
     c = conn.cursor()
