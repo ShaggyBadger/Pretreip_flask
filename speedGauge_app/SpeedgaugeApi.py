@@ -6,6 +6,7 @@ import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from flask_app import settings, models
+from .analytics import Analytics
 
 
 class Api:
