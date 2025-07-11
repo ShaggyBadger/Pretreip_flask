@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import speedGauge_app
 from speedGauge_app import SpeedgaugeApi as sga
+from speedGauge_app import analytics
 
 from rich.traceback import install
 from rich import print
@@ -28,6 +29,7 @@ class Initialize:
         self.models_util = models.Utils(debug_mode=False)
         self.models_cli_util = models.CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
+        self.analytics_obj = analytics.Analytics()
         self.db_conn = self.models_util.get_db_connection()
 
         if automatic_mode is True:
@@ -38,7 +40,8 @@ class Initialize:
         """General controller method that will automatically flow through and set everything up"""
         self.construct_dirs()
         self.initialize_db()
-
+        self.processess_speedgauge()
+        
     def initialize_db(self):
         """automated database creation. This will populate the users table with all the id's from my
         company. Later on anyone can register to use the program as well."""
@@ -52,9 +55,18 @@ class Initialize:
         print("\nEntering users from json file....")
         self.models_cli_util.enter_users_from_json()
 
-        # build the speedGauge table in the database
-        print("\nCreating speedGauge table....")
-        self.create_table_from_json()
+        # build the tables in the database
+        print("\nCreating tables for database....")
+        tables = {
+            'speedGauge_data': settings.DATABASE_DIR / "speedGauge_table.json",
+            'company_analytics_table': settings.DATABASE_DIR / "company_analytics_table.json",
+            'driver_analytics_table': settings.DATABASE_DIR / "driver_analytics_table.json"
+        }
+
+        for table_name, schema_path in tables.items():
+            print(f"Creating table: {table_name}")
+            self.create_table_from_json(json_file=schema_path, table_name=table_name)
+        print("Database initialized successfully.\n")
 
         # Populate the speedGauge table with all the files we have
         print("Populating the speedGauge table...")
@@ -78,14 +90,11 @@ class Initialize:
         self.sgProcessor.standard_flow()
 
     def create_table_from_json(
-        self, json_file=None, table_name="speedGauge_data_tbl_name", debug=False
+        self,
+        json_file=None,
+        table_name=None,
+        debug=False
     ):
-        """create table to hold speedGauge data"""
-        # default to the pre_made json file if none is provided
-        if json_file is None:
-            json_file = (
-                settings.SPEEDGAUGE_DIR / "speedGauge_table.json"
-            )  # Make sure this path is correct
 
         # Load JSON data from file
         with open(json_file, "r", encoding="utf-8") as file:
@@ -108,23 +117,22 @@ class Initialize:
         # Construct SQL CREATE TABLE statement
         # Remove quotes around table_name for MySQL compatibility
         create_table_sql = f"""
-    CREATE TABLE IF NOT EXISTS {table_name} (
-      {columns_sql}
-    ) {table_options};
-    """
+            CREATE TABLE IF NOT EXISTS {table_name} (
+            {columns_sql}
+            ) {table_options};
+            """
 
         # Print the SQL for debugging
         if debug is True:
             print("Executing SQL:\n", create_table_sql)
 
         # Connect to the database and execute SQL
-        # Ensure self.get_db_connection() is used to get a fresh connection
-        conn = self.db_conn
+        conn = self.models_util.get_db_connection()
         try:
             c = conn.cursor()
             c.execute(create_table_sql)
             conn.commit()
-            print(f"Table '{table_name}' created/verified successfully.")
+            print(f"Table '{table_name}' created/verified successfully.\n")
         except pymysql.Error as e:
             print(f"Error creating table '{table_name}': {e}")
             conn.rollback()
@@ -132,6 +140,11 @@ class Initialize:
             if conn:  # Ensure connection is closed even if an error occurs
                 conn.close()
 
+    def run_analyitics(self):
+        """Run the analytics on the speedGauge data"""
+        print("Running analytics on speedGauge data...")
+        self.sgProcessor.run_analytics()
+        print("Analytics completed successfully.\n")
 
 class TempTester:
     def __init__(self):

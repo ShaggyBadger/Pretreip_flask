@@ -12,16 +12,18 @@ from flask_app import settings
 class Processor:
     """This class chomps through the speedGauge csv, extracts the data, and stores it in db"""
 
-    def __init__(self, models_utils, initialize=True):
+    def __init__(self, models_utils):
+        '''Remember to go back in here and delete the build_speedgauge_table method
+        and the tbl_col_names attribute. We dont need them anymore.'''
         # make sure to send models util object here so we can get db connection
         self.models_utils = models_utils
 
-        if initialize is True:
-            # make sure table is built
-            self.build_speedgauge_table()
+        # if initialize is True:
+        #     # make sure table is built
+        #     self.build_speedgauge_table()
 
-            # get some useful data together
-            self.tbl_col_names = self.get_columns_in_table()
+        #     # get some useful data together
+        #     self.tbl_col_names = self.get_columns_in_table()
 
     def standard_flow(self):
         """Method that will process the csv files in an orderly manner"""
@@ -176,11 +178,11 @@ class Processor:
                     or str(value).strip() == ""
                 ):
                     value = None  # Convert to None for NULL in database
-                else:
+                elif not isinstance(value, datetime):
                     # Attempt to parse the date string if it's not None
                     try:
                         # Assuming the format is 'MM/DD/YYYY HH:MM'
-                        value = dateparser.parse(str(value)).date().isoformat()
+                        value = dateparser.parse(str(value))
                     except ValueError:
                         # If parsing fails, set to None or handle as appropriate
                         print(f"Date parsing failed for key '{key}': {value}")
@@ -441,9 +443,7 @@ class Processor:
 
     def extract_date(self, csv_file):
         """
-        This method locates the date in the csv, converts it to datetime object and then makes it a string
-        in ISO format so it can easily be converted back into a datetime object when I pull it out of the
-        database.
+        This method locates the date in the csv and converts it to a datetime object.
         """
         df = pd.read_csv(csv_file)
         # Find the index of the row with '---'
@@ -467,8 +467,8 @@ class Processor:
             # Convert to datetime objects
             start_date_obj = datetime.strptime(start_date_str, date_format)
             end_date_obj = datetime.strptime(end_date_str, date_format)
-            start_date = start_date_obj.date().isoformat()
-            end_date = end_date_obj.date().isoformat()
+            start_date = start_date_obj
+            end_date = end_date_obj
 
             return start_date, end_date, start_date_str, end_date_str
 
