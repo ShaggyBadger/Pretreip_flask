@@ -29,8 +29,7 @@ class Initialize:
         self.models_util = models.Utils(debug_mode=False)
         self.models_cli_util = models.CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
-        self.analytics_obj = analytics.Analytics()
-        self.db_conn = self.models_util.get_db_connection()
+        self.analytics_obj = analytics.Analytics(self.models_util)
 
         if automatic_mode is True:
             # if this is set to true, then go ahead and just automatically run this thing.
@@ -199,4 +198,4 @@ class TempTester:
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
-    initialization = Initialize(automatic_mode=True)
+    initialization = Initialize(automatic_mode=False)
