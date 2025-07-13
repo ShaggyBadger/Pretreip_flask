@@ -50,21 +50,23 @@ class Initialize:
         print("Building the Database....")
         self.models_util.build_db()
 
-        # Enter users from the json file
-        print("\nEntering users from json file....")
-        self.models_cli_util.enter_users_from_json()
-
         # build the tables in the database
         print("\nCreating tables for database....")
         tables = {
             'speedGauge_data': settings.DATABASE_DIR / "speedGauge_table.json",
             'company_analytics_table': settings.DATABASE_DIR / "company_analytics_table.json",
-            'driver_analytics_table': settings.DATABASE_DIR / "driver_analytics_table.json"
+            'driver_analytics_table': settings.DATABASE_DIR / "driver_analytics_table.json",
+            'visit_log_table': settings.DATABASE_DIR / "visit_log_table.json"
         }
 
         for table_name, schema_path in tables.items():
             print(f"Creating table: {table_name}")
             self.create_table_from_json(json_file=schema_path, table_name=table_name)
+        
+        # Enter users from the json file
+        print("\nEntering users from json file....")
+        self.models_cli_util.enter_users_from_json()
+
         print("Database initialized successfully.\n")
 
         # Populate the speedGauge table with all the files we have
@@ -198,4 +200,4 @@ class TempTester:
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
-    initialization = Initialize(automatic_mode=False)
+    initialization = Initialize(automatic_mode=True)
