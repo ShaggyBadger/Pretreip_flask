@@ -22,10 +22,27 @@ class Analytics:
 
         # Fetch a list of all available dates from the database upon initialization.
         self.full_date_list = self.fetch_full_date_list()
+        self.mssing_company_analytic_dates = self.fetch_missing_company_analytic_dates()
 
         # Determine the filter values for the data based on statistical analysis.
         self.data_filter_values = self.determine_data_filter_values()
-        print(self.data_filter_values)
+    
+    def standard_flow(self):
+        for date in self.mssing_company_analytic_dates:
+            # Build the analytic package for each missing date.
+            analytic_package = self.build_analytic_package(date, self.data_filter_values)
+            # Here you would typically save the analytic_package to the database or perform further processing.
+            # For now, we just print it.
+            print(f"Analytics for {date}")
+            p = analytic_package['percent_speeding']
+            d = analytic_package['distance_driven']
+            print("Percent Speeding Analytics:")
+            for key, value in p.items():
+                print(f"{key}: {value}")
+            print("\nDistance Driven Analytics:")
+            for key, value in d.items():
+                print(f"{key}: {value}")
+            input('Press Enter to continue.../n************/n')
 
     def fetch_full_date_list(self):
         """
@@ -124,32 +141,47 @@ class Analytics:
         data_set = {}
 
         for column in columns:
-            filter_values = filter_data[column]
-            filter_max = filter_values[f'{column}_max']
-            filter_min = filter_values[f'{column}_min']
-            query = f"""
+            # Correctly access filter values from the flat dictionary
+            filter_max = filter_data[f'{column}_max']
+            filter_min = filter_data[f'{column}_min']
+
+            # First query for aggregate statistics
+            query_stats = f"""
             SELECT
                 COUNT({column}) AS count,
                 AVG({column}) AS avg,
                 MAX({column}) AS max,
                 MIN({column}) AS min,
-                STDDEV({column}) AS stddev,
-                {column} AS data_points
-            FROM company_analytic_table
+                STDDEV({column}) AS stddev
+            FROM speedGauge_data
             WHERE start_date = %s
                 AND {column} <= %s
                 AND {column} >= %s
             """
             values = (date, filter_max, filter_min)
-            # FIXME: The execute call is missing the query and values.
-            # It should be c.execute(query, values)
-            c.execute(query, values)
+            c.execute(query_stats, values)
             analytic_data = c.fetchone()
 
-            # Calculate the median using the statistics module.
-            median = statistics.median(analytic_data["data_points"])
+            # Second query to get all data points for median calculation
+            query_points = f"""
+            SELECT {column}
+            FROM speedGauge_data
+            WHERE start_date = %s
+                AND {column} <= %s
+                AND {column} >= %s
+            """
+            c.execute(query_points, values)
+            data_points_rows = c.fetchall()
+            
+            # Extract data points into a list
+            data_points = [row[column] for row in data_points_rows]
 
-            analytic_data["median"] = median
+            # Calculate the median if data exists
+            if data_points:
+                median = statistics.median(data_points)
+                analytic_data["median"] = median
+            else:
+                analytic_data["median"] = None
 
             data_set[column] = analytic_data
 

@@ -18,8 +18,6 @@ class Processor:
         # make sure to send models util object here so we can get db connection
         self.models_utils = models_utils
         self.tbl_col_names = self.get_columns_in_table()
-        print(f"tbl_col_names: {self.tbl_col_names}")
-
         # if initialize is True:
         #     # make sure table is built
         #     self.build_speedgauge_table()

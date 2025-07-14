@@ -30,7 +30,7 @@ class Initialize:
         self.models_cli_util = models.CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
         self.analytics_obj = analytics.Analytics(self.models_util)
-        self.analytics_obj.determine_data_filter_values()
+        self.analytics_obj.standard_flow()
 
         if automatic_mode is True:
             # if this is set to true, then go ahead and just automatically run this thing.
