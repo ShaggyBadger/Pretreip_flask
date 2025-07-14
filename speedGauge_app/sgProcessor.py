@@ -13,10 +13,12 @@ class Processor:
     """This class chomps through the speedGauge csv, extracts the data, and stores it in db"""
 
     def __init__(self, models_utils):
-        '''Remember to go back in here and delete the build_speedgauge_table method
-        and the tbl_col_names attribute. We dont need them anymore.'''
+        """Remember to go back in here and delete the build_speedgauge_table method
+        and the tbl_col_names attribute. We dont need them anymore."""
         # make sure to send models util object here so we can get db connection
         self.models_utils = models_utils
+        self.tbl_col_names = self.get_columns_in_table()
+        print(f"tbl_col_names: {self.tbl_col_names}")
 
         # if initialize is True:
         #     # make sure table is built
@@ -371,14 +373,16 @@ class Processor:
         conn = self.models_utils.get_db_connection()
         c = conn.cursor()
 
-        sql = f"""
-    DESCRIBE {settings.speedGuage_data_tbl_name};
-    """
+        sql = '''
+            SELECT COLUMN_NAME
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = "pretrip_db"
+            AND TABLE_NAME = "speedGauge_data";
+            '''
         c.execute(sql)
-        columns_info = c.fetchall()
+        results = c.fetchall()
+        column_names = [row['COLUMN_NAME'] for row in results]
         conn.close()
-
-        column_names = [col["Field"] for col in columns_info]
 
         return column_names
 

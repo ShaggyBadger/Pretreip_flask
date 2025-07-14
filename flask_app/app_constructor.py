@@ -10,17 +10,18 @@ app.db_model = db_model
 
 app.config["SECRET_KEY"] = SECRET_KEY
 
+
 @app.after_request
 def log_request(response):
     ip_address = request.remote_addr
     path = request.path
     method = request.method
-    user_agent = request.headers.get('User-Agent', '')
-    username = session.get('username', 'anonymous')
+    user_agent = request.headers.get("User-Agent", "")
+    username = session.get("username", "anonymous")
     status_code = response.status_code
 
     # Skip static files and favicon
-    if path.startswith('/static') or path.endswith('.ico'):
+    if path.startswith("/static") or path.endswith(".ico"):
         return response
 
     query = """
@@ -42,6 +43,7 @@ def log_request(response):
         conn.close()
 
     return response  # Must return the response!
+
 
 # gotta import routes. idk why, you just do.
 import flask_app.routes

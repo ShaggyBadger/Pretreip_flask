@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+
 class Api:
     """
     this is the main way to get the data for a user. should return dicts and stuff

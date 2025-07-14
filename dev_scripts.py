@@ -30,6 +30,7 @@ class Initialize:
         self.models_cli_util = models.CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
         self.analytics_obj = analytics.Analytics(self.models_util)
+        self.analytics_obj.determine_data_filter_values()
 
         if automatic_mode is True:
             # if this is set to true, then go ahead and just automatically run this thing.
@@ -40,7 +41,7 @@ class Initialize:
         self.construct_dirs()
         self.initialize_db()
         self.processess_speedgauge()
-        
+
     def initialize_db(self):
         """automated database creation. This will populate the users table with all the id's from my
         company. Later on anyone can register to use the program as well."""
@@ -53,16 +54,18 @@ class Initialize:
         # build the tables in the database
         print("\nCreating tables for database....")
         tables = {
-            'speedGauge_data': settings.DATABASE_DIR / "speedGauge_table.json",
-            'company_analytics_table': settings.DATABASE_DIR / "company_analytics_table.json",
-            'driver_analytics_table': settings.DATABASE_DIR / "driver_analytics_table.json",
-            'visit_log_table': settings.DATABASE_DIR / "visit_log_table.json"
+            "speedGauge_data": settings.DATABASE_DIR / "speedGauge_table.json",
+            "company_analytics_table": settings.DATABASE_DIR
+            / "company_analytics_table.json",
+            "driver_analytics_table": settings.DATABASE_DIR
+            / "driver_analytics_table.json",
+            "visit_log_table": settings.DATABASE_DIR / "visit_log_table.json",
         }
 
         for table_name, schema_path in tables.items():
             print(f"Creating table: {table_name}")
             self.create_table_from_json(json_file=schema_path, table_name=table_name)
-        
+
         # Enter users from the json file
         print("\nEntering users from json file....")
         self.models_cli_util.enter_users_from_json()
@@ -90,12 +93,7 @@ class Initialize:
         """stick all speedguage files into the database for initial setup"""
         self.sgProcessor.standard_flow()
 
-    def create_table_from_json(
-        self,
-        json_file=None,
-        table_name=None,
-        debug=False
-    ):
+    def create_table_from_json(self, json_file=None, table_name=None, debug=False):
 
         # Load JSON data from file
         with open(json_file, "r", encoding="utf-8") as file:
@@ -146,6 +144,7 @@ class Initialize:
         print("Running analytics on speedGauge data...")
         self.sgProcessor.run_analytics()
         print("Analytics completed successfully.\n")
+
 
 class TempTester:
     def __init__(self):
