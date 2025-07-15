@@ -21,5 +21,8 @@
   "percent_change_distance_driven": "FLOAT DEFAULT NULL",
   "abs_change_distance_driven": "FLOAT DEFAULT NULL",
 
-  "table_options": "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+  "table_options": "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+  "unique_constraints": [
+    "UNIQUE (start_date, generated_records_allowed)"
+  ]
 }

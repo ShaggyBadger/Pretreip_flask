@@ -101,17 +101,25 @@ class Initialize:
 
         columns = []
         table_options = ""
+        unique_constraints = []
 
-        # Separate columns from table_options
+        # Separate columns from table_options and unique_constraints
+        if "table_options" in column_info:
+            table_options = column_info.pop("table_options")
+
+        if "unique_constraints" in column_info:
+            unique_constraints = column_info.pop("unique_constraints")
+
         for column, definition in column_info.items():
-            if column == "table_options":
-                table_options = definition  # Store the table options
-            else:
-                # Construct column definition without double quotes for MySQL compatibility
-                columns.append(f"{column} {definition}")
+            columns.append(f"{column} {definition}")
 
         # Join column definitions with proper indentation
         columns_sql = ",\n      ".join(columns)
+
+        # Add unique constraints to the SQL statement
+        if unique_constraints:
+            constraints_sql = ",\n      ".join(unique_constraints)
+            columns_sql += f",\n      {constraints_sql}"
 
         # Construct SQL CREATE TABLE statement
         # Remove quotes around table_name for MySQL compatibility

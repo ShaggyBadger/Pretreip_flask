@@ -28,21 +28,83 @@ class Analytics:
         self.data_filter_values = self.determine_data_filter_values()
     
     def standard_flow(self):
-        for date in self.mssing_company_analytic_dates:
-            # Build the analytic package for each missing date.
-            analytic_package = self.build_analytic_package(date, self.data_filter_values)
-            # Here you would typically save the analytic_package to the database or perform further processing.
-            # For now, we just print it.
-            print(f"Analytics for {date}")
-            p = analytic_package['percent_speeding']
-            d = analytic_package['distance_driven']
-            print("Percent Speeding Analytics:")
-            for key, value in p.items():
-                print(f"{key}: {value}")
-            print("\nDistance Driven Analytics:")
-            for key, value in d.items():
-                print(f"{key}: {value}")
-            input('Press Enter to continue.../n************/n')
+        self.company_standard_flow()
+        self.driver_standard_flow()
+
+    def company_standard_flow(self):
+        self.missing_analytics = self.fetch_missing_company_analytic_dates()
+
+        for date, generated_records_allowed in self.missing_analytics:
+            if generated_records_allowed:
+                # Don't filter, use wide values
+                filter_data = {
+                    'percent_speeding_max': 999999, 'percent_speeding_min': 0,
+                    'distance_driven_max': 999999, 'distance_driven_min': 0
+                }
+            else:
+                # Use pre-calculated filters
+                filter_data = self.data_filter_values
+
+            analytic_package = self.build_analytic_package(date, filter_data)
+            self.insert_company_analytics(analytic_package, date, generated_records_allowed)
+
+    def driver_standard_flow(self):
+        self.missing_driver_analytics = self.fetch_missing_driver_analytic_dates()
+
+        for driver_id, date in self.missing_driver_analytics:
+            analytic_package = self.build_driver_analytic_package(driver_id, date, self.data_filter_values)
+            self.insert_driver_analytics(analytic_package, driver_id, date)
+
+    def insert_company_analytics(self, analytic_package, start_date, generated_records_allowed):
+        """
+        Inserts or updates company analytics data in the database.
+
+        Args:
+            analytic_package: A dictionary containing the analytics data.
+            start_date: The start date of the analytics period.
+            generated_records_allowed: A boolean indicating if generated records are allowed.
+        """
+        conn = self.models_util.get_db_connection()
+        c = conn.cursor()
+
+        # Prepare the data for insertion
+        data_to_insert = {
+            "start_date": start_date,
+            "generated_records_allowed": generated_records_allowed,
+            "records_count": analytic_package.get("percent_speeding", {}).get("count", 0),
+            "std_filter_value": self.data_filter_values.get("stdev_threshold", None),
+            "max_percent_speeding": analytic_package.get("percent_speeding", {}).get("max", None),
+            "min_percent_speeding": analytic_package.get("percent_speeding", {}).get("min", None),
+            "avg_percent_speeding": analytic_package.get("percent_speeding", {}).get("avg", None),
+            "median_percent_speeding": analytic_package.get("percent_speeding", {}).get("median", None),
+            "std_percent_speeding": analytic_package.get("percent_speeding", {}).get("stddev", None),
+            "max_distance_driven": analytic_package.get("distance_driven", {}).get("max", None),
+            "min_distance_driven": analytic_package.get("distance_driven", {}).get("min", None),
+            "avg_distance_driven": analytic_package.get("distance_driven", {}).get("avg", None),
+            "median_distance_driven": analytic_package.get("distance_driven", {}).get("median", None),
+            "std_distance_driven": analytic_package.get("distance_driven", {}).get("stddev", None),
+        }
+
+        # Construct the SQL query for ON DUPLICATE KEY UPDATE
+        columns = ", ".join(data_to_insert.keys())
+        placeholders = ", ".join(["%s"] * len(data_to_insert))
+        update_statements = ", ".join([f"{col} = VALUES({col})" for col in data_to_insert if col not in ['start_date', 'generated_records_allowed']])
+
+        query = f"""
+        INSERT INTO company_analytics_table ({columns})
+        VALUES ({placeholders})
+        ON DUPLICATE KEY UPDATE {update_statements}
+        """
+
+        try:
+            c.execute(query, list(data_to_insert.values()))
+            conn.commit()
+            print(f"Successfully inserted/updated analytics for {start_date} (generated_records_allowed={generated_records_allowed})")
+        except Exception as e:
+            conn.rollback()
+            print(f"Error inserting/updating analytics for {start_date}: {e}")
+        finally:
+            conn.close()
 
     def fetch_full_date_list(self):
         """
@@ -72,32 +134,34 @@ class Analytics:
     def fetch_missing_company_analytic_dates(self):
         """
         Finds dates that are in the main speedGauge_data table but not in the
-        company_analytics_table.
+        company_analytics_table for each value of generated_records_allowed.
 
         Returns:
-            A list of date strings that are missing from the company_analytics_table.
+            A list of tuples (date, generated_records_allowed) that are missing
+            from the company_analytics_table.
         """
         conn = self.models_util.get_db_connection()
         c = conn.cursor()
+
+        # Get all existing combinations of start_date and generated_records_allowed
         query = """
-        SELECT DISTINCT start_date
+        SELECT DISTINCT start_date, generated_records_allowed
         FROM company_analytics_table
         """
         c.execute(query)
-
-        rows = c.fetchall()
+        existing_analytics = {(row['start_date'], row['generated_records_allowed']) for row in c.fetchall()}
         conn.close()
-        
-        # Extract the date strings from the query results.
-        date_list = [row["start_date"] for row in rows]
 
-        # Filter the full date list to find dates not present in the analytics table.
-        filtered_date_list = []
+        # Determine the full set of required analytics
+        required_analytics = set()
         for date in self.full_date_list:
-            if date not in date_list:
-                filtered_date_list.append(date)
+            required_analytics.add((date, True))
+            required_analytics.add((date, False))
 
-        return filtered_date_list
+        # Find the missing analytics
+        missing_analytics = list(required_analytics - existing_analytics)
+
+        return missing_analytics
 
     def get_date_list(self):
         """
@@ -270,3 +334,79 @@ class Analytics:
 
         conn.close()
         return data_set
+
+    def fetch_missing_driver_analytic_dates(self):
+        """
+        Finds dates that are in the main speedGauge_data table but not in the
+        driver_analytics_table for each driver.
+
+        Returns:
+            A list of tuples (driver_id, date) that are missing
+            from the driver_analytics_table.
+        """
+        conn = self.models_util.get_db_connection()
+        c = conn.cursor()
+
+        # Get all existing combinations of driver_id and start_date
+        query = """
+        SELECT DISTINCT driver_id, start_date
+        FROM driver_analytics_table
+        """
+        c.execute(query)
+        existing_analytics = {(row['driver_id'], row['start_date']) for row in c.fetchall()}
+        conn.close()
+
+        # Determine the full set of required analytics
+        required_analytics = set()
+        driver_list = self.get_driver_list()
+        for driver_id in driver_list:
+            for date in self.full_date_list:
+                required_analytics.add((driver_id, date))
+
+        # Find the missing analytics
+        missing_analytics = list(required_analytics - existing_analytics)
+
+        return missing_analytics
+
+    def insert_driver_analytics(self, analytic_package, driver_id, start_date):
+        """
+        Inserts or updates driver analytics data in the database.
+
+        Args:
+            analytic_package: A dictionary containing the analytics data.
+            driver_id: The ID of the driver.
+            start_date: The start date of the analytics period.
+        """
+        conn = self.models_util.get_db_connection()
+        c = conn.cursor()
+
+        # Prepare the data for insertion
+        data_to_insert = {
+            "driver_id": driver_id,
+            "start_date": start_date,
+            "records_count": analytic_package.get("percent_speeding", {}).get("count", 0),
+            "std_filter_value": self.data_filter_values.get("stdev_threshold", None),
+            "current_week_percent_speeding": analytic_package.get("percent_speeding", {}).get("avg", None),
+            "current_week_distance_driven": analytic_package.get("distance_driven", {}).get("avg", None),
+        }
+
+        # Construct the SQL query for ON DUPLICATE KEY UPDATE
+        columns = ", ".join(data_to_insert.keys())
+        placeholders = ", ".join(["%s"] * len(data_to_insert))
+        update_statements = ", ".join([f"{col} = VALUES({col})" for col in data_to_insert if col not in ['driver_id', 'start_date']])
+
+        query = f"""
+        INSERT INTO driver_analytics_table ({columns})
+        VALUES ({placeholders})
+        ON DUPLICATE KEY UPDATE {update_statements}
+        """
+
+        try:
+            c.execute(query, list(data_to_insert.values()))
+            conn.commit()
+            print(f"Successfully inserted/updated analytics for driver {driver_id} on {start_date}")
+        except Exception as e:
+            conn.rollback()
+            print(f"Error inserting/updating analytics for driver {driver_id} on {start_date}: {e}")
+        finally:
+            conn.close()

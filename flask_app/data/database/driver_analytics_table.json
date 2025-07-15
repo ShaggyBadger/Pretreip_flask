@@ -2,6 +2,7 @@
   "id": "INT NOT NULL AUTO_INCREMENT PRIMARY KEY",
   "driver_id": "INT NOT NULL",
   "start_date": "DATETIME NOT NULL",
+  "generated_records_allowed": "TINYINT(1) DEFAULT NULL",
   "std_filter_value": "FLOAT DEFAULT NULL",
 
   "current_week_percent_speeding": "FLOAT DEFAULT NULL",
@@ -26,5 +27,8 @@
 
   "records_count": "INT NOT NULL",
 
-  "table_options": "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+  "table_options": "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+  "unique_constraints": [
+    "UNIQUE (driver_id, start_date)"
+  ]
 }
