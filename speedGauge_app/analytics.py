@@ -90,11 +90,11 @@ class Analytics:
         placeholders = ", ".join(["%s"] * len(data_to_insert))
         update_statements = ", ".join([f"{col} = VALUES({col})" for col in data_to_insert if col not in ['start_date', 'generated_records_allowed']])
 
-        query = f"""
+        query = f'''
         INSERT INTO company_analytics_table ({columns})
         VALUES ({placeholders})
         ON DUPLICATE KEY UPDATE {update_statements}
-        """
+        '''
 
         try:
             c.execute(query, list(data_to_insert.values()))
