@@ -88,6 +88,8 @@
 | std_distance_driven            | FLOAT  | YES      | NULL    |     |                  |    The standard deviation for the distance driven data points         |
 | percent_change_distance_driven | FLOAT  | YES      | NULL    |     |                  |    The relative percentage change in distance driven from last week. This is based on the average distance.         |
 | abs_change_distance_driven     | FLOAT  | YES      | NULL    |     |                  |    The absolute change in distance driven from the previous week. This is based on the average distance.        |
+| speeding_trend_json            | JSON   | YES      | NULL    |     |                  |    A JSON object containing the speeding trend data for the last year. The key is the start_date and the value is the average percent_speeding.         |
+| distance_trend_json            | JSON   | YES      | NULL    |     |                  |    A JSON object containing the distance driven trend data for the last year. The key is the start_date and the value is the average distance_driven.         |
 
 
 ## Table: driver_analytics

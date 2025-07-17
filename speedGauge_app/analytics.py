@@ -4,6 +4,7 @@ on the speedGauge data. It includes methods for fetching data, calculating stati
 and determining data filter values.
 """
 import statistics
+import json
 
 
 class Analytics:
@@ -29,24 +30,19 @@ class Analytics:
     
     def standard_flow(self):
         self.company_standard_flow()
-        self.driver_standard_flow()
+        # self.driver_standard_flow()
 
     def company_standard_flow(self):
         self.missing_analytics = self.fetch_missing_company_analytic_dates()
 
         for date, generated_records_allowed in self.missing_analytics:
-            if generated_records_allowed:
-                # Don't filter, use wide values
-                filter_data = {
-                    'percent_speeding_max': 999999, 'percent_speeding_min': 0,
-                    'distance_driven_max': 999999, 'distance_driven_min': 0
-                }
-            else:
-                # Use pre-calculated filters
-                filter_data = self.data_filter_values
+            analytic_package = self.build_company_analytic_package(
+                date, self.data_filter_values, generated_records_allowed
+            )
 
-            analytic_package = self.build_analytic_package(date, filter_data)
-            self.insert_company_analytics(analytic_package, date, generated_records_allowed)
+            self.insert_company_analytics(
+                analytic_package, date, generated_records_allowed
+            )
 
     def driver_standard_flow(self):
         self.missing_driver_analytics = self.fetch_missing_driver_analytic_dates()
@@ -73,16 +69,20 @@ class Analytics:
             "generated_records_allowed": generated_records_allowed,
             "records_count": analytic_package.get("percent_speeding", {}).get("count", 0),
             "std_filter_value": self.data_filter_values.get("stdev_threshold", None),
+
             "max_percent_speeding": analytic_package.get("percent_speeding", {}).get("max", None),
             "min_percent_speeding": analytic_package.get("percent_speeding", {}).get("min", None),
             "avg_percent_speeding": analytic_package.get("percent_speeding", {}).get("avg", None),
             "median_percent_speeding": analytic_package.get("percent_speeding", {}).get("median", None),
             "std_percent_speeding": analytic_package.get("percent_speeding", {}).get("stddev", None),
+            "speeding_trend_json": analytic_package.get("percent_speeding", {}).get("trend_json", None),
+
             "max_distance_driven": analytic_package.get("distance_driven", {}).get("max", None),
             "min_distance_driven": analytic_package.get("distance_driven", {}).get("min", None),
             "avg_distance_driven": analytic_package.get("distance_driven", {}).get("avg", None),
             "median_distance_driven": analytic_package.get("distance_driven", {}).get("median", None),
             "std_distance_driven": analytic_package.get("distance_driven", {}).get("stddev", None),
+            "distance_trend_json": analytic_package.get("distance_driven", {}).get("trend_json", None),
         }
 
         # Construct the SQL query for ON DUPLICATE KEY UPDATE
@@ -187,7 +187,9 @@ class Analytics:
         conn.close()
         return [date["start_date"] for date in date_list]
 
-    def build_analytic_package(self, date, filter_data):
+    def build_company_analytic_package(
+        self, date, filter_data, generated_records_allowed=False
+    ):
         """
         Builds a dictionary of analytics for a given date.
 
@@ -209,7 +211,7 @@ class Analytics:
             filter_max = filter_data[f'{column}_max']
             filter_min = filter_data[f'{column}_min']
 
-            # First query for aggregate statistics
+            # Base query for statistics
             query_stats = f"""
             SELECT
                 COUNT({column}) AS count,
@@ -222,8 +224,13 @@ class Analytics:
                 AND {column} <= %s
                 AND {column} >= %s
             """
-            values = (date, filter_max, filter_min)
-            c.execute(query_stats, values)
+            filter_values = [date, filter_max, filter_min]
+
+            # If generated records are not allowed, add the is_interpolated condition
+            if not generated_records_allowed:
+                query_stats += " AND is_interpolated = 0"
+
+            c.execute(query_stats, filter_values)
             analytic_data = c.fetchone()
 
             # Second query to get all data points for median calculation
@@ -234,7 +241,11 @@ class Analytics:
                 AND {column} <= %s
                 AND {column} >= %s
             """
-            c.execute(query_points, values)
+            # If generated records are not allowed, add the is_interpolated condition
+            if not generated_records_allowed:
+                query_points += " AND is_interpolated = 0"
+
+            c.execute(query_points, filter_values)
             data_points_rows = c.fetchall()
             
             # Extract data points into a list
@@ -247,12 +258,17 @@ class Analytics:
             else:
                 analytic_data["median"] = None
 
+            # Add trend data for the current column
+            analytic_data['trend_json'] = self.fetch_trend_data(
+                date, column, filter_max, filter_min
+            )
+
             data_set[column] = analytic_data
 
         conn.close()
         return data_set
 
-    def fetch_speeding_trend_dict(self, date, max_spd, driver_id=None):
+    def fetch_trend_data(self, date, column, max_value, min_value):
         """
         Fetches speeding trend data for the year leading up to a specific date.
 
@@ -262,29 +278,30 @@ class Analytics:
             driver_id: (Optional) The ID of the driver to filter by.
 
         Returns:
-            None. The fetched data is not currently used or returned.
+            A dictionary with start_date as key and avg_percent_speeding as value.
         """
-        query = """
+        query = f"""
         SELECT
             start_date,
-            AVG(percent_speeding),
-            MAX(percent_speeding),
-            MIN(percent_speeding),
-            STDDEV(percent_speeding)
+            AVG({column}) AS avg_value
         FROM speedGauge_data
         WHERE start_date BETWEEN DATE_SUB(%s, INTERVAL 1 YEAR) AND %s
-            AND percent_speeding <= %s
+            AND {column} <= %s
+            AND {column} >= %s
         GROUP BY start_date
         ORDER BY start_date ASC
         """
 
-        values = (date, max_spd)
+        values = (date, date, max_value, min_value)
 
         conn = self.models_util.get_db_connection()
         c = conn.cursor()
         c.execute(query, values)
-        # The fetched data is not currently used or returned.
-        filtered_dates = c.fetchall()
+        
+        trend_data = {row['start_date'].isoformat(): str(row['avg_value']) for row in c.fetchall()}
+        conn.close()
+
+        return json.dumps(trend_data)
 
     def determine_data_filter_values(self, stdev_threshold=1):
         """
@@ -313,6 +330,7 @@ class Analytics:
             SELECT AVG({column}) AS avg,
                     STDDEV({column}) AS stddev
             FROM speedGauge_data
+            WHERE is_interpolated = 0
             """
             c.execute(query)
             result = c.fetchone()
