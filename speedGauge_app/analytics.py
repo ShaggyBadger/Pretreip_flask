@@ -30,7 +30,7 @@ class Analytics:
     
     def standard_flow(self):
         self.company_standard_flow()
-        # self.driver_standard_flow()
+        self.driver_standard_flow()
 
     def company_standard_flow(self):
         self.missing_analytics = self.fetch_missing_company_analytic_dates()
@@ -48,7 +48,7 @@ class Analytics:
         self.missing_driver_analytics = self.fetch_missing_driver_analytic_dates()
 
         for driver_id, date in self.missing_driver_analytics:
-            analytic_package = self.build_driver_analytic_package(driver_id, date, self.data_filter_values)
+            analytic_package = self.build_driver_analytic_package(driver_id, date)
             self.insert_driver_analytics(analytic_package, driver_id, date)
 
     def insert_company_analytics(self, analytic_package, start_date, generated_records_allowed):
@@ -187,6 +187,69 @@ class Analytics:
         conn.close()
         return [date["start_date"] for date in date_list]
 
+    def build_driver_analytic_package(driver_id, date):
+        conn = self.models_util.get_db_connection()
+        c = conn.cursor()
+
+        columns = ["percent_speeding", "distance_driven"]
+        data_set = {}
+
+        for column in columns:
+            # Base query for statistics
+            query_stats = f'''
+            SELECT
+                COUNT({column}) AS count,
+                AVG({column}) AS avg,
+                MAX({column}) AS max,
+                MIN({column}) AS min,
+                STDDEV({column}) AS stddev
+            FROM speedGauge_data
+            WHERE start_date BETWEEN 
+                DATE_SUB(%s, INTERVAL 1 YEAR)
+                AND %s
+            '''
+            
+            values = (date, date )
+            c.execute(query_stats, values)
+            analytic_data = c.fetchone()
+            
+            query_points = f'''
+            SELECT
+                {column},
+                start_date
+            FROM speedGauge_data
+            WHERE start_date BETWEEN 
+                DATE_SUB(
+                    %s,
+                    INTERVAL 1 YEAR
+                    )
+                AND %s
+            ORDER BY start_date ASC
+            '''
+            c.execute(query_points, values)
+            rows = c.fetchall()
+            
+            data_points = [
+                (row['start_date'], row[column])
+                for row in rows
+                ]
+            
+            values_list = [
+                value for _, value
+                in data_points
+                ]
+            
+            median = statistics.median(values_list)
+            
+            trend_data = {row['start_date'].isoformat(): str(row[column]) for row in rows}
+                    
+            analytic_data['median'] = median
+            analytic_data['trend_json'] = json.dumps(trend_data)
+            data_set[column] = analytic_data
+
+        conn.close()
+        return data_set
+
     def build_company_analytic_package(
         self, date, filter_data, generated_records_allowed=False
     ):
@@ -212,7 +275,7 @@ class Analytics:
             filter_min = filter_data[f'{column}_min']
 
             # Base query for statistics
-            query_stats = f"""
+            query_stats = f'''
             SELECT
                 COUNT({column}) AS count,
                 AVG({column}) AS avg,
@@ -223,7 +286,8 @@ class Analytics:
             WHERE start_date = %s
                 AND {column} <= %s
                 AND {column} >= %s
-            """
+            '''
+            
             filter_values = [date, filter_max, filter_min]
 
             # If generated records are not allowed, add the is_interpolated condition
@@ -234,13 +298,14 @@ class Analytics:
             analytic_data = c.fetchone()
 
             # Second query to get all data points for median calculation
-            query_points = f"""
+            query_points = f'''
             SELECT {column}
             FROM speedGauge_data
             WHERE start_date = %s
                 AND {column} <= %s
                 AND {column} >= %s
-            """
+            '''
+            
             # If generated records are not allowed, add the is_interpolated condition
             if not generated_records_allowed:
                 query_points += " AND is_interpolated = 0"
@@ -280,7 +345,7 @@ class Analytics:
         Returns:
             A dictionary with start_date as key and avg_percent_speeding as value.
         """
-        query = f"""
+        query = f'''
         SELECT
             start_date,
             AVG({column}) AS avg_value
@@ -290,7 +355,7 @@ class Analytics:
             AND {column} >= %s
         GROUP BY start_date
         ORDER BY start_date ASC
-        """
+        '''
 
         values = (date, date, max_value, min_value)
 
@@ -304,7 +369,7 @@ class Analytics:
         return json.dumps(trend_data)
 
     def determine_data_filter_values(self, stdev_threshold=1):
-        """
+        '''
         Determines the filter values for data columns based on mean and standard deviation.
 
         This method calculates a max and min filter value for specified columns. The max is
@@ -318,7 +383,8 @@ class Analytics:
         Returns:
             dict: A dictionary containing the calculated max and min filter values
                   for each column.
-        """
+        '''
+        
         columns = ["percent_speeding", "distance_driven"]
         data_set = {}
 
@@ -326,12 +392,13 @@ class Analytics:
         c = conn.cursor()
 
         for column in columns:
-            query = f"""
+            query = f'''
             SELECT AVG({column}) AS avg,
                     STDDEV({column}) AS stddev
             FROM speedGauge_data
             WHERE is_interpolated = 0
-            """
+            '''
+            
             c.execute(query)
             result = c.fetchone()
 
@@ -367,24 +434,18 @@ class Analytics:
 
         # Get all existing combinations of driver_id and start_date
         query = """
-        SELECT DISTINCT driver_id, start_date
-        FROM driver_analytics_table
+        SELECT DISTINCT sg.driver_id, sg.start_date
+        FROM speedGauge_data sg
+        LEFT JOIN driver_analytics_table da
+            ON sg.driver_id = da.driver_id AND sg.start_date = da.start_date
+        WHERE da.driver_id IS NULL
         """
         c.execute(query)
-        existing_analytics = {(row['driver_id'], row['start_date']) for row in c.fetchall()}
+        missing_analytics = c.fetchall()
         conn.close()
+        
+        return [(row['driver_id'], row['start_date']) for row in missing_analytics]
 
-        # Determine the full set of required analytics
-        required_analytics = set()
-        driver_list = self.get_driver_list()
-        for driver_id in driver_list:
-            for date in self.full_date_list:
-                required_analytics.add((driver_id, date))
-
-        # Find the missing analytics
-        missing_analytics = list(required_analytics - existing_analytics)
-
-        return missing_analytics
 
     def insert_driver_analytics(self, analytic_package, driver_id, start_date):
         """
@@ -413,11 +474,11 @@ class Analytics:
         placeholders = ", ".join(["%s"] * len(data_to_insert))
         update_statements = ", ".join([f"{col} = VALUES({col})" for col in data_to_insert if col not in ['driver_id', 'start_date']])
 
-        query = f"""
+        query = f'''
         INSERT INTO driver_analytics_table ({columns})
         VALUES ({placeholders})
         ON DUPLICATE KEY UPDATE {update_statements}
-        """
+        '''
 
         try:
             c.execute(query, list(data_to_insert.values()))
