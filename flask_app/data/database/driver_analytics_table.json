@@ -1,0 +1,34 @@
+{
+  "id": "INT NOT NULL AUTO_INCREMENT PRIMARY KEY",
+  "driver_id": "INT NOT NULL",
+  "start_date": "DATETIME NOT NULL",
+  "generated_records_allowed": "TINYINT(1) DEFAULT NULL",
+  "std_filter_value": "FLOAT DEFAULT NULL",
+
+  "current_week_percent_speeding": "FLOAT DEFAULT NULL",
+  "previous_week_percent_speeding": "FLOAT DEFAULT NULL",
+  "max_percent_speeding": "FLOAT DEFAULT NULL",
+  "min_percent_speeding": "FLOAT DEFAULT NULL",
+  "avg_percent_speeding": "FLOAT DEFAULT NULL",
+  "median_percent_speeding": "FLOAT DEFAULT NULL",
+  "std_percent_speeding": "FLOAT DEFAULT NULL",
+  "percent_change_percent_speeding": "FLOAT DEFAULT NULL",
+  "abs_change_percent_speeding": "FLOAT DEFAULT NULL",
+
+  "current_week_distance_driven": "FLOAT DEFAULT NULL",
+  "previous_week_distance_driven": "FLOAT DEFAULT NULL",
+  "max_distance_driven": "FLOAT DEFAULT NULL",
+  "min_distance_driven": "FLOAT DEFAULT NULL",
+  "avg_distance_driven": "FLOAT DEFAULT NULL",
+  "median_distance_driven": "FLOAT DEFAULT NULL",
+  "std_distance_driven": "FLOAT DEFAULT NULL",
+  "percent_change_distance_driven": "FLOAT DEFAULT NULL",
+  "abs_change_distance_driven": "FLOAT DEFAULT NULL",
+
+  "records_count": "INT NOT NULL",
+
+  "table_options": "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+  "unique_constraints": [
+    "UNIQUE (driver_id, start_date)"
+  ]
+}

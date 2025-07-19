@@ -1,0 +1,11 @@
+{
+  "id": "INT NOT NULL AUTO_INCREMENT PRIMARY KEY",
+  "timestamp": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+  "ip_address": "VARCHAR(45) NOT NULL",
+  "path": "TEXT NOT NULL",
+  "method": "VARCHAR(10) NOT NULL",
+  "user_agent": "TEXT DEFAULT NULL",
+  "status_code": "INT DEFAULT NULL",
+  "username": "VARCHAR(255) DEFAULT NULL",
+  "table_options": "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+}
