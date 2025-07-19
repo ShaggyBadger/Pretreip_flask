@@ -20,6 +20,8 @@ class Analytics:
             models_util: An object that provides database connection utilities.
         """
         self.models_util = models_util
+        self.conn = self.models_util.get_db_connection()
+        self.c = self.conn.cursor()
 
         # Fetch a list of all available dates from the database upon initialization.
         self.full_date_list = self.fetch_full_date_list()
@@ -27,10 +29,18 @@ class Analytics:
 
         # Determine the filter values for the data based on statistical analysis.
         self.data_filter_values = self.determine_data_filter_values()
-    
+
+    def close_connection(self):
+        """Closes the database connection and cursor."""
+        if self.c:
+            self.c.close()
+        if self.conn:
+            self.conn.close()
+
     def standard_flow(self):
         self.company_standard_flow()
         self.driver_standard_flow()
+        self.close_connection()
 
     def company_standard_flow(self):
         self.missing_analytics = self.fetch_missing_company_analytic_dates()
@@ -43,13 +53,26 @@ class Analytics:
             self.insert_company_analytics(
                 analytic_package, date, generated_records_allowed
             )
+        self.conn.commit()
+
 
     def driver_standard_flow(self):
         self.missing_driver_analytics = self.fetch_missing_driver_analytic_dates()
+        total_records = len(self.missing_driver_analytics)
+        print(f"Found {total_records} missing driver analytic records to process.")
 
-        for driver_id, date in self.missing_driver_analytics:
+        for i, (driver_id, date) in enumerate(self.missing_driver_analytics):
             analytic_package = self.build_driver_analytic_package(driver_id, date)
             self.insert_driver_analytics(analytic_package, driver_id, date)
+
+            # Commit in batches of 1000
+            if (i + 1) % 1000 == 0:
+                self.conn.commit()
+                print(f"Committed {i + 1}/{total_records} records...")
+
+        # Commit any remaining records
+        self.conn.commit()
+        print(f"Finished committing all {total_records} records.")
 
     def insert_company_analytics(self, analytic_package, start_date, generated_records_allowed):
         """
@@ -60,9 +83,6 @@ class Analytics:
             start_date: The start date of the analytics period.
             generated_records_allowed: A boolean indicating if generated records are allowed.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
         # Prepare the data for insertion
         data_to_insert = {
             "start_date": start_date,
@@ -97,14 +117,11 @@ class Analytics:
         '''
 
         try:
-            c.execute(query, list(data_to_insert.values()))
-            conn.commit()
+            self.c.execute(query, list(data_to_insert.values()))
             print(f"Successfully inserted/updated analytics for {start_date} (generated_records_allowed={generated_records_allowed})")
         except Exception as e:
-            conn.rollback()
+            self.conn.rollback()
             print(f"Error inserting/updating analytics for {start_date}: {e}")
-        finally:
-            conn.close()
 
     def fetch_full_date_list(self):
         """
@@ -113,18 +130,14 @@ class Analytics:
         Returns:
             A list of unique start_date strings, sorted in ascending order.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
         # Query to get a full list of available dates.
         query = """
         SELECT DISTINCT start_date
         FROM speedGauge_data
         ORDER BY start_date ASC
         """
-        c.execute(query)
-        rows = c.fetchall()
-        conn.close()
+        self.c.execute(query)
+        rows = self.c.fetchall()
 
         # Extract the date strings from the query results.
         date_list = [row["start_date"] for row in rows]
@@ -140,17 +153,13 @@ class Analytics:
             A list of tuples (date, generated_records_allowed) that are missing
             from the company_analytics_table.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
         # Get all existing combinations of start_date and generated_records_allowed
         query = """
         SELECT DISTINCT start_date, generated_records_allowed
         FROM company_analytics_table
         """
-        c.execute(query)
-        existing_analytics = {(row['start_date'], row['generated_records_allowed']) for row in c.fetchall()}
-        conn.close()
+        self.c.execute(query)
+        existing_analytics = {(row['start_date'], row['generated_records_allowed']) for row in self.c.fetchall()}
 
         # Determine the full set of required analytics
         required_analytics = set()
@@ -170,8 +179,6 @@ class Analytics:
         Returns:
             A list of date strings from the last year, sorted in ascending order.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
         query = """
         SELECT DISTINCT start_date
         FROM speedGauge_data
@@ -182,15 +189,11 @@ class Analytics:
         )
         ORDER BY start_date ASC;
         """
-        c.execute(query)
-        date_list = c.fetchall()
-        conn.close()
+        self.c.execute(query)
+        date_list = self.c.fetchall()
         return [date["start_date"] for date in date_list]
 
-    def build_driver_analytic_package(driver_id, date):
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
+    def build_driver_analytic_package(self, driver_id, date):
         columns = ["percent_speeding", "distance_driven"]
         data_set = {}
 
@@ -204,21 +207,23 @@ class Analytics:
                 MIN({column}) AS min,
                 STDDEV({column}) AS stddev
             FROM speedGauge_data
-            WHERE start_date BETWEEN 
-                DATE_SUB(%s, INTERVAL 1 YEAR)
-                AND %s
+            WHERE driver_id = %s
+                AND start_date BETWEEN 
+                    DATE_SUB(%s, INTERVAL 1 YEAR)
+                    AND %s
             '''
             
-            values = (date, date )
-            c.execute(query_stats, values)
-            analytic_data = c.fetchone()
+            values = (driver_id, date, date )
+            self.c.execute(query_stats, values)
+            analytic_data = self.c.fetchone()
             
             query_points = f'''
             SELECT
                 {column},
                 start_date
             FROM speedGauge_data
-            WHERE start_date BETWEEN 
+            WHERE driver_id = %s
+            AND start_date BETWEEN 
                 DATE_SUB(
                     %s,
                     INTERVAL 1 YEAR
@@ -226,8 +231,8 @@ class Analytics:
                 AND %s
             ORDER BY start_date ASC
             '''
-            c.execute(query_points, values)
-            rows = c.fetchall()
+            self.c.execute(query_points, values)
+            rows = self.c.fetchall()
             
             data_points = [
                 (row['start_date'], row[column])
@@ -237,9 +242,13 @@ class Analytics:
             values_list = [
                 value for _, value
                 in data_points
+                if value is not None
                 ]
             
-            median = statistics.median(values_list)
+            try:
+                median = statistics.median(values_list)
+            except:
+                median = None
             
             trend_data = {row['start_date'].isoformat(): str(row[column]) for row in rows}
                     
@@ -247,7 +256,6 @@ class Analytics:
             analytic_data['trend_json'] = json.dumps(trend_data)
             data_set[column] = analytic_data
 
-        conn.close()
         return data_set
 
     def build_company_analytic_package(
@@ -263,9 +271,6 @@ class Analytics:
         Returns:
             A dictionary containing the calculated analytics for the specified date.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
         columns = ["percent_speeding", "distance_driven"]
         data_set = {}
 
@@ -294,8 +299,8 @@ class Analytics:
             if not generated_records_allowed:
                 query_stats += " AND is_interpolated = 0"
 
-            c.execute(query_stats, filter_values)
-            analytic_data = c.fetchone()
+            self.c.execute(query_stats, filter_values)
+            analytic_data = self.c.fetchone()
 
             # Second query to get all data points for median calculation
             query_points = f'''
@@ -310,8 +315,8 @@ class Analytics:
             if not generated_records_allowed:
                 query_points += " AND is_interpolated = 0"
 
-            c.execute(query_points, filter_values)
-            data_points_rows = c.fetchall()
+            self.c.execute(query_points, filter_values)
+            data_points_rows = self.c.fetchall()
             
             # Extract data points into a list
             data_points = [row[column] for row in data_points_rows]
@@ -330,7 +335,6 @@ class Analytics:
 
             data_set[column] = analytic_data
 
-        conn.close()
         return data_set
 
     def fetch_trend_data(self, date, column, max_value, min_value):
@@ -359,12 +363,9 @@ class Analytics:
 
         values = (date, date, max_value, min_value)
 
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-        c.execute(query, values)
+        self.c.execute(query, values)
         
-        trend_data = {row['start_date'].isoformat(): str(row['avg_value']) for row in c.fetchall()}
-        conn.close()
+        trend_data = {row['start_date'].isoformat(): str(row['avg_value']) for row in self.c.fetchall()}
 
         return json.dumps(trend_data)
 
@@ -388,9 +389,6 @@ class Analytics:
         columns = ["percent_speeding", "distance_driven"]
         data_set = {}
 
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
         for column in columns:
             query = f'''
             SELECT AVG({column}) AS avg,
@@ -399,8 +397,8 @@ class Analytics:
             WHERE is_interpolated = 0
             '''
             
-            c.execute(query)
-            result = c.fetchone()
+            self.c.execute(query)
+            result = self.c.fetchone()
 
             # Calculate max and min filter values based on the standard deviation threshold.
             max_filter_value = float(result["avg"]) + float(
@@ -417,7 +415,6 @@ class Analytics:
             else:
                 data_set[f'{column}_min'] = round(min_filter_value, 2)
 
-        conn.close()
         return data_set
 
     def fetch_missing_driver_analytic_dates(self):
@@ -429,9 +426,6 @@ class Analytics:
             A list of tuples (driver_id, date) that are missing
             from the driver_analytics_table.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-
         # Get all existing combinations of driver_id and start_date
         query = """
         SELECT DISTINCT sg.driver_id, sg.start_date
@@ -440,12 +434,10 @@ class Analytics:
             ON sg.driver_id = da.driver_id AND sg.start_date = da.start_date
         WHERE da.driver_id IS NULL
         """
-        c.execute(query)
-        missing_analytics = c.fetchall()
-        conn.close()
+        self.c.execute(query)
+        missing_analytics = self.c.fetchall()
         
         return [(row['driver_id'], row['start_date']) for row in missing_analytics]
-
 
     def insert_driver_analytics(self, analytic_package, driver_id, start_date):
         """
@@ -456,17 +448,26 @@ class Analytics:
             driver_id: The ID of the driver.
             start_date: The start date of the analytics period.
         """
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
+        ps_pkg = analytic_package.get("percent_speeding", {})
+        dd_pkg = analytic_package.get("distance_driven", {})
 
         # Prepare the data for insertion
         data_to_insert = {
             "driver_id": driver_id,
             "start_date": start_date,
-            "records_count": analytic_package.get("percent_speeding", {}).get("count", 0),
-            "std_filter_value": self.data_filter_values.get("stdev_threshold", None),
-            "current_week_percent_speeding": analytic_package.get("percent_speeding", {}).get("avg", None),
-            "current_week_distance_driven": analytic_package.get("distance_driven", {}).get("avg", None),
+            "records_count": ps_pkg.get("count", 0),
+            "avg_percent_speeding": ps_pkg.get("avg", None),
+            "max_percent_speeding": ps_pkg.get("max", None),
+            "min_percent_speeding": ps_pkg.get("min", None),
+            "std_percent_speeding": ps_pkg.get("stddev", None),
+            "median_percent_speeding": ps_pkg.get("median", None),
+            "speeding_trend_json": ps_pkg.get("trend_json", None),
+            "avg_distance_driven": dd_pkg.get("avg", None),
+            "max_distance_driven": dd_pkg.get("max", None),
+            "min_distance_driven": dd_pkg.get("min", None),
+            "std_distance_driven": dd_pkg.get("stddev", None),
+            "median_distance_driven": dd_pkg.get("median", None),
+            "distance_trend_json": dd_pkg.get("trend_json", None),
         }
 
         # Construct the SQL query for ON DUPLICATE KEY UPDATE
@@ -481,11 +482,7 @@ class Analytics:
         '''
 
         try:
-            c.execute(query, list(data_to_insert.values()))
-            conn.commit()
-            print(f"Successfully inserted/updated analytics for driver {driver_id} on {start_date}")
+            self.c.execute(query, list(data_to_insert.values()))
         except Exception as e:
-            conn.rollback()
+            self.conn.rollback()
             print(f"Error inserting/updating analytics for driver {driver_id} on {start_date}: {e}")
-        finally:
-            conn.close()

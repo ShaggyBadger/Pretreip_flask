@@ -92,7 +92,7 @@
 | distance_trend_json            | JSON   | YES      | NULL    |     |                  |    A JSON object containing the distance driven trend data for the last year. The key is the start_date and the value is the average distance_driven.         |
 
 
-## Table: driver_analytics
+## Table: driver_analytics_table
 
 | Column Name                      | Type     | Nullable | Default | Key | Extra           | Description |
 |----------------------------------|----------|----------|---------|-----|------------------|-------------|
@@ -119,3 +119,5 @@
 | median_distance_driven           | float    | YES      | NULL    |     |                  | Historical median distance for the driver            |
 | std_distance_driven              | float    | YES      | NULL    |     |                  | standard deviation of distance driven for the driver            |
 | records_count                    | int      | YES      | NULL    |     |                  | A count of how many records were available for calculating the data for this analysis.            |
+| speeding_trend_json            | JSON   | YES      | NULL    |     |                  |    A JSON object containing the speeding trend data for the last year. The key is the start_date and the value is the average percent_speeding.         |
+| distance_trend_json            | JSON   | YES      | NULL    |     |                  |    A JSON object containing the distance driven trend data for the last year. The key is the start_date and the value is the average distance_driven.         |
