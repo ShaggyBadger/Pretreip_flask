@@ -137,14 +137,17 @@ def speedGauge():
         None,
     )
 
+    # collect analytic data
+    driver_analytics = sg_api.get_driver_analytics(driver_id, selected_date)
+    company_analytics = sg_api.get_company_analytics(selected_date)
+
     return render_template(
         "speedgauge.html",
         available_dates=available_dates,
         selected_date=selected_date,
         selected_data=selected_data,
+        driver_analytics=driver_analytics,
+        company_analytics=company_analytics
     )
 
 
-@app.route("/routes_debug")
-def routes_debug():
-    return "<br>".join(str(rule) for rule in app.url_map.iter_rules())

@@ -199,6 +199,10 @@ class Analytics:
 
         for column in columns:
             # Base query for statistics
+            filter_max = self.data_filter_values[f'{column}_max']
+            filter_min = self.data_filter_values[f'{column}_min']
+
+            # Base query for statistics (with filters)
             query_stats = f'''
             SELECT
                 COUNT({column}) AS count,
@@ -211,12 +215,15 @@ class Analytics:
                 AND start_date BETWEEN 
                     DATE_SUB(%s, INTERVAL 1 YEAR)
                     AND %s
+                AND {column} <= %s
+                AND {column} >= %s
             '''
             
-            values = (driver_id, date, date )
-            self.c.execute(query_stats, values)
+            values_stats = (driver_id, date, date, filter_max, filter_min)
+            self.c.execute(query_stats, values_stats)
             analytic_data = self.c.fetchone()
             
+            # Query for trend data (without filters)
             query_points = f'''
             SELECT
                 {column},
@@ -231,7 +238,8 @@ class Analytics:
                 AND %s
             ORDER BY start_date ASC
             '''
-            self.c.execute(query_points, values)
+            values_points = (driver_id, date, date)
+            self.c.execute(query_points, values_points)
             rows = self.c.fetchall()
             
             data_points = [
@@ -242,7 +250,7 @@ class Analytics:
             values_list = [
                 value for _, value
                 in data_points
-                if value is not None
+                if value is not None and value <= filter_max and value >= filter_min
                 ]
             
             try:

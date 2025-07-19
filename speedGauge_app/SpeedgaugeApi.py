@@ -117,3 +117,41 @@ class Api:
         }
 
         return extracted_data
+
+    def get_driver_analytics(self, driver_id, start_date):
+        """
+        Returns the driver analytic package for a given driver_id and start_date.
+        """
+        conn = self.models_utils.get_db_connection()
+        c = conn.cursor()
+
+        sql = """
+            SELECT *
+            FROM driver_analytics_table
+            WHERE driver_id = %s AND start_date = %s;
+            """
+        values = (driver_id, start_date)
+        c.execute(sql, values)
+        analytic_data = c.fetchone()
+        conn.close()
+
+        return analytic_data
+
+    def get_company_analytics(self, start_date, generated_records_allowed=True):
+        """
+        Returns the company analytic package for a given start_date and generated_records_allowed status.
+        """
+        conn = self.models_utils.get_db_connection()
+        c = conn.cursor()
+
+        sql = """
+            SELECT *
+            FROM company_analytics_table
+            WHERE start_date = %s AND generated_records_allowed = %s;
+            """
+        values = (start_date, generated_records_allowed)
+        c.execute(sql, values)
+        analytic_data = c.fetchone()
+        conn.close()
+
+        return analytic_data

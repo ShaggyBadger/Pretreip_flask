@@ -7,6 +7,7 @@ from datetime import datetime
 from dateutil import parser as dateparser
 import pandas as pd
 from flask_app import settings
+from speedGauge_app import analytics
 
 
 class Processor:
@@ -18,6 +19,8 @@ class Processor:
         # make sure to send models util object here so we can get db connection
         self.models_utils = models_utils
         self.tbl_col_names = self.get_columns_in_table()
+        self.analytics_obj = analytics.Analytics(self.models_utils)
+        self.analytics_obj.standard_flow()
         # if initialize is True:
         #     # make sure table is built
         #     self.build_speedgauge_table()
