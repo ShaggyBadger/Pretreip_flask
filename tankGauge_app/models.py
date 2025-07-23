@@ -1,40 +1,35 @@
 from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from flask_app.db import Base  # or wherever your Base is declared
+from dbConnector import Base  # or wherever your Base is declared
 
 
 class TankData(Base):
     __tablename__ = 'tank_data'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, unique=True)
-    manufacturer = Column(String)
-    model = Column(String)
-    capacity = Column(Integer)
-    max_depth = Column(Integer)
-    misc_info = Column(Text)
-    chart_source = Column(Text)
+    id = Column(Integer, primary_key=True, autoincrement=True) # the identifier
+    name = Column(String) # general name. 15k119 etc
+    manufacturer = Column(String) # sometimes we have this if have proper charts
+    model = Column(String) # sometimes we have this if we have proper charts
+    capacity = Column(Integer) # maximum gallons
+    max_depth = Column(Integer) # maximum inches
+    misc_info = Column(Text) # stuff whatever in there
+    chart_source = Column(Text) # pdf, spreadsheet, whatever
+    description = Column(Text) # description is put out in website
 
-    # Relationship to tank charts
+    # Relationship to tank charts - associate chart rows with these tanks
     tank_charts = relationship("TankCharts", back_populates="tank_type")
 
     def __repr__(self):
         return f"<TankData(name={self.name}, capacity={self.capacity})>"
         
-class StoreInfo(Base):
-    __tablename__ = 'store_info'
+class StoreData(Base):
+    __tablename__ = 'store_data'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     store_num = Column(Integer, unique=True)
-    riso_num = Column(Integer)
-    store_name = Column(String)
-    store_type = Column(String)
-    num_tanks = Column(Integer)
-    regular = Column(String)
-    premium = Column(String)
-    plus = Column(String)
-    kerosene = Column(String)
-    diesel = Column(String)
+    riso_num = Column(Integer, unique=True)
+    store_name = Column(String) # ws1, greensboro 3, etc.
+    store_type = Column(String) # exxon, 7-11, speedway, etc
     address = Column(String)
     city = Column(String)
     state = Column(String)
@@ -56,6 +51,7 @@ class TankCharts(Base):
     inches = Column(Integer, nullable=False)
     gallons = Column(Integer, nullable=False)
     tank_name = Column(String, nullable=False)
+    misc_info = Column(Text)
 
     # Backref to TankData
     tank_type = relationship("TankData", back_populates="tank_charts")
@@ -63,4 +59,13 @@ class TankCharts(Base):
     def __repr__(self):
         return f"<TankCharts(tank_name={self.tank_name}, inches={self.inches}, gallons={self.gallons})>"
 
+class tt(Base):
+    __tablename__ = 'f'
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    store_id = Column(Integer, ForeignKey('store_data.id'), nullable=False)
+    tank_id = Column(Integer, ForeignKey('tank_data.id'), nullable=False)
+    fuel_type = Column(String(10))
+
+    # Backref to TankData and StoreData
+    store = relationship('StoreInfo', back_populates="")

@@ -1,9 +1,11 @@
 from flask import Flask, request, session
 from flask_app.settings import SECRET_KEY
 from flask_app import models
-import datetime
+from tankGauge_app import tankGauge_bp
 
 app = Flask(__name__)
+# register blueprints
+app.register_blueprint(tankGauge_bp)
 
 db_model = models.Utils()
 app.db_model = db_model

@@ -7,6 +7,7 @@ load_dotenv()
 import speedGauge_app
 from speedGauge_app import SpeedgaugeApi as sga
 from speedGauge_app import analytics
+from tankGauge_app import models
 
 from rich.traceback import install
 from rich import print
@@ -205,6 +206,11 @@ class TempTester:
                 print("")
             print("******\n")
 
+class tankGauge_control:
+    def __init__(self):
+        pass
+
+    
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
