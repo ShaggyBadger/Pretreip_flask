@@ -2668,5 +2668,35 @@
         "driver_id": 32050498.0,
         "first_name": "Emanuel",
         "last_name": "Gordon"
+    },
+    {
+        "driver_id": 32053138.0,
+        "first_name": "Shawn",
+        "last_name": "Stevenson"
+    },
+    {
+        "driver_id": 32055963.0,
+        "first_name": "Steven",
+        "last_name": "Arce"
+    },
+    {
+        "driver_id": 32051964.0,
+        "first_name": "Erik",
+        "last_name": "Standefer"
+    },
+    {
+        "driver_id": 32051705.0,
+        "first_name": "Adarius",
+        "last_name": "Wilson"
+    },
+    {
+        "driver_id": 32051707.0,
+        "first_name": "Raul",
+        "last_name": "Boisjoli"
+    },
+    {
+        "driver_id": 32054694.0,
+        "first_name": "Jared",
+        "last_name": "Jones"
     }
 ]
