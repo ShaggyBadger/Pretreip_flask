@@ -30,7 +30,6 @@ class Initialize:
         self.models_cli_util = models.CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
         self.analytics_obj = analytics.Analytics(self.models_util)
-        self.analytics_obj.standard_flow()
 
         if automatic_mode is True:
             # if this is set to true, then go ahead and just automatically run this thing.
@@ -92,6 +91,8 @@ class Initialize:
     def processess_speedgauge(self):
         """stick all speedguage files into the database for initial setup"""
         self.sgProcessor.standard_flow()
+        self.analytics_obj.standard_flow()
+        
 
     def create_table_from_json(self, json_file=None, table_name=None, debug=False):
 
