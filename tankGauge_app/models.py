@@ -59,8 +59,8 @@ class TankCharts(Base):
     def __repr__(self):
         return f"<TankCharts(tank_name={self.tank_name}, inches={self.inches}, gallons={self.gallons})>"
 
-class tt(Base):
-    __tablename__ = 'f'
+class StoreTankMap(Base):
+    __tablename__ = 'store_tank_map'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     store_id = Column(Integer, ForeignKey('store_data.id'), nullable=False)
