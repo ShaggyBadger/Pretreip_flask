@@ -19,7 +19,7 @@ engine = create_engine(
     pool_size=5,
     max_overflow=10,
     pool_pre_ping=True,
-    poor_timeout=30
+    pool_timeout=30
 )
 
 # Make session factory
@@ -30,4 +30,9 @@ Base = declarative_base()
 
 # Your session getter
 def fetch_session():
-    return SessionLocal()
+    session = SessionLocal()
+    
+    try:
+        yield session # Yields the session to the caller
+    finally:
+        session.close()

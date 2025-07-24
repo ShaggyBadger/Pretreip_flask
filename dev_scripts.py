@@ -2,12 +2,13 @@ import json
 import pymysql
 from flask_app import models, settings
 from dotenv import load_dotenv
-
 load_dotenv()
 import speedGauge_app
 from speedGauge_app import SpeedgaugeApi as sga
 from speedGauge_app import analytics
 from tankGauge_app import models
+
+from tankGauge_app.processing import Processing
 
 from rich.traceback import install
 from rich import print
@@ -214,4 +215,6 @@ class tankGauge_control:
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
-    initialization = Initialize(automatic_mode=True)
+    # initialization = Initialize(automatic_mode=True) 
+    tg = Processing()
+    tg.store_data_entry()

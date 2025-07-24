@@ -16,12 +16,18 @@ class TankData(Base):
     chart_source = Column(Text) # pdf, spreadsheet, whatever
     description = Column(Text) # description is put out in website
 
-    # Relationship to tank charts - associate chart rows with these tanks
+    # Relationship to TankCharts: One TankData type can have many TankCharts rows
+    # 'tank_charts' on TankData will be a list of TankCharts objects
     tank_charts = relationship("TankCharts", back_populates="tank_type")
+
+    # Relationship to StoreTankMap: A TankData type can be mapped to many stores
+    # via the StoreTankMap association table.
+    # 'mapped_stores' on TankData will be a list of StoreTankMap objects
+    mapped_stores = relationship("StoreTankMap", back_populates="tank_info")
 
     def __repr__(self):
         return f"<TankData(name={self.name}, capacity={self.capacity})>"
-        
+
 class StoreData(Base):
     __tablename__ = 'store_data'
 
@@ -40,9 +46,14 @@ class StoreData(Base):
     install_date = Column(String)  # Could use Date if data is normalized
     overfill_protection = Column(String)
 
+    # Relationship to StoreTankMap: One StoreData can have many tanks mapped to it
+    # via the StoreTankMap association table.
+    # 'store_tanks_map' on StoreData will be a list of StoreTankMap objects
+    store_tanks_map = relationship("StoreTankMap", back_populates="store_info")
+
     def __repr__(self):
-        return f"<StoreInfo(store_num={self.store_num}, city={self.city})>"
-        
+        return f"<StoreData(store_num={self.store_num}, city={self.city})>"
+
 class TankCharts(Base):
     __tablename__ = 'tank_charts'
 
@@ -53,7 +64,8 @@ class TankCharts(Base):
     tank_name = Column(String, nullable=False)
     misc_info = Column(Text)
 
-    # Backref to TankData
+    # Relationship back to TankData: Each TankCharts row belongs to one TankData type.
+    # 'tank_type' on TankCharts will be a single TankData object.
     tank_type = relationship("TankData", back_populates="tank_charts")
 
     def __repr__(self):
@@ -67,5 +79,13 @@ class StoreTankMap(Base):
     tank_id = Column(Integer, ForeignKey('tank_data.id'), nullable=False)
     fuel_type = Column(String(10))
 
-    # Backref to TankData and StoreData
-    store = relationship('StoreInfo', back_populates="")
+    # Relationship back to StoreData: Each StoreTankMap entry links to one StoreData.
+    # 'store_info' on StoreTankMap will be a single StoreData object.
+    store_info = relationship('StoreData', back_populates='store_tanks_map')
+
+    # Relationship back to TankData: Each StoreTankMap entry links to one TankData type.
+    # 'tank_info' on StoreTankMap will be a single TankData object.
+    tank_info = relationship('TankData', back_populates='mapped_stores')
+
+    def __repr__(self):
+        return f"<StoreTankMap(store_id={self.store_id}, tank_id={self.tank_id}, fuel_type={self.fuel_type})>"

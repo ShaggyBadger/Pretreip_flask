@@ -1,3 +1,5 @@
+from rich.traceback import install
+install()
 from flask_app import settings
 from flask_app import app_constructor
 from flask_app import models
