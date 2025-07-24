@@ -149,5 +149,3 @@ def speedGauge():
         driver_analytics=driver_analytics,
         company_analytics=company_analytics
     )
-
-
