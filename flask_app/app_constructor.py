@@ -1,10 +1,14 @@
 from flask import Flask, g, session
 from datetime import timedelta
 from flask_app.settings import SECRET_KEY
-from dbConnector import fetch_session
+from dbConnector import fetch_session, init_db
 from flask_app import models
 from tankGauge_app import tankGauge_bp
 
+# Initialize the database
+init_db()
+
+# Make a function to create the app
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY

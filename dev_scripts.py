@@ -1,6 +1,7 @@
 import json
 import pymysql
 from flask_app import models, settings
+from dbConnector import init_db
 from dotenv import load_dotenv
 load_dotenv()
 import speedGauge_app
@@ -209,12 +210,18 @@ class TempTester:
 
 class tankGauge_control:
     def __init__(self):
-        pass
+        init_db()
+        self.processing_obj = Processing()
+    
+    def run_store_data(self):
+        self.processing_obj.store_data_entry()
+
+    
 
     
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
     # initialization = Initialize(automatic_mode=True) 
-    tg = Processing()
-    tg.store_data_entry()
+    tankGauge_controler = tankGauge_control()
+    tankGauge_controler.run_store_data()

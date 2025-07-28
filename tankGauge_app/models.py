@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Text, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from dbConnector import Base  # or wherever your Base is declared
 
@@ -7,9 +7,9 @@ class TankData(Base):
     __tablename__ = 'tank_data'
 
     id = Column(Integer, primary_key=True, autoincrement=True) # the identifier
-    name = Column(String) # general name. 15k119 etc
-    manufacturer = Column(String) # sometimes we have this if have proper charts
-    model = Column(String) # sometimes we have this if we have proper charts
+    name = Column(String(255)) # general name. 15k119 etc
+    manufacturer = Column(String(255)) # sometimes we have this if have proper charts
+    model = Column(String(255)) # sometimes we have this if we have proper charts
     capacity = Column(Integer) # maximum gallons
     max_depth = Column(Integer) # maximum inches
     misc_info = Column(Text) # stuff whatever in there
@@ -34,17 +34,17 @@ class StoreData(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     store_num = Column(Integer, unique=True)
     riso_num = Column(Integer, unique=True)
-    store_name = Column(String) # ws1, greensboro 3, etc.
-    store_type = Column(String) # exxon, 7-11, speedway, etc
-    address = Column(String)
-    city = Column(String)
-    state = Column(String)
+    store_name = Column(String(255)) # ws1, greensboro 3, etc.
+    store_type = Column(String(255)) # exxon, 7-11, speedway, etc
+    address = Column(String(255))
+    city = Column(String(255))
+    state = Column(String(255))
     zip = Column(Integer)
-    county = Column(String)
+    county = Column(String(255))
     lat = Column(Float)
     lon = Column(Float)
-    install_date = Column(String)  # Could use Date if data is normalized
-    overfill_protection = Column(String)
+    install_date = Column(Date)  # Could use Date if data is normalized
+    overfill_protection = Column(String(255))
 
     # Relationship to StoreTankMap: One StoreData can have many tanks mapped to it
     # via the StoreTankMap association table.
@@ -61,7 +61,7 @@ class TankCharts(Base):
     tank_type_id = Column(Integer, ForeignKey('tank_data.id'), nullable=False)
     inches = Column(Integer, nullable=False)
     gallons = Column(Integer, nullable=False)
-    tank_name = Column(String, nullable=False)
+    tank_name = Column(String(255), nullable=False)
     misc_info = Column(Text)
 
     # Relationship back to TankData: Each TankCharts row belongs to one TankData type.
