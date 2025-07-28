@@ -52,21 +52,24 @@ class Processing:
 
         session = next(fetch_session())
         try:
-            # Get existing store IDs to prevent duplicates
-            existing_store_ids = {result[0] for result in session.query(StoreData.store_id).all()}
-            
             stores_to_add = []
             for index, row in df.iterrows():
-                if row['store_id'] not in existing_store_ids:
-                    stores_to_add.append(StoreData(
-                        store_id=row['store_id'],
-                        address=row['address'],
-                        city=row['city'],
-                        state=row['state'],
-                        zip_code=row['zip_code'],
-                        latitude=row['latitude'],
-                        longitude=row['longitude']
-                    ))
+                current_store_num = row.get('store_num')
+                print(current_store_num)
+                stores_to_add.append(StoreData(
+                    store_num=row['store_num'],
+                    riso_num=row['riso_num'],
+                    store_name=row['store_name'],
+                    store_type=row['store_type'],
+                    address=row['address'],
+                    city=row['city'],
+                    state=row['state'],
+                    zip_code=row['zip_code'],
+                    latitude=row['latitude'],
+                    longitude=row['longitude'],
+                    install_date=row['install_date'],
+                    overfill_protection=row['overfill_protection']
+                ))
 
             if stores_to_add:
                 #session.bulk_save_objects(stores_to_add)
