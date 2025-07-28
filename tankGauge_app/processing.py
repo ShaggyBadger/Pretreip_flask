@@ -14,40 +14,6 @@ class Processing:
         self.charts_dir = self.tankGauge_files / 'tank_charts'
         self.misc_dir = self.tankGauge_files / 'misc'
 
-    def store_data_entry2(self):
-        file = self.misc_dir / 'storeInfo_master.xlsx'
-        df = pd.read_excel(file)
-
-        session = next(fetch_session())
-        try:
-            stores_to_add = []
-            for _, row in df.iterrows():
-                stores_to_add.append(StoreData(
-                    store_num=row['store_num'],
-                    riso_num=row['riso_num'],
-                    store_name=row['store_name'],
-                    store_type=row['store_type'],
-                    address=row['address'],
-                    city=row['city'],
-                    state=row['state'],
-                    zip=row['zip'],
-                    lat=row['lat'],
-                    lon=row['lon'],
-                    install_date=row['install_date'],
-                    overfill_protection=row['overfill_protection']
-                ))
-
-            if stores_to_add:
-                session.bulk_save_objects(stores_to_add)
-                session.commit()
-                print(f"Successfully inserted {len(stores_to_add)} new store records.")
-
-        except Exception as e:
-            session.rollback()
-            print(f"An error occurred: {e}")
-        finally:
-            session.close()
-    
     def store_data_entry(self):
         """
         Reads store data from 'storeInfo_master.xlsx', and performs an upsert
