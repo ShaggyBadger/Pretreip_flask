@@ -46,9 +46,16 @@ class Processing:
                 current_store_num = row.get('store_num')
                 current_riso_num = row.get('riso_num')
 
+                # set NaN values to None for db insertion
+                if pd.isna(current_store_num): # Check if it's NaT or NaN
+                    current_store_num = None
+                
+                if pd.isna(current_riso_num): # Check if it's NaT or NaN
+                    current_riso_num = None
+
                 # Skip row if both identifying numbers are missing
                 if current_store_num is None and current_riso_num is None:
-                    print(f"  Skipping row {index} due to missing 'store_num_col' and 'riso_num_col'.")
+                    print(f"  Skipping row {index} due to missing 'store_num' and 'riso_num'.")
                     continue
 
                 # Build the OR condition for querying
@@ -63,7 +70,7 @@ class Processing:
 
                 # Prepare common data fields from the row
                 # Use .get() for robustness, providing None as default if column missing
-                # Ensure 'install_date_col' is converted to a date object if your DB column is DATE
+                # Ensure 'install_date' is converted to a date object if your DB column is DATE
                 raw_install_date_val = row.get('install_date')
                 install_date_val = None # Default to None
 
@@ -72,29 +79,76 @@ class Processing:
                 elif isinstance(raw_install_date_val, pd.Timestamp):
                     install_date_val = raw_install_date_val.date()
                 
+                # Handle zip (string to int or None, remove hyphens if present)
+                raw_zip_val = row.get('zip')
+                zip_val = None
+                if not pd.isna(raw_zip_val):
+                    try:
+                        # Remove any non-digit characters before converting to int
+                        cleaned_zip = str(raw_zip_val).split('-')[0].strip() # Take only the first part before hyphen
+                        zip_val = int(cleaned_zip)
+                    except (ValueError, TypeError):
+                        print(f"  Warning: Could not convert 'zip' value '{raw_zip_val}' to integer at row {index}. Setting to None.")
+                        zip_val = None
+
+                # Handle lat (to float or None)
+                raw_lat_val = row.get('lat')
+                lat_val = None
+                if not pd.isna(raw_lat_val):
+                    try:
+                        lat_val = float(raw_lat_val)
+                    except (ValueError, TypeError):
+                        print(f"  Warning: Could not convert 'lat' value '{raw_lat_val}' to float at row {index}. Setting to None.")
+                        lat_val = None
+
+                # Handle lon (to float or None)
+                raw_lon_val = row.get('lon')
+                lon_val = None
+                if not pd.isna(raw_lon_val):
+                    try:
+                        lon_val = float(raw_lon_val)
+                    except (ValueError, TypeError):
+                        print(f"  Warning: Could not convert 'lon' value '{raw_lon_val}' to float at row {index}. Setting to None.")
+                        lon_val = None
+                
                 store_data = {
                     'store_num': current_store_num,
                     'riso_num': current_riso_num,
-                    'store_name': row.get('store_name_col'),
-                    'store_type': row.get('store_type_col'),
-                    'address': row.get('address_col'),
-                    'city': row.get('city_col'),
-                    'state': row.get('state_col'),
-                    'zip': row.get('zip_col'),
-                    'lat': row.get('lat_col'),
-                    'lon': row.get('lon_col'),
+                    'store_name': row.get('store_name'),
+                    'store_type': row.get('store_type'),
+                    'address': row.get('address'),
+                    'city': row.get('city'),
+                    'state': row.get('state'),
+                    'zip': zip_val,
+                    'lat': lat_val,
+                    'lon': lon_val,
                     'install_date': install_date_val,
-                    'overfill_protection': row.get('overfill_protection_col')
+                    'overfill_protection': row.get('overfill_protection')
                 }
+
+                # Check for null values in pandas dataframe data.
+                # Convert to None for db insertion.
+                for key, value in store_data.items(): # Iterate through key-value pairs
+                    if pd.isna(value): # Use pd.isna() to check for NaN, NaT, and None
+                        store_data[key] = None # <--- Corrected assignment
 
                 if existing_store:
                     # If store exists, update its attributes
+                    row_actually_updated = False
                     for key, value in store_data.items():
-                        # Only update if the incoming value is not None (or if you want to allow None updates)
-                        # Also, avoid updating primary key 'id' or other non-updatable fields if they were in store_data
-                        if value is not None and key != 'id':
-                            setattr(existing_store, key, value)
-                    updated_count += 1
+                        if key != 'id': # Always skip 'id'
+                            # Check if value is different OR if incoming value is None and existing is not (to allow setting to NULL)
+                            # Or if you want to allow setting to None, and existing is not None
+                            if value is not None and getattr(existing_store, key) != value:
+                                setattr(existing_store, key, value)
+                                row_actually_updated = True
+                            elif value is None and getattr(existing_store, key) is not None:
+                                setattr(existing_store, key, None)
+                                row_actually_updated = True
+
+                    if row_actually_updated:
+                        updated_count += 1
+
                 else:
                     # If store does not exist, create a new record
                     new_store = StoreData(**store_data) # Create new object from dict

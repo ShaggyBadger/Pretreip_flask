@@ -18,10 +18,6 @@ MYSQL_DB = os.environ.get("MYSQL_DB")
 # This ensures special characters in the password are handled correctly.
 encoded_password = quote_plus(MYSQL_PASSWORD)
 
-print(f"DEBUG: MYSQL_HOST={MYSQL_HOST}")
-print(f"DEBUG: MYSQL_USER={MYSQL_USER}")
-print(f"DEBUG: MYSQL_DB={MYSQL_DB}")
-
 DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}"
 
 # Create engine with pooling options
