@@ -240,8 +240,6 @@ class Processing:
             session.commit() # Commit all changes (inserts and updates) at once
             session.close()
         
-        
-
     def tank_data_entry(self):
         '''
         This bad boy is specifically to enter in a set of tanks for tank_data when the db is 
@@ -251,7 +249,6 @@ class Processing:
         those tanks. It will not insert this initial entry into the database if this tank name
         already exists.
         '''
-        session = self.get_session() # Get a new database session
         store_info_file = self.misc_dir / 'storeInfo_master.xlsx'
 
         if not store_info_file.exists():
@@ -272,41 +269,45 @@ class Processing:
         tank_names = []
         fuel_types = ['regular', 'plus', 'premium', 'kerosene', 'diesel']
         
-        for fuel_type in fuel_types:
-            for _, row in df.iterrows():
-                row_data = row.get(fuel_type)
-                if not pd.isna(row_data):
-                    names = [
-                        name.strip() for name
-                        in str(row_data).split(',')
-                    ]
+        try:
+            session = self.get_session() # Get a new database session
+            for fuel_type in fuel_types:
+                for _, row in df.iterrows():
+                    row_data = row.get(fuel_type)
+                    if not pd.isna(row_data):
+                        names = [
+                            name.strip() for name
+                            in str(row_data).split(',')
+                        ]
 
-                    for name in names:
-                        if name not in tank_names:
-                            tank_names.append(name)
-        
-        # build model attribute stuff for insertion using names
-        for tank_name in tank_names:
-            tank_data = {
-                'name': tank_name, # string
-                'manufacturer': None, # string
-                'model': None, # string
-                'capacity': None, # integer
-                'max_depth': None, # integer
-                'misc_info': None, # text
-                'chart_source': None, # text
-                'description': None # text
-            }
-
-            # build db upsertion
-            query = session.query(TankData).filter(TankData.name == tank_data['name'])
-            existing_tank = query.first()
+                        for name in names:
+                            if name not in tank_names:
+                                tank_names.append(name)
             
-            if existing_tank is None:
-                new_tank = TankData(**tank_data)
-                session.add(new_tank)
+            # build model attribute stuff for insertion using names
+            for tank_name in tank_names:
+                tank_data = {
+                    'name': tank_name, # string
+                    'manufacturer': None, # string
+                    'model': None, # string
+                    'capacity': None, # integer
+                    'max_depth': None, # integer
+                    'misc_info': None, # text
+                    'chart_source': None, # text
+                    'description': None # text
+                }
 
-        session.commit() # Commit all changes (inserts and updates) at once
+                # build db upsertion
+                query = session.query(TankData).filter(TankData.name == tank_data['name'])
+                existing_tank = query.first()
+                
+                if existing_tank is None:
+                    new_tank = TankData(**tank_data)
+                    session.add(new_tank)
+
+            session.commit() # Commit all changes (inserts and updates) at once
+        finally:
+            session.close()
 
     def store_tank_map(self):
         pass
