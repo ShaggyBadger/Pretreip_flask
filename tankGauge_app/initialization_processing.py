@@ -3,6 +3,7 @@ from rich.traceback import install
 import pandas as pd
 from sqlalchemy import or_
 from dbConnector import fetch_session
+import dbConnector
 from .models import StoreData, TankData, TankCharts, StoreTankMap
 import numpy as np # Import numpy for pd.isna
 install()
@@ -310,4 +311,74 @@ class Processing:
             session.close()
 
     def store_tank_map(self):
-        pass
+        session = self.get_session()
+        excel_file = self.misc_dir / 'storeInfo_master.xlsx'
+        df = pd.read_excel(excel_file)
+
+        try:
+            # Iterate through each row of the DataFrame
+            for _, row in df.iterrows():
+                # Get identifying data from the row.
+                fuel_types = ['regular', 'plus', 'premium', 'kerosene', 'diesel']
+                tanks = {}
+
+                store_num = row.get('store_num')
+                riso_num = row.get('riso_num')
+
+                if pd.isna(store_num):
+                    store_num = None
+                if pd.isna(riso_num):
+                    riso_num = None
+
+                for fuel_type in fuel_types:
+                    fuel_tank_data = row.get(fuel_type)
+                    if not pd.isna(fuel_tank_data):
+                        tank_list = [
+                            name.strip() for name
+                            in str(fuel_tank_data).split(',')
+                        ]
+
+                        tanks[fuel_type] = tank_list
+                
+                query = session.query(StoreData.id)
+                query = query.filter(
+                    or_(
+                        StoreData.store_num == store_num,
+                        StoreData.riso_num == riso_num
+                    )
+                )
+                store_data_row = query.first()
+                
+                for fuel_type in tanks:
+                    for tank_name in tanks[fuel_type]:
+                        query = session.query(TankData.id)
+                        query = query.filter(TankData.name == tank_name)
+                        tank_data_row = query.first()
+
+                        store_tank_map_data = {
+                            'store_id': store_data_row.id,
+                            'tank_id': tank_data_row.id,
+                            'fuel_type': fuel_type
+                        }
+
+                        new_mapping = StoreTankMap(**store_tank_map_data)
+
+                        # add a quick check to see if the database holds all the tanks for this 
+                        # store or not. This is a quck and dirty check, so don't expect too much
+                        target_len = len(tanks[fuel_type])
+                        query = session.query(StoreTankMap)
+                        query = query.filter(StoreTankMap.store_id == store_data_row.id)
+                        query = query.filter(StoreTankMap.fuel_type == fuel_type)
+                        num_tanks_in_model = query.count()
+
+                        if num_tanks_in_model < target_len:
+                            session.add(new_mapping)
+
+            session.commit()
+                
+        except Exception as e:
+            session.rollback() # Rollback all changes if any error occurs during the process
+            print(f"An error occurred during store data entry: {e}")
+
+        finally:
+            session.close()

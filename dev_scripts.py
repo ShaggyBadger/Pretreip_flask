@@ -9,7 +9,7 @@ from speedGauge_app import SpeedgaugeApi as sga
 from speedGauge_app import analytics
 from tankGauge_app import models
 
-from tankGauge_app.processing import Processing
+from tankGauge_app.initialization_processing import Processing
 
 from rich.traceback import install
 from rich import print
@@ -221,6 +221,9 @@ class tankGauge_control:
     
     def run_charts_data(self):
         self.processing_obj.tank_chart_entry()
+    
+    def run_store_tank_map(self):
+        self.processing_obj.store_tank_map()
 
     
 
@@ -230,4 +233,4 @@ if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
     # initialization = Initialize(automatic_mode=True) 
     tankGauge_controler = tankGauge_control()
-    tankGauge_controler.run_charts_data()
+    tankGauge_controler.run_store_tank_map()
