@@ -3,7 +3,7 @@ from rich.traceback import install
 import pandas as pd
 from sqlalchemy import or_
 from dbConnector import fetch_session
-from .models import StoreData
+from .models import StoreData, TankData, TankCharts, StoreTankMap
 import numpy as np # Import numpy for pd.isna
 install()
 
@@ -13,6 +13,9 @@ class Processing:
         self.tankGauge_files = Path('tankGauge_app/tankGauge_files')
         self.charts_dir = self.tankGauge_files / 'tank_charts'
         self.misc_dir = self.tankGauge_files / 'misc'
+
+    def get_session(self):
+        return next(fetch_session())
 
     def store_data_entry(self):
         """
@@ -167,7 +170,70 @@ class Processing:
         pass
 
     def tank_data_entry(self):
-        pass
+        '''
+        This bad boy is specifically to enter in a set of tanks for tank_data when the db is 
+        fresh. It is basically a db initialization script. It will use the tank name as the 
+        unique identifier, although as this grows that will no longer work as the id. So, this
+        takes tank names from the store data spreadsheet and makes an intial db entry based on
+        those tanks. It will not insert this initial entry into the database if this tank name
+        already exists.
+        '''
+        session = self.get_session() # Get a new database session
+        store_info_file = self.misc_dir / 'storeInfo_master.xlsx'
+
+        if not store_info_file.exists():
+            print(f"Error: Expected Excel file not found: {store_info_file}")
+            print("Please ensure 'storeInfo_master.xlsx' exists in the specified directory.")
+            return
+
+        try:
+            # Read the Excel file directly
+            # Requires 'openpyxl' to be installed (pip install openpyxl)
+            df = pd.read_excel(store_info_file)
+        except Exception as e:
+            print(f"Error reading Excel file {store_info_file.name}: {e}")
+            print("Ensure 'openpyxl' is installed (pip install openpyxl) and the file is valid.")
+            return
+        
+        # start by building a list of tank names from the store_info file
+        tank_names = []
+        fuel_types = ['regular', 'plus', 'premium', 'kerosene', 'diesel']
+        
+        for fuel_type in fuel_types:
+            for _, row in df.iterrows():
+                row_data = row.get(fuel_type)
+                if not pd.isna(row_data):
+                    names = [
+                        name.strip() for name
+                        in str(row_data).split(',')
+                    ]
+
+                    for name in names:
+                        if name not in tank_names:
+                            tank_names.append(name)
+        
+        # build model attribute stuff for insertion using names
+        for tank_name in tank_names:
+            tank_data = {
+                'name': tank_name, # string
+                'manufacturer': None, # string
+                'model': None, # string
+                'capacity': None, # integer
+                'max_depth': None, # integer
+                'misc_info': None, # text
+                'chart_source': None, # text
+                'description': None # text
+            }
+
+            # build db upsertion
+            query = session.query(TankData).filter(TankData.name == tank_data['name'])
+            existing_tank = query.first()
+            
+            if existing_tank is None:
+                new_tank = TankData(**tank_data)
+                session.add(new_tank)
+
+        session.commit() # Commit all changes (inserts and updates) at once
 
     def store_tank_map(self):
         pass
