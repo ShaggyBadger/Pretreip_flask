@@ -69,7 +69,7 @@ class TankCharts(Base):
     tank_type = relationship("TankData", back_populates="tank_charts")
 
     def __repr__(self):
-        return f"<TankCharts(tank_name={self.tank_name}, inches={self.inches}, gallons={self.gallons})>"
+        return f"<TankCharts(tank_name={self.tank_name}, inches={self.inches}, gallons={self.gallons}, tank_type_id={self.tank_type_id})>"
 
 class StoreTankMap(Base):
     __tablename__ = 'store_tank_map'

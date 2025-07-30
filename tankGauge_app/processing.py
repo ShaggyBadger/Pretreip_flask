@@ -167,7 +167,80 @@ class Processing:
             session.close() # Always close the session
 
     def tank_chart_entry(self):
-        pass
+        session = self.get_session() # Get a new database session
+        chart_files = list(self.charts_dir.glob('*.xlsx'))
+        try:
+            for chart_file in chart_files:
+                df = pd.read_excel(chart_file)
+                df_columns = list(df.columns)
+                row_dicts = []
+
+                for _, row in df.iterrows():
+                    row_dict = {}
+                    valid_row = True
+
+                    for col in df_columns:
+                        value = row.get(col)
+                        if pd.isna(value) is True:
+                            # skip this entry. Something is off with the tank chart
+                            valid_row = False
+                        
+                        row_dict[col] = value
+
+                    if valid_row:
+                        row_dicts.append(row_dict)
+                
+                # take all those row_dicts and insert each dict into the database
+                for row in row_dicts:
+                    # check to see if this chart entry is already in db
+                    query = session.query(TankCharts)
+                    query = query.filter(TankCharts.gallons == row.get('gallons'))
+                    query = query.filter(TankCharts.inches == row.get('inches'))
+                    query = query.filter(TankCharts.tank_name == row.get('tank_name'))
+                    chart_entry = query.first()
+                    
+                    if chart_entry is None:
+                        # fetch the foreign key
+                        query = session.query(TankData.id)
+                        query = query.filter(TankData.name == row.get('tank_name'))
+                        try:
+                            fk = query.first()[0]
+                        except:
+                            print(row)
+                            print('It looks like we found a tank_name not in the tank_data table. Do you want to add it now?')
+                            user_input = input('y/n: ')
+                            if user_input == 'y':
+                                try:
+                                    tank_data = {'name': row.get('tank_name')}
+                                    temp_session = self.get_session()
+                                    query = temp_session.query(TankData).filter(TankData.name == tank_data['name'])
+                                    existing_tank = query.first()
+                                    
+                                    if existing_tank is None:
+                                        new_tank = TankData(**tank_data)
+                                        temp_session.add(new_tank)
+                                except:
+                                    temp_session.rollback()
+                                    print('something went wrong with temp_session tank update.')
+                                finally:
+                                    temp_session.commit()
+                                    temp_session.close()
+
+                        if fk:
+                            # insert the chart information
+                            row['tank_type_id'] = fk
+                            new_chart_entry = TankCharts(**row)
+                            session.add(new_chart_entry)
+        
+        except:
+            session.rollback()
+            print('Exception happened in tank_chart_entry method. Rolling things back...')
+
+        finally:
+            session.commit() # Commit all changes (inserts and updates) at once
+            session.close()
+        
+        
 
     def tank_data_entry(self):
         '''
