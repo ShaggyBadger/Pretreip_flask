@@ -1,6 +1,57 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
 
-<h2 class="mt-4 text-center">Tank Gauge Home</h2>
-<p>Temp tankGague homepage</p>
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-4">
+      {# This column size makes it slimmer on larger screens #}
+      <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-light mb-3">Tank Gauge Operations</h1>
+        <p class="lead text-secondary mb-5">
+          This is the command center. No excuses, just results. Choose your
+          mission.
+        </p>
+      </div>
+
+      <div class="d-grid gap-4">
+        <!-- Planning Section -->
+        <div class="card p-4">
+          <div class="card-body">
+            <h2 class="card-title h3 fw-bold text-info mb-3">
+              Mission: Planning
+            </h2>
+            <p class="card-text text-light mb-4">
+              Calculate optimal fill levels. Know your limits before you roll
+              out. Precision is paramount.
+            </p>
+            <a href="/planning" class="btn btn-primary btn-lg w-100">
+              Execute Planning
+            </a>
+          </div>
+        </div>
+
+        <!-- Delivery Section -->
+        <div class="card p-4">
+          <div class="card-body">
+            <h2 class="card-title h3 fw-bold text-success mb-3">
+              Mission: Delivery
+            </h2>
+            <p class="card-text text-light mb-4">
+              Log actual delivery data. Confirm the mission parameters and
+              assess the outcome. Accountability is key.
+            </p>
+            <a href="/delivery" class="btn btn-success btn-lg w-100">
+              Log Delivery
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-center text-muted mt-5 mb-0 small">
+        &copy; 2024 Tank Gauge Operations. All rights reserved. Maintain
+        vigilance.
+      </p>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

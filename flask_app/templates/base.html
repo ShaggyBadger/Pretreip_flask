@@ -6,10 +6,100 @@
 		<!-- Link Bootstrap CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap-5.0.2-dist/css/bootstrap.min.css') }}">
 		<!-- Later in body, add JS if needed -->
-		<title>The J Files</title>
-	<style type="text/css">
-	/* CSS styles here... */
-	</style>
+		<title>{% block title %}The J Files{% endblock %}</title>
+	        <style>
+      /* Overall Body Styling - Keeping it dark for the command center feel */
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #212529; /* Dark background */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        color: #f8f9fa; /* Light text for general body content OUTSIDE cards */
+      }
+
+      /* Navbar Specific Styles - Keeping it dark as per your current setup */
+      .navbar {
+          background-color: #343a40 !important; /* Darker navbar background */
+          border-bottom: 1px solid #495057;
+          width: 100%; /* Ensure navbar spans full width */
+      }
+      .navbar-brand, .nav-link {
+          color: #f8f9fa !important; /* Light text for brand and links */
+          font-weight: 600;
+      }
+      .navbar-toggler-icon {
+          /* Toggler icon needs to be light for dark navbar background */
+          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28248, 249, 250, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+      }
+
+      /* Main Content Area Wrapper */
+      .main-content {
+          flex-grow: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 1rem;
+          width: 100%;
+          /* The actual background for the content will be on the inner container/card */
+      }
+
+      /* Card Styles - Bringing back the lighter, distinct colors for content cards */
+      .card {
+          border-radius: 0.75rem; /* Rounded corners for cards */
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Soft shadow */
+          background-color: #ffffff; /* Default card background (white) */
+          border: 1px solid #dee2e6; /* Light default border */
+          color: #343a40; /* Set default text color for all text INSIDE cards to dark */
+      }
+
+      /* Ensure headings and paragraphs inside the main card are also dark */
+      .card h1, .card h2, .card p, .card .lead, .card .text-muted {
+          color: #343a40 !important; /* Force dark text for readability on light card backgrounds */
+      }
+
+      /* Custom styles for the Planning card */
+      .card-planning {
+          background-color: #e0f2f7; /* Light blue */
+          border-color: #b3e0f2;
+      }
+      .card-planning .card-title, .card-planning .card-text {
+          color: #0056b3 !important; /* Darker blue text for planning card */
+      }
+
+      /* Custom styles for the Delivery card */
+      .card-delivery {
+          background-color: #e6ffe6; /* Light green */
+          border-color: #b3ffb3;
+      }
+      .card-delivery .card-title, .card-delivery .card-text {
+          color: #28a745 !important; /* Darker green text for delivery card */
+      }
+
+      /* Button Styles - Using Bootstrap's default primary/success colors for the buttons */
+      .btn-primary {
+          background-color: #007bff; /* Bootstrap primary blue */
+          border-color: #007bff;
+          font-weight: 600;
+      }
+      .btn-primary:hover {
+          background-color: #0056b3; /* Darker blue on hover */
+          border-color: #0056b3;
+      }
+      .btn-success {
+          background-color: #28a745; /* Bootstrap success green */
+          border-color: #28a745;
+          font-weight: 600;
+      }
+      .btn-success:hover {
+          background-color: #218838; /* Darker green on hover */
+          border-color: #218838;
+      }
+    </style>
+
 	</head>
 	
 	<body>
