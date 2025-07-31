@@ -3,7 +3,6 @@ from rich.traceback import install
 import pandas as pd
 from sqlalchemy import or_
 from dbConnector import fetch_session
-import dbConnector
 from .models import StoreData, TankData, TankCharts, StoreTankMap
 import numpy as np # Import numpy for pd.isna
 install()

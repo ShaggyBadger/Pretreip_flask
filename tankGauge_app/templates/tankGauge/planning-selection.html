@@ -1,5 +1,56 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+<div class="container mt-5" style="max-width: 600px">
+  <h1 class="text-center fw-bold mono mb-5" style="font-size: 3.5rem">
+    Fuel Delivery Planning
+  </h1>
+  <form
+    method="POST"
+    action="{{ url_for('tankgauge.planning_submit') }}"
+    class="needs-validation"
+    novalidate
+  >
+    <!-- Store Number Input -->
+    <div class="mb-4">
+      <label for="storeNumber" class="form-label mono fw-bold"
+        >Store Number</label
+      >
+      <input
+        type="text"
+        class="form-control form-control-lg"
+        id="storeNumber"
+        name="store_number"
+        placeholder="Enter store number"
+        required
+      />
+    </div>
 
-<div></div>
+    <!-- Fuel Switches -->
+    <div class="mb-4">
+      <label class="form-label mono fw-bold mb-3">Select Fuel Types</label>
 
+      {% for fuel in ['Regular', 'Plus', 'Premium', 'Kerosene', 'Diesel'] %}
+      <div
+        class="form-check form-switch d-flex align-items-center justify-content-between mb-3"
+      >
+        <label class="form-check-label mono fs-5" for="fuel_{{ fuel.lower() }}"
+          >{{ fuel }}</label
+        >
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="fuel_{{ fuel.lower() }}"
+          name="fuel_types"
+          value="{{ fuel.lower() }}"
+          style="width: 3rem; height: 1.6rem"
+        />
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Submit Button -->
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary btn-lg mono">Submit</button>
+    </div>
+  </form>
+</div>
 {% endblock %}
