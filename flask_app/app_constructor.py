@@ -15,7 +15,7 @@ def create_app():
     app.permanent_session_lifetime = timedelta(days=7)
 
     # Register blueprints
-    app.register_blueprint(tankGauge_bp)
+    app.register_blueprint(tankGauge_bp, url_prefix='/tankgauge')
 
     # Attach a database utility to the app context
     app.db_model = models.Utils()

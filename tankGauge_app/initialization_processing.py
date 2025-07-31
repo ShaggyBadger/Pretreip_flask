@@ -14,6 +14,11 @@ class Processing:
         self.charts_dir = self.tankGauge_files / 'tank_charts'
         self.misc_dir = self.tankGauge_files / 'misc'
 
+        # Create the directories if they don't exist
+        self.tankGauge_files.mkdir(parents=True, exists_ok=True)
+        self.charts_dir.mkdir(parents=True, exist_ok=True)
+        self.misc_dir.mkdir(parents=True, exist_ok=True)
+
     def get_session(self):
         return next(fetch_session())
 
