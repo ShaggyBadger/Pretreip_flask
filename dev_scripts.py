@@ -213,6 +213,12 @@ class tankGauge_control:
         init_db()
         self.processing_obj = Processing()
     
+    def initialize(self):
+        self.run_store_data()
+        self.run_tank_data()
+        self.run_charts_data()
+        self.run_store_tank_map()
+    
     def run_store_data(self):
         self.processing_obj.store_data_entry()
 
@@ -233,4 +239,4 @@ if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
     # initialization = Initialize(automatic_mode=True) 
     tankGauge_controler = tankGauge_control()
-    tankGauge_controler.run_store_tank_map()
+    tankGauge_controler.initialize()
