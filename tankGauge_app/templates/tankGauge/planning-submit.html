@@ -18,17 +18,28 @@
       card.className = "card shadow-sm p-4 mb-4";
 
       card.innerHTML = `
-      <h5>Fuel Type: ${tank.fuel_type}</h5>
-      <p>Max Capacity: ${tank.max_gal} gallons</p>
-      <p>90% Capacity: ${tank.ninety_percent} gallons</p>
+  <h5>Fuel Type: ${tank.fuel_type}</h5>
+  <p>Max Capacity: ${tank.max_gal} gallons</p>
+  <p>90% Capacity: ${tank.ninety_percent} gallons</p>
 
-      <label for="gallons-${index}" class="form-label mt-3">Enter delivery gallons:</label>
-      <input type="number" id="gallons-${index}" class="form-control mb-2" placeholder="e.g. 500">
+  <div class="row align-items-center mb-3">
+    <!-- Input column -->
+    <div class="col-md-8">
+      <label for="gallons-${index}" class="form-label">Enter delivery gallons:</label>
+      <input type="number" id="gallons-${index}" class="form-control" placeholder="e.g. 500">
+    </div>
 
-      <button id="calc-btn-${index}" class="btn btn-primary mb-3">Calculate Max Inches</button>
+    <!-- Result column -->
+    <div class="col-md-4 text-center">
+      <div id="result-${index}" class="fw-bold mono"
+           style="font-size: 1.8rem; color: #28a745;">
+        <!-- Result shows here -->
+      </div>
+    </div>
+  </div>
 
-      <div id="result-${index}" class="mt-2 text-success fw-bold"></div>
-    `;
+  <button id="calc-btn-${index}" class="btn btn-primary mb-3">Calculate Max Inches</button>
+`;
 
       container.appendChild(card);
 
@@ -68,33 +79,6 @@
             });
         });
     });
-  }
-
-  //function fetchMaxInches()
-
-  function calculateMaxInches(index) {
-    const gallonsInput = document.getElementById(`gallons-${index}`).value;
-    const gallons = parseFloat(gallonsInput);
-
-    const chart = tanks[index].tank_chart;
-
-    let bestInch = null;
-
-    for (const inchStr in chart) {
-      const inch = parseInt(inchStr);
-      const gallonsAtInch = chart[inchStr];
-
-      if (gallonsAtInch <= gallons) {
-        bestInch = inch; // keep updating as we find valid ones
-      }
-    }
-
-    const result = document.getElementById(`result-${index}`);
-    if (bestInch !== null) {
-      result.textContent = `Max Inches: ${bestInch}"`;
-    } else {
-      result.textContent = `No matching inches found.`;
-    }
   }
 
   renderTankCards(tanks);
