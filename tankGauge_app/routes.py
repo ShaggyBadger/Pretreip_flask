@@ -4,6 +4,9 @@ from dbConnector import fetch_session
 from .models import TankCharts, TankData, StoreData, StoreTankMap
 from sqlalchemy import or_, func
 import math
+from rich.traceback import install
+from rich import print
+install()
 
 
 @tankGauge_bp.route('/')
@@ -41,39 +44,45 @@ def planning_submit():
     
     # get store_tank_map model obj
     tank_dict_list = []
-    for fuel_type in fuel_types:
-        tank_map_entry = (
-        session.query(StoreTankMap)
-        .filter_by(store_id=store_data.id, fuel_type=fuel_type)
-        .all()
-        )
 
-        if tank_map_entry:
-            for stm in tank_map_entry: # stm = StoreTankMap
-                tank_id = stm.tank_id
+    try:
+        for fuel_type in fuel_types:
+            tank_map_entry = (
+            session.query(StoreTankMap)
+            .filter_by(store_id=store_data.id, fuel_type=fuel_type)
+            .all()
+            )
 
-                # build tank chart for this tank
-                query = session.query(func.max(TankCharts.gallons))
-                query = query.filter(TankCharts.tank_type_id == tank_id)
-                max_gal = query.first()[0]
-                ninety_percent = math.floor(max_gal * 0.9)
+            if tank_map_entry:
+                for stm in tank_map_entry: # stm = StoreTankMap
+                    tank_id = stm.tank_id
 
-                temp_dict = {
-                    'tank_type_id': tank_id,
-                    'store_num': store_number,
-                    'fuel_type': fuel_type,
-                    'max_gal': max_gal,
-                    'ninety_percent': ninety_percent
-                }
+                    # build tank chart for this tank
+                    query = session.query(func.max(TankCharts.gallons))
+                    query = query.filter(TankCharts.tank_type_id == tank_id)
+                    max_gal = query.first()[0]
+                    ninety_percent = math.floor(max_gal * 0.9)
 
-                tank_dict_list.append(temp_dict)
+                    temp_dict = {
+                        'tank_type_id': tank_id,
+                        'store_num': store_number,
+                        'fuel_type': fuel_type,
+                        'max_gal': max_gal,
+                        'ninety_percent': ninety_percent
+                    }
 
-    session.close()
-    return render_template(
+                    tank_dict_list.append(temp_dict)
+        return render_template(
         'tankGauge/planning-submit.html',
         tanks = tank_dict_list,
         store_num = store_number
-    )
+        )
+
+    except:
+        return render_template('tankGauge/missing-chart.html')
+    
+    finally:
+        session.close()
 
 @tankGauge_bp.route('/calculate_inches', methods=['POST'])
 def calculate_inches():
@@ -148,34 +157,41 @@ def delivery_submit():
 
     # get store_tank_map model obj
     tank_dict_list = []
-    for fuel_type in fuel_types:
-        tank_map_entry = (
-        session.query(StoreTankMap)
-        .filter_by(store_id=store_data.id, fuel_type=fuel_type)
-        .all()
-        )
 
-        if tank_map_entry:
-            for stm in tank_map_entry: # stm = StoreTankMap object
-                tank_id = stm.tank_id
+    try:
+        for fuel_type in fuel_types:
+            tank_map_entry = (
+            session.query(StoreTankMap)
+            .filter_by(store_id=store_data.id, fuel_type=fuel_type)
+            .all()
+            )
 
-                # build tank chart for this tank
-                query = session.query(func.max(TankCharts.gallons))
-                query = query.filter(TankCharts.tank_type_id == tank_id)
-                max_gal = query.first()[0]
-                ninety_percent = math.floor(max_gal * 0.9)
+            if tank_map_entry:
+                for stm in tank_map_entry: # stm = StoreTankMap object
+                    tank_id = stm.tank_id
 
-                temp_dict = {
-                    'tank_type_id': tank_id,
-                    'store_num': store_number,
-                    'fuel_type': fuel_type,
-                    'max_gal': max_gal,
-                    'ninety_percent': ninety_percent
-                }
+                    # build tank chart for this tank
+                    query = session.query(func.max(TankCharts.gallons))
+                    query = query.filter(TankCharts.tank_type_id == tank_id)
+                    max_gal = query.first()[0]
+                    ninety_percent = math.floor(max_gal * 0.9)
 
-                tank_dict_list.append(temp_dict)
+                    temp_dict = {
+                        'tank_type_id': tank_id,
+                        'store_num': store_number,
+                        'fuel_type': fuel_type,
+                        'max_gal': max_gal,
+                        'ninety_percent': ninety_percent
+                    }
 
-    session.close()
+                    tank_dict_list.append(temp_dict)
+
+    except:
+        return render_template('tankGauge/missing-chart.html')
+    
+    finally:
+        print('\n\n*****session closing\*****\n\n')
+        session.close()
 
     return render_template(
         'tankGauge/delivery-submit.html',
@@ -193,7 +209,6 @@ def estimate_delivery_values():
     deliver_gallons = data.get("delivery_gallons")
     tank_inches = data.get("current_inches")
     tank_type_id = data.get('tank_type_id')
-    max_gal = data.get('max_gal')
 
     # hit up the db
     session = next(fetch_session())

@@ -1,0 +1,24 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm p-5 text-center">
+        <!-- Main headline for the error message -->
+        <h1 class="fw-bold text-danger display-4 mb-4">MISSION FAILURE</h1>
+        <h3 class="text-secondary mb-4">No Tank Chart Found</h3>
+
+        <!-- The core message, with a motivational and direct tone -->
+        <p class="fs-5 text-dark lh-base">
+          There was an error in this request. It's likely that the tank chart
+          for this store is not in the system yet.
+        </p>
+        <p class="fs-5 fw-bold text-dark lh-base">
+          Let Josh know, maybe we can get this information put into the system.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
