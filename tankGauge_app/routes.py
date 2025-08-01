@@ -118,3 +118,10 @@ def calculate_inches():
     
     finally:
         session.close()
+
+@tankGauge_bp.route('/delivery')
+def delivery():
+    if "user_id" not in flask_session:
+        return redirect(url_for("home"))
+    
+    return render_template(url_for('tankGauge.delivery'))
