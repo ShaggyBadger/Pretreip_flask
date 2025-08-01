@@ -1,0 +1,198 @@
+{% extends "base.html" %} {% block content %}
+
+<!-- This is where the navigation menu is included. -->
+{% include 'nav_menu.html' %}
+
+<div class="container">
+  <h1 class="text-center fw-bold display-4 mb-5">Tank Delivery Estimation</h1>
+  <h5 class="text-center mb-5">{{ store_num }}</h5>
+
+  <!-- This is the container where all the dynamically generated tank cards will be placed. -->
+  <div id="tank-cards"></div>
+</div>
+
+<script>
+  // A. Pass the Python list of dictionaries 'tanks' directly to a JavaScript variable.
+  // The default('[]') filter is added to prevent a JSON parsing error if 'tanks' is null or undefined.
+  const tanks = JSON.parse(`{{ tanks | tojson | safe | default('[]') }}`);
+
+  // B. Use Jinja to get the URL for the estimation endpoint. This is better than hardcoding.
+  const estimateUrl = "{{ url_for('tankgauge.estimate_delivery_values') }}";
+
+  /**
+   * Dynamically renders tank cards based on the provided data.
+   * @param {Array<Object>} tanks - A list of tank objects.
+   */
+  function renderTankCards(tanks) {
+    const container = document.getElementById("tank-cards");
+
+    // Clear any existing content before rendering
+    container.innerHTML = "";
+
+    tanks.forEach((tank, index) => {
+      // C. Create the card element once. No need for a redundant inner div.
+      const card = document.createElement("div");
+      card.className = "card shadow-sm p-4 mb-4";
+
+      card.innerHTML = `
+      <!-- Row for displaying tank details -->
+      <div class="row mb-3">
+          <div class="col-4">
+              <h5>Fuel Type: ${tank.fuel_type}</h5>
+              <p class="mb-1">Max Capacity: ${tank.max_gal} gallons</p>
+              <p>90% Capacity: ${tank.ninety_percent} gallons</p>
+          </div>
+      </div>
+
+      <!-- Row for user input fields -->
+      <div class="row mb-3">
+          <div class="col-md-4 mb-3 mb-md-0">
+              <label for="gallons-${index}" class="form-label">Enter delivery gallons:</label>
+              <input type="number" id="gallons-${index}" class="form-control" placeholder="e.g. 4200">
+          </div>
+      </div>
+      <div class="row mb-3">
+          <div class="col-md-4">
+              <label for="inches-${index}" class="form-label">Enter current inches:</label>
+              <input type="number" id="inches-${index}" class="form-control" placeholder="e.g. 29">
+          </div>
+      </div>
+      
+      <!-- Row for the calculation button -->
+      <div class="row mb-3">
+          <div class="col-4">
+              <button id="calc-btn-${index}" class="btn btn-primary mono w-100">Calculate</button>
+          </div>
+      </div>
+
+      <!-- Container for displaying results or errors -->
+      <div id="results-container-${index}" class="mt-4">
+        <!-- Error messages will be displayed here -->
+        <div id="error-message-${index}" class="text-danger fw-bold text-center"></div>
+
+        <!-- This is the new, structured display for the successful results -->
+        <div id="successful-results-${index}" class="row g-2 mt-2" style="display: none;">
+          <!-- New: Starting Gallons -->
+          <div class="row mb-3">
+          <div class="col-4 d-flex">
+            <div class="fw-bold me-2 text-info">Starting Gallons:</div>
+            <div id="starting-gallons-value-${index}" class="fw-bold text-info"></div>
+          </div>
+          </div>
+          <!-- New: Starting Inches -->
+          <div class="row mb-3">
+          <div class="col-4 d-flex mt-2">
+            <div class="fw-bold me-2 text-info">Starting Inches:</div>
+            <div id="starting-inches-value-${index}" class="fw-bold text-info"></div>
+          </div>
+          </div>
+
+          <!-- First row for Final Gallons -->
+          <div class="row mb-3">
+          <div class="col-4 d-flex mt-2">
+            <div class="fw-bold me-2 text-success">Final Gallons:</div>
+            <div id="final-gallons-value-${index}" class="fw-bold text-success"></div>
+          </div>
+          </div>
+          <!-- Second row for Final Inches -->
+          <div class="row mb-3">
+          <div class="col-4 d-flex mt-2">
+            <div class="fw-bold me-2 text-success">Final Inches:</div>
+            <div id="final-inches-value-${index}" class="fw-bold text-success"></div>
+          </div>
+          </div>
+        </div>
+      </div>
+      `;
+
+      container.appendChild(card);
+
+      // E. Add the event listener for the button.
+      document
+        .getElementById(`calc-btn-${index}`)
+        .addEventListener("click", function () {
+          // Get the user's input values.
+          const deliveryGallons = parseFloat(
+            document.getElementById(`gallons-${index}`).value
+          );
+          const currentInches = parseFloat(
+            document.getElementById(`inches-${index}`).value
+          );
+
+          const errorMessageElement = document.getElementById(
+            `error-message-${index}`
+          );
+          const successfulResultsElement = document.getElementById(
+            `successful-results-${index}`
+          );
+          const startingGallonsValueElement = document.getElementById(
+            `starting-gallons-value-${index}`
+          );
+          const startingInchesValueElement = document.getElementById(
+            `starting-inches-value-${index}`
+          );
+          const finalGallonsValueElement = document.getElementById(
+            `final-gallons-value-${index}`
+          );
+          const finalInchesValueElement = document.getElementById(
+            `final-inches-value-${index}`
+          );
+
+          // Clear previous results and errors
+          errorMessageElement.textContent = "";
+          successfulResultsElement.style.display = "none";
+
+          // F. Validate inputs and provide in-page feedback.
+          if (isNaN(deliveryGallons) || isNaN(currentInches)) {
+            errorMessageElement.textContent = "Please enter valid numbers.";
+            return;
+          }
+
+          errorMessageElement.textContent = "Calculating...";
+          errorMessageElement.style.color = "#ffc107"; // Yellow for loading state
+
+          // G. Send the data to Flask using the dynamically generated URL.
+          fetch(estimateUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              delivery_gallons: deliveryGallons,
+              current_inches: currentInches,
+              tank_type_id: tank.tank_type_id,
+              max_gal: tank.max_gal,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              errorMessageElement.textContent = ""; // Clear loading message
+
+              if (data.final_gallons !== null && data.final_inches !== null) {
+                // H. Correctly display results in the new structured elements.
+                startingGallonsValueElement.textContent = `${data.starting_gallons} gallons`;
+                startingInchesValueElement.textContent = `${data.starting_inches}"`;
+                finalGallonsValueElement.textContent = `${data.final_gallons} gallons`;
+                finalInchesValueElement.textContent = `${data.final_inches}"`;
+                successfulResultsElement.style.display = "flex"; // Show the results container
+              } else {
+                errorMessageElement.textContent =
+                  data.message || `Calculation failed.`;
+                errorMessageElement.style.color = "#dc3545"; // Red for error
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              errorMessageElement.textContent =
+                "An error occurred. Please try again.";
+              errorMessageElement.style.color = "#dc3545"; // Red for error
+            });
+        });
+    });
+  }
+
+  // Initial call to render the cards when the page loads.
+  renderTankCards(tanks);
+</script>
+
+{% endblock %}
