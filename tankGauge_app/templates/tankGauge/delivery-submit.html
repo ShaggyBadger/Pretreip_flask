@@ -37,11 +37,10 @@
       card.innerHTML = `
       <!-- Row for displaying tank details -->
       <div class="row mb-3">
-          <div class="col-4">
+          
               <h5>Fuel Type: ${tank.fuel_type}</h5>
               <p class="mb-1">Max Capacity: ${tank.max_gal} gallons</p>
               <p>90% Capacity: ${tank.ninety_percent} gallons</p>
-          </div>
       </div>
 
       <!-- Row for user input fields -->
@@ -60,9 +59,7 @@
       
       <!-- Row for the calculation button -->
       <div class="row mb-3">
-          <div class="col-4">
               <button id="calc-btn-${index}" class="btn btn-primary mono w-100">Calculate</button>
-          </div>
       </div>
 
       <!-- Container for displaying results or errors -->
@@ -74,32 +71,20 @@
         <div id="successful-results-${index}" class="row g-2 mt-2" style="display: none;">
           <!-- New: Starting Gallons -->
           <div class="row mb-3">
-          <div class="col-4 d-flex">
             <div class="fw-bold me-2 text-info">Starting Gallons:</div>
             <div id="starting-gallons-value-${index}" class="fw-bold text-info"></div>
-          </div>
-          </div>
-          <!-- New: Starting Inches -->
-          <div class="row mb-3">
-          <div class="col-4 d-flex mt-2">
+            <!-- New: Starting Inches -->
             <div class="fw-bold me-2 text-info">Starting Inches:</div>
             <div id="starting-inches-value-${index}" class="fw-bold text-info"></div>
-          </div>
           </div>
 
           <!-- First row for Final Gallons -->
           <div class="row mb-3">
-          <div class="col-4 d-flex mt-2">
             <div class="fw-bold me-2 text-success">Final Gallons:</div>
             <div id="final-gallons-value-${index}" class="fw-bold text-success"></div>
-          </div>
-          </div>
           <!-- Second row for Final Inches -->
-          <div class="row mb-3">
-          <div class="col-4 d-flex mt-2">
             <div class="fw-bold me-2 text-success">Final Inches:</div>
             <div id="final-inches-value-${index}" class="fw-bold text-success"></div>
-          </div>
           </div>
         </div>
       </div>
