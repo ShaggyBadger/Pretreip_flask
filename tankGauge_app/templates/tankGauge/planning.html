@@ -53,4 +53,21 @@
     </div>
   </form>
 </div>
+
+<script>
+  document.querySelector("form").addEventListener("submit", function (e) {
+    const storeNumber = document.getElementById("storeNumber").value.trim();
+    const fuelCheckboxes = document.querySelectorAll("input[name='fuel_types']:checked");
+
+    if (!storeNumber || fuelCheckboxes.length === 0) {
+      e.preventDefault(); // Stop form from submitting
+
+      let msg = "Please do the following before proceeding:\n";
+      if (!storeNumber) msg += "- Enter a store number\n";
+      if (fuelCheckboxes.length === 0) msg += "- Select at least one fuel type";
+
+      alert(msg);
+    }
+  });
+</script>
 {% endblock %}
