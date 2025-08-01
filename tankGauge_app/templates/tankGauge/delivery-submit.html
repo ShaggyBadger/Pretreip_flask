@@ -37,21 +37,20 @@
       card.innerHTML = `
       <!-- Row for displaying tank details -->
       <div class="row mb-3">
-          
-              <h5>Fuel Type: ${tank.fuel_type}</h5>
-              <p class="mb-1">Max Capacity: ${tank.max_gal} gallons</p>
-              <p>90% Capacity: ${tank.ninety_percent} gallons</p>
+        <div class="col-12">
+          <h5>Fuel Type: ${tank.fuel_type}</h5>
+          <p class="mb-1">Max Capacity: ${tank.max_gal} gallons</p>
+          <p>90% Capacity: ${tank.ninety_percent} gallons</p>
+        </div>
       </div>
 
       <!-- Row for user input fields -->
       <div class="row mb-3">
-          <div class="col-md-4 mb-3 mb-md-0">
+          <div class="col-md-6 mb-3 mb-md-0">
               <label for="gallons-${index}" class="form-label">Enter delivery gallons:</label>
               <input type="number" id="gallons-${index}" class="form-control" placeholder="e.g. 4200">
           </div>
-      </div>
-      <div class="row mb-3">
-          <div class="col-md-4">
+          <div class="col-md-6">
               <label for="inches-${index}" class="form-label">Enter current inches:</label>
               <input type="number" id="inches-${index}" class="form-control" placeholder="e.g. 29">
           </div>
@@ -59,7 +58,9 @@
       
       <!-- Row for the calculation button -->
       <div class="row mb-3">
+          <div class="col-12">
               <button id="calc-btn-${index}" class="btn btn-primary mono w-100">Calculate</button>
+          </div>
       </div>
 
       <!-- Container for displaying results or errors -->
@@ -68,23 +69,34 @@
         <div id="error-message-${index}" class="text-danger fw-bold text-center"></div>
 
         <!-- This is the new, structured display for the successful results -->
-        <div id="successful-results-${index}" class="row g-2 mt-2" style="display: none;">
-          <!-- New: Starting Gallons -->
-          <div class="row mb-3">
-            <div class="fw-bold me-2 text-info">Starting Gallons:</div>
-            <div id="starting-gallons-value-${index}" class="fw-bold text-info"></div>
-            <!-- New: Starting Inches -->
-            <div class="fw-bold me-2 text-info">Starting Inches: 
-            <span id="starting-inches-value-${index}" class="fw-bold text-info"></span>
+        <div id="successful-results-${index}" class="mt-2" style="display: none;">
+          <!-- Starting Gallons Row -->
+          <div class="row mb-1">
+            <div class="col-12">
+              <span class="fw-bold me-2 text-info">Starting Gallons:</span>
+              <span id="starting-gallons-value-${index}" class="text-info"></span>
+            </div>
           </div>
-
-          <!-- First row for Final Gallons -->
-          <div class="row mb-3">
-            <div class="fw-bold me-2 text-success">Final Gallons:</div>
-            <div id="final-gallons-value-${index}" class="fw-bold text-success"></div>
-          <!-- Second row for Final Inches -->
-            <div class="fw-bold me-2 text-success">Final Inches:</div>
-            <div id="final-inches-value-${index}" class="fw-bold text-success"></div>
+          <!-- Starting Inches Row -->
+          <div class="row mb-1">
+            <div class="col-12">
+              <span class="fw-bold me-2 text-info">Starting Inches:</span>
+              <span id="starting-inches-value-${index}" class="text-info"></span>
+            </div>
+          </div>
+          <!-- Ending Gallons Row -->
+          <div class="row mt-3 mb-1">
+            <div class="col-12">
+              <span class="fw-bold me-2 text-success">Ending Gallons:</span>
+              <span id="final-gallons-value-${index}" class="text-success"></span>
+            </div>
+          </div>
+          <!-- Ending Inches Row -->
+          <div class="row">
+            <div class="col-12">
+              <span class="fw-bold me-2 text-success">Ending Inches:</span>
+              <span id="final-inches-value-${index}" class="text-success"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -159,7 +171,7 @@
                 startingInchesValueElement.textContent = `${data.starting_inches}"`;
                 finalGallonsValueElement.textContent = `${data.final_gallons} gallons`;
                 finalInchesValueElement.textContent = `${data.final_inches}"`;
-                successfulResultsElement.style.display = "flex"; // Show the results container
+                successfulResultsElement.style.display = "block"; // Show the results container
               } else {
                 errorMessageElement.textContent =
                   data.message || `Calculation failed.`;
