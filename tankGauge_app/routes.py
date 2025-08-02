@@ -1,7 +1,7 @@
 from flask import render_template, request, jsonify, redirect, abort, url_for, session as flask_session
 from tankGauge_app import tankGauge_bp
 from dbConnector import fetch_session
-from .models import TankCharts, TankData, StoreData, StoreTankMap
+from tankGauge_app.models import TankCharts, TankData, StoreData, StoreTankMap
 from sqlalchemy import or_, func
 import math
 from rich.traceback import install

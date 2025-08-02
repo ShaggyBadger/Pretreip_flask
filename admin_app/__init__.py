@@ -1,7 +1,7 @@
 from flask import Blueprint
 
-tankGauge_bp = Blueprint(
-    'tankgauge', __name__,
+admin_bp = Blueprint(
+    'admin', __name__,
     template_folder='templates',
     static_folder='static',
 )
