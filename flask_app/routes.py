@@ -41,6 +41,7 @@ def login():
 
         if user:
             session["user_id"] = user["id"]
+            session['admin_level'] = user.get('admin_level', 0)
             session["username"] = username
             url = url_for("home")
 

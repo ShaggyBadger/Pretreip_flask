@@ -109,7 +109,7 @@ class Utils:
         c = conn.cursor()
 
         sql = """
-    SELECT id, password
+    SELECT id, password, admin_level
     FROM users
     WHERE username = %s
     """

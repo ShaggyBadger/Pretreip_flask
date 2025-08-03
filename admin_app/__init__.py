@@ -7,4 +7,6 @@ admin_bp = Blueprint(
 )
 
 from . import routes
-from . import models
+from .models import users
+
+
