@@ -1,3 +1,0 @@
-ALTER TABLE users ADD COLUMN admin_level INT NOT NULL DEFAULT 0;
-
-run this on mysql laptop pls
