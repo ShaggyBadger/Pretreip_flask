@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from urllib.parse import quote_plus
+import socket
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -18,7 +19,11 @@ MYSQL_DB = os.environ.get("MYSQL_DB")
 # This ensures special characters in the password are handled correctly.
 encoded_password = quote_plus(MYSQL_PASSWORD)
 
-DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}"
+hostname = socket.gethostname()
+if hostname == "theShire":  # Your laptop
+    DATABASE_URL = f'mysql+pymysql://{MYSQL_USER}:{encoded_password}@{os.environ.get('TUNNEL_HOST')}/{MYSQL_DB}'
+else: # assume we are on linode server
+    DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}"
 
 # Create engine with pooling options
 engine = create_engine(
