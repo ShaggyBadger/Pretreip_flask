@@ -62,7 +62,8 @@ def register():
         password = request.form.get("password")
 
         utils_obj = models.Utils()
-        user_id = utils_obj.register_user(username, password)
+        #user_id = utils_obj.register_user(username, password)
+        user_id = 1
 
         # register_user method returns True if user already exists in db
         print(f"\n\n*****\n{utils_obj.user_exists}\n*****\n\n")
@@ -78,6 +79,7 @@ def register():
             url = url_for("home")
 
             return redirect(url)
+        
     return render_template("register.html")
 
 
