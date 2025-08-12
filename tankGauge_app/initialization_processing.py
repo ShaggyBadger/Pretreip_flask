@@ -2,8 +2,8 @@ from pathlib import Path
 from rich.traceback import install
 import pandas as pd
 from sqlalchemy import or_
-from dbConnector import fetch_session
-from .models import StoreData, TankData, TankCharts, StoreTankMap
+from flask_app.extensions import db # Import db from extensions
+from flask_app.models import StoreData, TankData, TankCharts, StoreTankMap
 import numpy as np # Import numpy for pd.isna
 install()
 
@@ -19,8 +19,7 @@ class Processing:
         self.charts_dir.mkdir(parents=True, exist_ok=True)
         self.misc_dir.mkdir(parents=True, exist_ok=True)
 
-    def get_session(self):
-        return next(fetch_session())
+    
 
     def store_data_entry(self):
         """
@@ -43,7 +42,7 @@ class Processing:
             print("Ensure 'openpyxl' is installed (pip install openpyxl) and the file is valid.")
             return
 
-        session = next(fetch_session()) # Get a new database session
+        session = db.session # Get a new database session
         inserted_count = 0
         updated_count = 0
 
@@ -169,10 +168,11 @@ class Processing:
             session.rollback() # Rollback all changes if any error occurs during the process
             print(f"An error occurred during store data entry: {e}")
         finally:
-            session.close() # Always close the session
+            pass
+            
 
     def tank_chart_entry(self):
-        session = self.get_session() # Get a new database session
+        session = db.session # Get a new database session
         chart_files = list(self.charts_dir.glob('*.xlsx'))
         try:
             for chart_file in chart_files:
@@ -217,7 +217,7 @@ class Processing:
                             if user_input == 'y':
                                 try:
                                     tank_data = {'name': row.get('tank_name')}
-                                    temp_session = self.get_session()
+                                    temp_session = db.session
                                     query = temp_session.query(TankData).filter(TankData.name == tank_data['name'])
                                     existing_tank = query.first()
                                     
@@ -229,7 +229,7 @@ class Processing:
                                     print('something went wrong with temp_session tank update.')
                                 finally:
                                     temp_session.commit()
-                                    temp_session.close()
+                                    
 
                         if fk:
                             # insert the chart information
@@ -243,7 +243,6 @@ class Processing:
 
         finally:
             session.commit() # Commit all changes (inserts and updates) at once
-            session.close()
         
     def tank_data_entry(self):
         '''
@@ -275,7 +274,7 @@ class Processing:
         fuel_types = ['regular', 'plus', 'premium', 'kerosene', 'diesel']
         
         try:
-            session = self.get_session() # Get a new database session
+            session = db.session # Get a new database session
             for fuel_type in fuel_types:
                 for _, row in df.iterrows():
                     row_data = row.get(fuel_type)
@@ -311,8 +310,8 @@ class Processing:
                     session.add(new_tank)
 
             session.commit() # Commit all changes (inserts and updates) at once
-        finally:
-            session.close()
+        except:
+            pass
 
     def store_tank_map(self):
         session = self.get_session()
@@ -384,5 +383,4 @@ class Processing:
             session.rollback() # Rollback all changes if any error occurs during the process
             print(f"An error occurred during store data entry: {e}")
 
-        finally:
-            session.close()
+

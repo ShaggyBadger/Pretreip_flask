@@ -1,40 +1,49 @@
-from flask import Flask, g, session
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+import os
+import urllib.parse
+from flask import Flask
 from datetime import timedelta
-from flask_app.settings import SECRET_KEY
-from dbConnector import fetch_session, init_db
-from flask_app import models
-from tankGauge_app import tankGauge_bp
+from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
+#from tankGauge_app import tankGauge_bp
+#from speedGauge_app import speedGauge_bp
+from admin_app import admin_bp
+from auth_app import auth_bp
+from flask_app.extensions import db, migrate
 
-# Initialize the database
-init_db()
-
-# Make a function to create the app
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
+    app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
     app.permanent_session_lifetime = timedelta(days=7)
 
+    # Configure the database
+    MYSQL_HOST = os.environ.get("MYSQL_HOST")
+    MYSQL_USER = os.environ.get("MYSQL_USER")
+    MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD")
+    MYSQL_DB = os.environ.get("MYSQL_DB")
+    
+    # URL-encode the password to handle special characters
+    encoded_password = urllib.parse.quote_plus(MYSQL_PASSWORD)
+    db_uri = f"mysql+pymysql://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}?charset=utf8mb4"
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ECHO'] = True
+    print(f"DEBUG: SQLALCHEMY_DATABASE_URI = {db_uri}")
+
+    
+
+    # Initialize extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    # Explicitly import Users model and access its table to force mapping
+    from flask_app.models.users import Users
+    _ = Users.__table__
+
     # Register blueprints
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(tankGauge_bp, url_prefix='/tankgauge')
-
-    # Attach a database utility to the app context
-    app.db_model = models.Utils()
-
-    @app.before_request
-    def before_request_hook():
-        # Set session to permanent
-        session.permanent = True
-        # Get a database session from the pool and store it in the application context
-        g.db_session = next(fetch_session())
-
-    @app.teardown_appcontext
-    def teardown_db_session(exception=None):
-        # Pop the session from the application context and close it
-        db_session = g.pop('db_session', None)
-        if db_session is not None:
-            db_session.close()
+    app.register_blueprint(speedGauge_bp, url_prefix='/speedgauge')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
     return app
 

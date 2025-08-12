@@ -1,7 +1,7 @@
 from flask import render_template, request, jsonify, redirect, abort, url_for, session as flask_session
 from tankGauge_app import tankGauge_bp
-from dbConnector import fetch_session
-from tankGauge_app.models import TankCharts, TankData, StoreData, StoreTankMap
+from flask_app.extensions import db
+from flask_app.models import TankCharts, TankData, StoreData, StoreTankMap
 from sqlalchemy import or_, func
 import math
 from rich.traceback import install
@@ -34,8 +34,7 @@ def planning_submit():
         return redirect(url_for('tankGauge.planning_selection'))
 
     # get the store_data object for the usere's store_num entry
-    session = next(fetch_session())
-    store_data = session.query(StoreData).filter(
+    store_data = db.session.query(StoreData).filter(
     or_(
         StoreData.store_num == store_number,
         StoreData.riso_num == store_number
@@ -48,7 +47,7 @@ def planning_submit():
     try:
         for fuel_type in fuel_types:
             tank_map_entry = (
-            session.query(StoreTankMap)
+            db.session.query(StoreTankMap)
             .filter_by(store_id=store_data.id, fuel_type=fuel_type)
             .all()
             )
@@ -58,7 +57,7 @@ def planning_submit():
                     tank_id = stm.tank_id
 
                     # build tank chart for this tank
-                    query = session.query(func.max(TankCharts.gallons))
+                    query = db.session.query(func.max(TankCharts.gallons))
                     query = query.filter(TankCharts.tank_type_id == tank_id)
                     max_gal = query.first()[0]
                     ninety_percent = math.floor(max_gal * 0.9)
@@ -80,9 +79,6 @@ def planning_submit():
 
     except:
         return render_template('tankGauge/missing-chart.html')
-    
-    finally:
-        session.close()
 
 @tankGauge_bp.route('/calculate_inches', methods=['POST'])
 def calculate_inches():
@@ -99,8 +95,7 @@ def calculate_inches():
     max_available_gal = math.floor(max_gal * 0.9) - gallons
 
     # hit up the db
-    session = next(fetch_session())
-    query = session.query(TankCharts.inches, TankCharts.gallons)
+    query = db.session.query(TankCharts.inches, TankCharts.gallons)
     query = query.filter(TankCharts.tank_type_id == tank_type_id)
     query = query.filter(TankCharts.gallons >= max_available_gal)
     query = query.order_by(TankCharts.gallons.asc())
@@ -124,9 +119,6 @@ def calculate_inches():
                 'gal': None
             }
         )
-    
-    finally:
-        session.close()
 
 @tankGauge_bp.route('/delivery')
 def delivery():
@@ -147,8 +139,7 @@ def delivery_submit():
         return redirect(url_for('tankGauge.planning_selection'))
 
     # get the store_data object for the usere's store_num entry
-    session = next(fetch_session())
-    store_data = session.query(StoreData).filter(
+    store_data = db.session.query(StoreData).filter(
     or_(
         StoreData.store_num == store_number,
         StoreData.riso_num == store_number
@@ -161,7 +152,7 @@ def delivery_submit():
     try:
         for fuel_type in fuel_types:
             tank_map_entry = (
-            session.query(StoreTankMap)
+            db.session.query(StoreTankMap)
             .filter_by(store_id=store_data.id, fuel_type=fuel_type)
             .all()
             )
@@ -171,7 +162,7 @@ def delivery_submit():
                     tank_id = stm.tank_id
 
                     # build tank chart for this tank
-                    query = session.query(func.max(TankCharts.gallons))
+                    query = db.session.query(func.max(TankCharts.gallons))
                     query = query.filter(TankCharts.tank_type_id == tank_id)
                     max_gal = query.first()[0]
                     ninety_percent = math.floor(max_gal * 0.9)
@@ -188,10 +179,6 @@ def delivery_submit():
 
     except:
         return render_template('tankGauge/missing-chart.html')
-    
-    finally:
-        print('\n\n*****session closing\*****\n\n')
-        session.close()
 
     return render_template(
         'tankGauge/delivery-submit.html',
@@ -211,16 +198,14 @@ def estimate_delivery_values():
     tank_type_id = data.get('tank_type_id')
 
     # hit up the db
-    session = next(fetch_session())
-    
-    query = session.query(TankCharts.gallons)
+    query = db.session.query(TankCharts.gallons)
     query = query.filter(TankCharts.tank_type_id == tank_type_id)
     query = query.filter(TankCharts.inches == tank_inches)
     gallons_in_tank = query.first()
     
     try:
         final_gal = gallons_in_tank[0] + deliver_gallons
-        query = session.query(TankCharts.inches)
+        query = db.session.query(TankCharts.inches)
         query = query.filter(TankCharts.tank_type_id == tank_type_id)
         query = query.filter(TankCharts.gallons <= final_gal)
         query = query.order_by(TankCharts.inches.desc())
@@ -242,6 +227,3 @@ def estimate_delivery_values():
                 'gal': None
             }
         )
-
-    finally:
-        session.close()

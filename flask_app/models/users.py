@@ -1,18 +1,20 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
-from dbConnector import Base 
+from flask_app.extensions import db
 
-class Users(Base):
+class Users(db.Model):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String(255), unique=True, nullable=False)
-    username = Column(String(80), unique=True, nullable=False)
+    username = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     creation_timestamp = Column(DateTime, server_default=func.now())
     first_name = Column(String(255))
     last_name = Column(String(255))
-    driver_id = Column(Integer)  # Adjust this later if it becomes a ForeignKey
+    driver_id = Column(String(255))
+    admin_level = Column(Integer, nullable=False, server_default='0')
+    dot_number = db.Column(String(255))
+    role = db.Column(String(50), nullable=False, server_default='standard')
 
     def __repr__(self):
         return f"<Users(username='{self.username}', id={self.id})>"

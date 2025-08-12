@@ -53,7 +53,7 @@
 | Column Name | Type | Nullable | Default | Key | Extra | Description |
 |------------ |----- |--------- |-------- |---- | ----- | ----------- |
 | id                 | int          | NO          | NULL              | PRIMARY    | auto_increment    |                |
-| username           | varchar(80)  | NO          | NULL              | UNIQUE     |                   | unique username for the user. Currently its auto-populated to use driver number, but it will be an email address in the future. |
+| username           | varchar(255)  | NO          | NULL              | UNIQUE     |                   | User's email address, used for login. |
 | password           | varchar(255) | NO          | NULL              |            |                   | Hashed using python crypto magic. Obviously we are not storing actual password in here. |
 | creation_timestamp | datetime     | YES         | CURRENT_TIMESTAMP |            | DEFAULT_GENERATED | Python generates a timestamp when the user is first registered into the system. |
 | first_name         | varchar(255) | YES         | NULL              |            |                   | User's first name. Not necessesary but nice to  have |

@@ -1,12 +1,9 @@
 from flask import Blueprint
 
-admin_bp = Blueprint(
-    'admin', __name__,
+auth_bp = Blueprint(
+    'auth_bp', __name__,
     template_folder='templates',
-    static_folder='static',
+    static_folder='static'
 )
 
 from . import routes
-
-
-
