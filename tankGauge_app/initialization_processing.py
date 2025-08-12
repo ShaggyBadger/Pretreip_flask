@@ -29,6 +29,8 @@ class Processing:
         excel_file = self.misc_dir / 'storeInfo_master.xlsx'
 
         if not excel_file.exists():
+            print(f"Error: Expected Excel file not found: {excel_file}")
+            print("Please ensure 'storeInfo_master.xlsx' exists in the specified directory.")
             return
 
         try:
@@ -36,6 +38,8 @@ class Processing:
             # Requires 'openpyxl' to be installed (pip install openpyxl)
             df = pd.read_excel(excel_file)
         except Exception as e:
+            print(f"Error reading Excel file {excel_file.name}: {e}")
+            print("Ensure 'openpyxl' is installed (pip install openpyxl) and the file is valid.")
             return
 
         session = db.session # Get a new database session
@@ -162,10 +166,10 @@ class Processing:
 
         except Exception as e:
             session.rollback() # Rollback all changes if any error occurs during the process
+            print(f"An error occurred during store data entry: {e}")
         finally:
             pass
             
-
     def tank_chart_entry(self):
         session = db.session # Get a new database session
         chart_files = list(self.charts_dir.glob('*.xlsx'))
@@ -212,10 +216,11 @@ class Processing:
                             new_chart_entry = TankCharts(**row)
                             session.add(new_chart_entry)
                         else:
-                            pass
+                            print(f"Warning: Tank with name '{row.get('tank_name')}' not found in tank_data table. Skipping chart entry.")
 
         except Exception as e:
             session.rollback()
+            print(f'Exception happened in tank_chart_entry method: {e}. Rolling things back...')
 
         finally:
             session.commit() # Commit all changes (inserts and updates) at once
@@ -232,6 +237,8 @@ class Processing:
         store_info_file = self.misc_dir / 'storeInfo_master.xlsx'
 
         if not store_info_file.exists():
+            print(f"Error: Expected Excel file not found: {store_info_file}")
+            print("Please ensure 'storeInfo_master.xlsx' exists in the specified directory.")
             return
 
         try:
@@ -239,6 +246,8 @@ class Processing:
             # Requires 'openpyxl' to be installed (pip install openpyxl)
             df = pd.read_excel(store_info_file)
         except Exception as e:
+            print(f"Error reading Excel file {store_info_file.name}: {e}")
+            print("Ensure 'openpyxl' is installed (pip install openpyxl) and the file is valid.")
             return
         
         # start by building a list of tank names from the store_info file
@@ -353,5 +362,6 @@ class Processing:
                 
         except Exception as e:
             session.rollback() # Rollback all changes if any error occurs during the process
+            print(f"An error occurred during store data entry: {e}")
 
 

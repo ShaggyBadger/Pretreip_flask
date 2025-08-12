@@ -23,7 +23,6 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{MYSQL_USER}:{encoded_password}@{MYSQL_HOST}/{MYSQL_DB}?charset=utf8mb4"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True
-    print(f"DEBUG: SQLALCHEMY_DATABASE_URI = {db_uri}")
 
     # Initialize extensions
     db.init_app(app)
