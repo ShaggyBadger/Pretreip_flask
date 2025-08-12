@@ -5,7 +5,7 @@
 <div class="container mt-5">
     <h2 class="mb-4">Select a Date Range</h2>
 
-    <form method="get" action="{{ url_for('speedGauge') }}">
+    <form method="get" action="{{ url_for('speedGauge_bp.speedGauge') }}">
         <div class="input-group mb-4">
             <label class="input-group-text" for="start_date">Start Date</label>
             <select name="start_date" id="start_date" class="form-select" onchange="this.form.submit()">

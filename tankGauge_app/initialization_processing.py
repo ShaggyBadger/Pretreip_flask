@@ -15,7 +15,7 @@ class Processing:
         self.misc_dir = self.tankGauge_files / 'misc'
 
         # Create the directories if they don't exist
-        self.tankGauge_files.mkdir(parents=True, exists_ok=True)
+        self.tankGauge_files.mkdir(parents=True, exist_ok=True)
         self.charts_dir.mkdir(parents=True, exist_ok=True)
         self.misc_dir.mkdir(parents=True, exist_ok=True)
 
@@ -29,8 +29,6 @@ class Processing:
         excel_file = self.misc_dir / 'storeInfo_master.xlsx'
 
         if not excel_file.exists():
-            print(f"Error: Expected Excel file not found: {excel_file}")
-            print("Please ensure 'storeInfo_master.xlsx' exists in the specified directory.")
             return
 
         try:
@@ -38,8 +36,6 @@ class Processing:
             # Requires 'openpyxl' to be installed (pip install openpyxl)
             df = pd.read_excel(excel_file)
         except Exception as e:
-            print(f"Error reading Excel file {excel_file.name}: {e}")
-            print("Ensure 'openpyxl' is installed (pip install openpyxl) and the file is valid.")
             return
 
         session = db.session # Get a new database session
@@ -166,7 +162,6 @@ class Processing:
 
         except Exception as e:
             session.rollback() # Rollback all changes if any error occurs during the process
-            print(f"An error occurred during store data entry: {e}")
         finally:
             pass
             
@@ -208,38 +203,19 @@ class Processing:
                         # fetch the foreign key
                         query = session.query(TankData.id)
                         query = query.filter(TankData.name == row.get('tank_name'))
-                        try:
-                            fk = query.first()[0]
-                        except:
-                            print(row)
-                            print('It looks like we found a tank_name not in the tank_data table. Do you want to add it now?')
-                            user_input = input('y/n: ')
-                            if user_input == 'y':
-                                try:
-                                    tank_data = {'name': row.get('tank_name')}
-                                    temp_session = db.session
-                                    query = temp_session.query(TankData).filter(TankData.name == tank_data['name'])
-                                    existing_tank = query.first()
-                                    
-                                    if existing_tank is None:
-                                        new_tank = TankData(**tank_data)
-                                        temp_session.add(new_tank)
-                                except:
-                                    temp_session.rollback()
-                                    print('something went wrong with temp_session tank update.')
-                                finally:
-                                    temp_session.commit()
-                                    
-
-                        if fk:
+                        fk_result = query.first()
+                        
+                        if fk_result:
+                            fk = fk_result[0]
                             # insert the chart information
                             row['tank_type_id'] = fk
                             new_chart_entry = TankCharts(**row)
                             session.add(new_chart_entry)
-        
-        except:
+                        else:
+                            pass
+
+        except Exception as e:
             session.rollback()
-            print('Exception happened in tank_chart_entry method. Rolling things back...')
 
         finally:
             session.commit() # Commit all changes (inserts and updates) at once
@@ -256,8 +232,6 @@ class Processing:
         store_info_file = self.misc_dir / 'storeInfo_master.xlsx'
 
         if not store_info_file.exists():
-            print(f"Error: Expected Excel file not found: {store_info_file}")
-            print("Please ensure 'storeInfo_master.xlsx' exists in the specified directory.")
             return
 
         try:
@@ -265,8 +239,6 @@ class Processing:
             # Requires 'openpyxl' to be installed (pip install openpyxl)
             df = pd.read_excel(store_info_file)
         except Exception as e:
-            print(f"Error reading Excel file {store_info_file.name}: {e}")
-            print("Ensure 'openpyxl' is installed (pip install openpyxl) and the file is valid.")
             return
         
         # start by building a list of tank names from the store_info file
@@ -314,7 +286,7 @@ class Processing:
             pass
 
     def store_tank_map(self):
-        session = self.get_session()
+        session = db.session
         excel_file = self.misc_dir / 'storeInfo_master.xlsx'
         df = pd.read_excel(excel_file)
 
@@ -381,6 +353,5 @@ class Processing:
                 
         except Exception as e:
             session.rollback() # Rollback all changes if any error occurs during the process
-            print(f"An error occurred during store data entry: {e}")
 
 

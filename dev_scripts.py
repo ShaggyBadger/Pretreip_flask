@@ -9,6 +9,8 @@ from flask_app import settings
 from flask_app.utils import Utils, CLI_Utils
 from flask_app.app_constructor import app # Import app instance
 from flask_app.models.users import Users # Import Users model here
+from flask_app.models.tankgauge import StoreData, TankData, TankCharts, StoreTankMap
+from flask_app.extensions import db
 
 from tankGauge_app.initialization_processing import Processing
 
@@ -172,6 +174,27 @@ def repopulate_users_from_json():
         print(f"Total users in DB: {Users.query.count()}")
         print(f"First user in DB: {Users.query.first()}")
 
+def reinitialize_tank_gauge_tables():
+    print("Re-initializing tank gauge tables...")
+    with app.app_context():
+        try:
+            print("Dropping tank gauge tables...")
+            db.session.query(StoreTankMap).delete()
+            db.session.query(TankCharts).delete()
+            db.session.query(TankData).delete()
+            db.session.query(StoreData).delete()
+            db.session.commit()
+            print("Tank gauge tables dropped.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error dropping tables: {e}")
+            return
+
+        print("Repopulating tank gauge tables...")
+        tank_gauge_controller = tankGauge_control()
+        tank_gauge_controller.initialize()
+        print("Tank gauge tables repopulated.")
+
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
     # initialization = Initialize(automatic_mode=True) 
@@ -179,4 +202,5 @@ if __name__ == "__main__":
     # tankGauge_controler.initialize()
 
     # Call the new function to repopulate users
-    repopulate_users_from_json()
+    # repopulate_users_from_json()
+    # reinitialize_tank_gauge_tables()
