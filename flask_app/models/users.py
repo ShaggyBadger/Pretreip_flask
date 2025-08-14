@@ -4,6 +4,7 @@ from flask_app.extensions import db
 
 class Users(db.Model):
     __tablename__ = 'users'
+    __table_args__ = {'schema': 'pretrip_db'}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(255), unique=True, nullable=False)

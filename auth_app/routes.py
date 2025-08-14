@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, session, current_app, flash
 from . import auth_bp
-from flask_app import utils
+from . import utils
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -12,7 +12,7 @@ def register():
 
         # Determine role based on DOT number
         authorized_dots = current_app.config.get('AUTHORIZED_DOT_NUMBERS', [])
-        role = 'premium' if dot_number in authorized_dots else 'standard'
+        role = 'swto' if dot_number in authorized_dots else 'standard'
 
         utils_obj = utils.Utils()
         user_id = utils_obj.register_user(
@@ -28,7 +28,9 @@ def register():
             return redirect(url_for('auth_bp.failed_register'))
         else:
             # Log the user in immediately
-            session['user_id'] = user_id
+            # Retrieve the user object to get admin_level
+            user = utils.Utils().check_password(email, password) # Re-fetch user to get full object
+            session['user_id'] = user.id
             session['username'] = email
             session['role'] = role
             return redirect(url_for('home'))
@@ -45,6 +47,8 @@ def login():
         user = utils_obj.check_password(identifier, password)
 
         if user:
+            print(f"DEBUG: User object after login: {user}")
+            print(f"DEBUG: User admin_level after login: {user.admin_level}")
             session['user_id'] = user.id
             session['username'] = user.username
             session['role'] = user.role
