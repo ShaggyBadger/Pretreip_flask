@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, session, current_app
 from flask_app.app_constructor import app
+from flask_app.models.users import Users
 from flask_app import models
 from flask_app import settings
 from datetime import timedelta
@@ -20,12 +21,17 @@ def refresh_session():
 @app.route("/")
 def home():
     if "user_id" in session:
-        return render_template("dashboard.html")
+        user = Users.query.filter_by(id=session['user_id']).first()
+        print(user.admin_level)
+        print(user.role)
+        if user.admin_level < 1 and user.role == 'swto':
+            return render_template("dashboard-swto.html")
+        elif user.admin_level >= 1:
+            return render_template('dashboard-admin.html')
+        else:
+            return render_template('dashboard-standard.html')
+        
     return render_template("home_guest.html")
-
-
-
-
 
 @app.route("/tempUpload", methods=["GET", "POST"])
 def tempUpload():
@@ -33,7 +39,6 @@ def tempUpload():
         file = request.files.get("file")
         destination = settings.UNPROCESSED_SPEEDGAUGE_PATH / file.filename
         file.save(destination)
+
+
     return render_template("tempUpload.html")
-
-
-

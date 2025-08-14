@@ -15,7 +15,7 @@ def register():
         role = 'swto' if dot_number in authorized_dots else 'standard'
 
         utils_obj = utils.Utils()
-        user_id = utils_obj.register_user(
+        user = utils_obj.register_user(
             username=email,
             password=password,
             driver_id=driver_id,
@@ -23,16 +23,16 @@ def register():
             role=role
         )
 
-        if user_id is None:
+        if user is None:
             flash('An account with that email already exists.')
             return redirect(url_for('auth_bp.failed_register'))
         else:
             # Log the user in immediately
-            # Retrieve the user object to get admin_level
-            user = utils.Utils().check_password(email, password) # Re-fetch user to get full object
+            # user object is already available
             session['user_id'] = user.id
-            session['username'] = email
-            session['role'] = role
+            session['username'] = user.username
+            session['role'] = user.role
+            session['admin_level'] = user.admin_level
             return redirect(url_for('home'))
 
     return render_template('auth/register.html')

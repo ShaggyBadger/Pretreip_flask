@@ -87,7 +87,6 @@ class Initialize:
         self.sgProcessor.run_analytics()
         print("Analytics completed successfully.\n")
 
-
 class TempTester:
     def __init__(self):
         self.models_util = Utils(debug_mode=False)
@@ -130,7 +129,6 @@ class TempTester:
                 print(f"value: {d}")
                 print("")
             print("******\n")
-
 
 class tankGauge_control:
     def __init__(self):

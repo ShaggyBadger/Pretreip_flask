@@ -1,0 +1,31 @@
+<div class="card bg-dark text-light">
+  <div class="card-header">
+    <h4 class="mb-0">Upload SpeedGauge CSV File</h4>
+  </div>
+  <div class="card-body">
+    <p class="card-text">
+      Select a SpeedGauge CSV file to upload. The file will be processed and its
+      data will be added to the system.
+    </p>
+    <form
+      id="speedgauge-upload-form" 
+      action="/admin/upload_speedgauge"
+      method="post"
+      enctype="multipart/form-data"
+    >
+      <div class="mb-3">
+        <label for="speedgaugeFile" class="form-label">CSV File</label>
+        <input
+          class="form-control"
+          type="file"
+          id="speedgaugeFile"
+          name="file"
+          required
+        />
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-upload me-2"></i>Upload File
+      </button>
+    </form>
+  </div>
+</div>

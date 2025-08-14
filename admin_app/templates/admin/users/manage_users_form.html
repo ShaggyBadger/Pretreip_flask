@@ -1,0 +1,100 @@
+<div class="container mt-4">
+  <h2>User Management</h2>
+  <p>Search for users to view or edit their details.</p>
+
+  <div class="card">
+    <div class="card-header">Filter Users</div>
+    <div class="card-body">
+      <form id="search-form" action="/admin/manage_users/search" method="POST">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="first_name" class="form-label">First Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="first_name"
+              name="first_name"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="last_name" class="form-label">Last Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="last_name"
+              name="last_name"
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="driver_id" class="form-label">Driver ID</label>
+            <input
+              type="text"
+              class="form-control"
+              id="driver_id"
+              name="driver_id"
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="dot_number" class="form-label">DOT Number</label>
+            <input
+              type="text"
+              class="form-control"
+              id="dot_number"
+              name="dot_number"
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="role" class="form-label">Role</label>
+            <input type="text" class="form-control" id="role" name="role" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="user-results-container" class="mt-4">
+    <!-- Search results table will be loaded here -->
+  </div>
+</div>
+
+<script>
+  // Function to handle user search form submission
+  function handleUserSearchSubmit(event) {
+    event.preventDefault(); // Stop full-page reload
+
+    const form = event.target;
+    const contentArea = document.getElementById("user-results-container");
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.text())
+      .then((html) => {
+        contentArea.innerHTML = html;
+      })
+      .catch((err) => {
+        console.error("Error during user search:", err);
+        contentArea.innerHTML =
+          '<p class="text-danger">An error occurred during search.</p>';
+      });
+  }
+
+  // Attach submit handler **after template is loaded**
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchForm = document.getElementById("search-form");
+    if (searchForm) {
+      searchForm.addEventListener("submit", handleUserSearchSubmit);
+    }
+  });
+
+  // If loaded dynamically via AJAX, call this function immediately after injecting the template:
+  function attachUserSearchHandler() {
+    const searchForm = document.getElementById("search-form");
+    if (searchForm) {
+      searchForm.addEventListener("submit", handleUserSearchSubmit);
+    }
+  }
+</script>
