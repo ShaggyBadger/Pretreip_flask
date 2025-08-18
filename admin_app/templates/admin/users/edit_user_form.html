@@ -10,6 +10,8 @@
     <div class="card-header">User Details</div>
     <div class="card-body">
       <form id="edit-user-form" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
         <!-- required so server knows which user to update -->
         <input type="hidden" name="user_id" value="{{ user.id }}" />
 
@@ -126,6 +128,7 @@
       if (submitBtn) submitBtn.disabled = true;
 
       const formData = new FormData(form);
+      formData.append("csrf_token", "{{ csrf_token() }}");
 
       try {
         const response = await fetch("{{ url_for('admin.update_user') }}", {

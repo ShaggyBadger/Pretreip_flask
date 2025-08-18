@@ -4,12 +4,14 @@ from flask import Flask
 from datetime import timedelta
 from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
 from flask_app.extensions import db, migrate
+from flask_wtf.csrf import CSRFProtect
 
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
     app.permanent_session_lifetime = timedelta(days=7)
+    csrf = CSRFProtect(app)
 
     # Configure the database
     DB_MODE = os.environ.get("DB_MODE", "prod")  # Default to production
