@@ -17,7 +17,7 @@
             <a
               class="nav-link text-light fw-bold"
               href="#"
-              onclick="loadAdminSection('/admin/manage_users')"
+              onclick="loadAdminSection(event, '/admin/manage_users')"
             >
               <i class="bi bi-people me-2"></i> Manage Users
             </a>
@@ -26,7 +26,7 @@
             <a
               class="nav-link text-light fw-bold"
               href="#"
-              onclick="loadAdminSection('/admin/tank_charts')"
+              onclick="loadAdminSection(event, '/admin/tank_charts')"
             >
               <i class="bi bi-fuel-pump me-2"></i> Tank Charts
             </a>
@@ -35,7 +35,7 @@
             <a
               class="nav-link text-light fw-bold"
               href="#"
-              onclick="loadAdminSection('/admin/store_info')"
+              onclick="loadAdminSection(event, '/admin/store_info')"
             >
               <i class="bi bi-shop me-2"></i> Store Info
             </a>
@@ -44,7 +44,7 @@
             <a
               class="nav-link text-light fw-bold"
               href="#"
-              onclick="loadAdminSection('/admin/upload_speedgauge')"
+              onclick="loadAdminSection(event, '/admin/upload_speedgauge')"
             >
               <i class="bi bi-speedometer2 me-2"></i> SpeedGauge Files
             </a>
@@ -66,23 +66,74 @@
 </div>
 
 <script>
-  function loadAdminSection(route) {
+  function loadAdminSection(event, route, data = null) {
+    // stop submit btn from submitting
     event.preventDefault();
+
+    // define the area of the web page we will be updating
     let contentArea = document.getElementById("admin-main-content");
 
-    fetch(route)
+    // set data format to send stuff to server if needed
+    let fetchOptions = {};
+
+    if (data) {
+      // If we have data, send it as a POST request
+      fetchOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      };
+    }
+
+    // send for stuff from the server
+    fetch(route, fetchOptions)
       .then((response) => {
+        // if response is bad, give this error
         if (!response.ok) throw new Error("Network response was not ok");
+
+        // if response is good, then extract the text from it and give it to the
+        // next .then and call it html since that's what it is.
         return response.text();
       })
+
+      // html is the value returned from the response.text() above
       .then((html) => {
+        // stuff the html into the content area
         contentArea.innerHTML = html;
-        // If the upload form was loaded, attach the submit handler
-        const uploadForm = document.getElementById("speedgauge-upload-form");
-        if (uploadForm) {
-          uploadForm.addEventListener("submit", handleUploadSubmit);
-        }
+
+        // After injecting the new HTML into contentArea, re-run only the scripts inside it.
+        Array.from(contentArea.querySelectorAll("script")).forEach(function (
+          oldScript
+        ) {
+          // Step 1: Create a brand-new script element.
+          // Browsers only *execute* script element tags if they're created this way.
+          let newScript = document.createElement("script");
+
+          // Step 2: Copy over all attributes from the old script element.
+          // Example: src, type, async, defer, etc.
+          for (let i = 0; i < oldScript.attributes.length; i++) {
+            let attr = oldScript.attributes[i];
+            newScript.setAttribute(attr.name, attr.value);
+          }
+
+          // Step 3: Copy inline script content (if there is any).
+          // This handles script element console.log("hi")
+          if (oldScript.textContent) {
+            newScript.appendChild(
+              document.createTextNode(oldScript.textContent)
+            );
+          }
+
+          // Step 4: Replace the old script element  with the new one.
+          // This triggers execution: inline scripts run immediately,
+          // external scripts (with src) get fetched and executed.
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
       })
+
+      // final catch. If something goes wrong dont crash the system! just do this instead.
       .catch((error) => {
         console.error("Error loading section:", error);
         contentArea.innerHTML = `<div class="alert alert-danger">Error loading content.</div>`;

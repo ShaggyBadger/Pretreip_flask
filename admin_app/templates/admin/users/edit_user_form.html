@@ -1,83 +1,177 @@
 <div class="container mt-4">
-    <h2>Edit User: {{ user.username }}</h2>
+  <h2>Edit User: {{ user.username }}</h2>
 
-    {% if success_message %}
-    <div class="alert alert-success" role="alert">
-        {{ success_message }}
-    </div>
-    {% endif %}
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
 
-    {% if error_message %}
-    <div class="alert alert-danger" role="alert">
-        {{ error_message }}
-    </div>
-    {% endif %}
+  <div class="card">
+    <div class="card-header">User Details</div>
+    <div class="card-body">
+      <form id="edit-user-form" method="POST">
+        <!-- required so server knows which user to update -->
+        <input type="hidden" name="user_id" value="{{ user.id }}" />
 
-    <div class="card">
-        <div class="card-header">
-            User Details
+        <div class="mb-3">
+          <label for="username" class="form-label">Username (Email)</label>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            name="username"
+            value="{{ user.username }}"
+            required
+          />
         </div>
-        <div class="card-body">
-            <form id="edit-user-form" action="/admin/user/{{ user.id }}/update" method="POST">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username (Email)</label>
-                    <input type="email" class="form-control" id="username" name="username" value="{{ user.username }}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="first_name" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name or '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="last_name" class="form-label">Last Name</label>
-                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name or '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="driver_id" class="form-label">Driver ID</label>
-                    <input type="text" class="form-control" id="driver_id" name="driver_id" value="{{ user.driver_id or '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="dot_number" class="form-label">DOT Number</label>
-                    <input type="text" class="form-control" id="dot_number" name="dot_number" value="{{ user.dot_number or '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="admin_level" class="form-label">Administrative Level</label>
-                    <input type="number" class="form-control" id="admin_level" name="admin_level" value="{{ user.admin_level }}">
-                </div>
-                <div class="mb-3">
-                    <label for="role" class="form-label">Role</label>
-                    <input type="text" class="form-control" id="role" name="role" value="{{ user.role or '' }}">
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-                <a href="#" onclick="loadAdminSection('/admin/manage_users')" class="btn btn-secondary">Cancel</a>
-            </form>
+
+        <div class="mb-3">
+          <label for="first_name" class="form-label">First Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="first_name"
+            name="first_name"
+            value="{{ user.first_name or '' }}"
+          />
         </div>
+
+        <div class="mb-3">
+          <label for="last_name" class="form-label">Last Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="last_name"
+            name="last_name"
+            value="{{ user.last_name or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="driver_id" class="form-label">Driver ID</label>
+          <input
+            type="text"
+            class="form-control"
+            id="driver_id"
+            name="driver_id"
+            value="{{ user.driver_id or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="dot_number" class="form-label">DOT Number</label>
+          <input
+            type="text"
+            class="form-control"
+            id="dot_number"
+            name="dot_number"
+            value="{{ user.dot_number or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="admin_level" class="form-label"
+            >Administrative Level</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            id="admin_level"
+            name="admin_level"
+            value="{{ user.admin_level }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="role" class="form-label">Role</label>
+          <input
+            type="text"
+            class="form-control"
+            id="role"
+            name="role"
+            value="{{ user.role or '' }}"
+          />
+        </div>
+
+        <button
+          type="submit"
+          id="edit-user-submit"
+          class="btn btn-sm btn-secondary"
+        >
+          Submit
+        </button>
+      </form>
     </div>
+  </div>
 </div>
 
 <script>
-// Function to handle user edit form submission
-function handleUserEditSubmit(event) {
-    event.preventDefault();
-    const form = event.target;
-    const contentArea = document.getElementById('admin-main-content'); // Assuming this is the main content div
-    const formData = new FormData(form);
+  (function () {
+    const form = document.getElementById("edit-user-form");
+    if (!form) return; // nothing to do if injected elsewhere
 
-    fetch(form.action, {
-        method: 'POST',
-        body: formData,
-    })
-    .then(response => response.text())
-    .then(html => {
-        contentArea.innerHTML = html; // Replace with updated form (with messages) or a new view
-    })
-    .catch(err => {
-        console.error('Error during user update:', err);
-        // Display error message within the form or main content area
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger';
-        errorDiv.textContent = 'An error occurred during update.';
-        form.prepend(errorDiv);
+    // attach handler once
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      console.log("Submitting user edit...");
+
+      const submitBtn = document.getElementById("edit-user-submit");
+      const contentArea = document.getElementById("admin-main-content");
+      if (!contentArea) {
+        console.error("admin-main-content not found — nothing to inject into.");
+        return;
+      }
+
+      // disable submit to prevent double-clicks
+      if (submitBtn) submitBtn.disabled = true;
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch("{{ url_for('admin.update_user') }}", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+
+        if (!response.ok) {
+          // If server returns a non-2xx, try to read text for debugging
+          const text = await response.text().catch(() => null);
+          throw new Error(
+            "Network response not OK: " + response.status + " — " + (text || "")
+          );
+        }
+
+        const html = await response.text();
+        // replace the content area with server-rendered fragment (edit form or a new view)
+        contentArea.innerHTML = html;
+
+        // re-run any inline scripts that came back with the fragment
+        Array.from(contentArea.querySelectorAll("script")).forEach(
+          (oldScript) => {
+            const newScript = document.createElement("script");
+            if (oldScript.src) {
+              newScript.src = oldScript.src;
+            } else {
+              newScript.textContent = oldScript.textContent;
+            }
+            oldScript.replaceWith(newScript);
+          }
+        );
+
+        console.log("User edit form submitted successfully.");
+      } catch (err) {
+        console.error("Error submitting user form:", err);
+        // Optionally show an inline error message
+        const errHtml =
+          "<div class='alert alert-danger'>Error saving user. See console for details.</div>";
+        // prepend to contentArea so user sees it
+        contentArea.insertAdjacentHTML("afterbegin", errHtml);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     });
-}
+  })();
 </script>
