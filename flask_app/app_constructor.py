@@ -6,6 +6,15 @@ from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
 from flask_app.extensions import db, migrate
 from flask_wtf.csrf import CSRFProtect
 
+# make tracebacks more better
+from rich.traceback import install
+from flask import got_request_exception
+from rich.console import Console
+from rich.traceback import Traceback
+
+console = Console()
+install(show_locals=True)
+
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
@@ -53,6 +62,16 @@ def create_app():
 
 # Create the Flask app instance for global use
 app = create_app()
+
+# make tracebacks beuatiful again
+def log_exception(sender, exception, **extra):
+    tb = Traceback.from_exception(
+        type(exception), exception, exception.__traceback__, show_locals=True
+    )
+    console.print(tb)
+
+# Connect Rich to Flask route exceptions
+got_request_exception.connect(log_exception, app)
 
 # Import routes after the app is created to avoid circular imports
 import flask_app.routes

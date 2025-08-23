@@ -4,6 +4,7 @@ from admin_app import admin_bp
 from flask_app import settings
 from flask_app.extensions import db
 from flask_app.models.users import Users
+from flask_app.models.tankgauge import TankCharts, TankData
 
 # Import the refactored classes
 from speedGauge_app.sgProcessor import Processor
@@ -82,7 +83,6 @@ def manage_users():
 
     return render_template('admin/users/manage_users.html', users=users)
 
-
 @admin_bp.route('/user/edit_user', methods=['POST'])
 def edit_user():
     user_id = request.form.get("user_id")  # or request.json.get("user_id")
@@ -127,5 +127,39 @@ def update_user():
     else:
         return redirect(url_for("admin.manage_users"))
 
+@admin_bp.route("/tanks/select", methods=["GET", "POST"])
+def select_tank():
+    if request.method == "POST":
+        choice = request.form.get("action")
+        if choice == "new":
+            return redirect(url_for("admin.edit_tank", tank_id=None))
+        elif choice == "edit":
+            tank_id = request.form.get("tank_id")
+            return redirect(url_for("admin.edit_tank", tank_id=tank_id))
+    
+    # GET: show selection page
+    existing_tanks = TankData.query.all()
+    return render_template("admin/tankcharts/select.html", charts=existing_tanks)
 
+@admin_bp.route("/tanks/edit", methods=["GET", "POST"])
+def edit_tank():
+    chart_id = request.args.get("chart_id")  # comes from the redirect
+
+    if request.method == "POST":
+        # handle form submission for creating/updating a tank chart
+        # get values from request.form
+        # save to db
+        tank = TankCharts.query.get(chart_id)
+        chart = tank.tank_charts
+        stores = tank.mapped_stores
+
+        print(chart)
+        print('\n************\n\n')
+        print(stores)
+
+        if not chart:
+            flash("chart not found.", "error")
+            return redirect(url_for('admin.select_tank'))
+
+    return render_template("admin/tanks/edit.html", chart=chart, tank=tank, stores=stores)
 

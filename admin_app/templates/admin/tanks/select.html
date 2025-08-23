@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-4">
+  <h2>Tank Chart Management</h2>
+
+  <form method="POST" class="mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" name="action" value="new" class="btn btn-primary">
+      Create New Tank Chart
+    </button>
+  </form>
+
+  <div class="mt-4">
+    <h3>Existing Tanks In Database</h3>
+    <div
+      class="table-responsive"
+      id="admin-main-content"
+      style="max-height: 600px; overflow-y: auto"
+    >
+      <table
+        class="table table-striped table-hover table-dark table-bordered align-middle"
+      >
+        <thead class="table-dark" style="position: sticky; top: 0; z-index: 2">
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Manufacturer</th>
+            <th scope="col">Model</th>
+            <th scope="col">Capacity</th>
+            <th scope="col">Max Depth</th>
+            <th scope="col">Misc Info</th>
+            <th scope="col">Chart Source</th>
+            <th scope="col">Description</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if charts %} {% for chart in charts %}
+          <tr>
+            <td>{{ chart.name }}</td>
+            <td>{{ chart.manufacturer or '' }}</td>
+            <td>{{ chart.model or '' }}</td>
+            <td>{{ chart.capacity or '' }}</td>
+            <td>{{ chart.max_depth or '' }}</td>
+            <td>{{ chart.misc_info or '' }}</td>
+            <td>{{ chart.chart_source or '' }}</td>
+            <td>{{ chart.description or '' }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.edit_tank') }}">
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token() }}"
+                />
+                <input type="hidden" name="chart_id" value="{{ chart.id }}" />
+                <button
+                  type="submit"
+                  name="action"
+                  value="edit"
+                  class="btn btn-sm btn-secondary"
+                >
+                  Edit
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %} {% else %}
+          <tr>
+            <td colspan="9" class="text-center">No tank charts found.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
