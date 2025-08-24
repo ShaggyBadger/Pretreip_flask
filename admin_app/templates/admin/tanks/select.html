@@ -34,16 +34,16 @@
           </tr>
         </thead>
         <tbody>
-          {% if charts %} {% for chart in charts %}
+          {% if tanks %} {% for tank in tanks %}
           <tr>
-            <td>{{ chart.name }}</td>
-            <td>{{ chart.manufacturer or '' }}</td>
-            <td>{{ chart.model or '' }}</td>
-            <td>{{ chart.capacity or '' }}</td>
-            <td>{{ chart.max_depth or '' }}</td>
-            <td>{{ chart.misc_info or '' }}</td>
-            <td>{{ chart.chart_source or '' }}</td>
-            <td>{{ chart.description or '' }}</td>
+            <td>{{ tank.name }}</td>
+            <td>{{ tank.manufacturer or '' }}</td>
+            <td>{{ tank.model or '' }}</td>
+            <td>{{ tank.capacity or '' }}</td>
+            <td>{{ tank.max_depth or '' }}</td>
+            <td>{{ tank.misc_info or '' }}</td>
+            <td>{{ tank.tank_source or '' }}</td>
+            <td>{{ tank.description or '' }}</td>
             <td>
               <form method="POST" action="{{ url_for('admin.edit_tank') }}">
                 <input
@@ -51,7 +51,7 @@
                   name="csrf_token"
                   value="{{ csrf_token() }}"
                 />
-                <input type="hidden" name="chart_id" value="{{ chart.id }}" />
+                <input type="hidden" name="tank_id" value="{{ tank.id }}" />
                 <button
                   type="submit"
                   name="action"

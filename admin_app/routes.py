@@ -1,5 +1,5 @@
 from os import EX_TEMPFAIL
-from flask import render_template, request, jsonify, redirect, url_for, flash
+from flask import render_template, request, jsonify, redirect, url_for, flash, abort
 from admin_app import admin_bp
 from flask_app import settings
 from flask_app.extensions import db
@@ -139,27 +139,47 @@ def select_tank():
     
     # GET: show selection page
     existing_tanks = TankData.query.all()
-    return render_template("admin/tankcharts/select.html", charts=existing_tanks)
+    return render_template("admin/tanks/select.html", tanks=existing_tanks)
 
 @admin_bp.route("/tanks/edit", methods=["GET", "POST"])
 def edit_tank():
-    chart_id = request.args.get("chart_id")  # comes from the redirect
-
     if request.method == "POST":
+        tank_id = request.form.get("tank_id")  # comes from the redirect
         # handle form submission for creating/updating a tank chart
         # get values from request.form
-        # save to db
-        tank = TankCharts.query.get(chart_id)
-        chart = tank.tank_charts
-        stores = tank.mapped_stores
+        query = TankData.query
+        query = query.filter_by(id=tank_id)
+        tank = query.first()
+        charts = tank.tank_charts
 
-        print(chart)
-        print('\n************\n\n')
-        print(stores)
+        # I'll keep stores in here for now, but I'll comment it out bc I don't actually need it
+        #stores = tank.mapped_stores
 
-        if not chart:
+
+        if not charts:
             flash("chart not found.", "error")
             return redirect(url_for('admin.select_tank'))
 
-    return render_template("admin/tanks/edit.html", chart=chart, tank=tank, stores=stores)
+        return render_template("admin/tanks/edit.html", charts=charts, tank=tank)
+    else:
+        abort(404)
+
+@admin_bp.route('/tanks/edit-submit', methods=["POST"])
+def edit_tankChart_success():
+    if request.method == "POST":
+        input('Prepare to view form stuff')
+
+        row_ids = request.form.getlist("row_id")
+        inches_list = request.form.getlist("inches")
+        gallons_list = request.form.getlist("gallons")
+
+        for rid, inch, gal in zip(row_ids, inches_list, gallons_list):
+            print(rid, inch, gal)
+
+        input('end viewiong....')
+
+        return render_template("admin/tanks/edit-success.html")
+
+    else:
+        abort(404)
 
