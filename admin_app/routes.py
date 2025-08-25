@@ -138,7 +138,9 @@ def select_tank():
             return redirect(url_for("admin.edit_tank", tank_id=tank_id))
     
     # GET: show selection page
-    existing_tanks = TankData.query.all()
+    query = TankData.query
+    query = query.order_by(TankData.name.asc())
+    existing_tanks = query.all()
     return render_template("admin/tanks/select.html", tanks=existing_tanks)
 
 @admin_bp.route("/tanks/edit", methods=["GET", "POST"])
@@ -167,19 +169,69 @@ def edit_tank():
 @admin_bp.route('/tanks/edit-submit', methods=["POST"])
 def edit_tankChart_success():
     if request.method == "POST":
-        input('Prepare to view form stuff')
-
         row_ids = request.form.getlist("row_id")
         inches_list = request.form.getlist("inches")
         gallons_list = request.form.getlist("gallons")
+        misc_list = request.form.getlist("misc_info")
+        tank_id = request.form.get('tank_id')
 
-        for rid, inch, gal in zip(row_ids, inches_list, gallons_list):
-            print(rid, inch, gal)
+        try:
+            for rid, inch, gal, misc in zip(row_ids, inches_list, gallons_list, misc_list):
+                row = TankCharts.query.get(rid)
+                if row:
+                    row.inches = inch
+                    row.gallons = gal
+                    row.misc_info = misc
 
-        input('end viewiong....')
+            db.session.commit()
 
-        return render_template("admin/tanks/edit-success.html")
+        except Exception:
+            db.session.rollback()
+            flash("Failed to update tank charts.", "error")
 
+        
+        query = TankData.query
+        query = query.filter_by(id=tank_id)
+        tank = query.first()
+        charts = tank.tank_charts
+
+        return render_template("admin/tanks/edit-success.html", tank=tank, charts=charts)
+
+    else:
+        abort(404)
+
+@admin_bp.route('/tanks/edit-tankdata', methods=["POST"])
+def edit_tankdata_submit():
+    # process main tank info here
+    if request.method == "POST":
+        tank_id = request.form.get('tank_id')
+
+        # Remove csrf_token and tank_id if you don't want to update them
+        ignore_keys = ['csrf_token', 'tank_id']
+
+        try:
+            # get the tank obj from the database
+            tank = TankData.query.get(tank_id)
+
+            # update the columns
+            tank.name = request.form.get('name', tank.name)
+            tank.manufacturer = request.form.get('manufacturer', tank.manufacturer)
+            tank.model = request.form.get('model', tank.model)
+            tank.capacity = int(request.form.get('capacity', tank.capacity))
+            tank.max_depth = int(request.form.get('max_depth', tank.max_depth))
+            tank.misc_info = request.form.get('misc_info', tank.misc_info)
+            tank.chart_source = request.form.get('chart_source', tank.chart_source)
+            tank.description = request.form.get('description', tank.description)
+
+            db.session.commit()
+        
+        except Exception:
+            db.session.rollback()
+            flash("Failed to update tank charts.", "error")
+        
+        tank = TankData.query.get(tank_id)
+
+        return render_template('admin/tanks/submit-tankData-update.html', tank=tank)
     else:
         abort(404)
 
