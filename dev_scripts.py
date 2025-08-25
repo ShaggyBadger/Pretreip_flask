@@ -237,6 +237,7 @@ class tankGauge_control:
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
-    # initialization = Initialize(automatic_mode=True) 
-    tankGauge_controler = tankGauge_control()
-    tankGauge_controler.initialize()
+    initialization = Initialize(automatic_mode=False) 
+    intiialization.processess_speedgauge()
+    #tankGauge_controler = #tankGauge_control()
+    #tankGauge_controler.initialize()
