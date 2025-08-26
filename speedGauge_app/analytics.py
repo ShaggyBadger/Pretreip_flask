@@ -3,10 +3,12 @@ This module provides the Analytics class, which is used to perform data analysis
 on the speedGauge data using SQLAlchemy.
 """
 import statistics
+import sys
 import json
 from sqlalchemy import func, case, and_, not_
 from flask_app.extensions import db
 from flask_app.models.speedgauge import SpeedGaugeData, CompanyAnalytics, DriverAnalytics
+from datetime import timedelta
 
 class Analytics:
     """
@@ -45,21 +47,49 @@ class Analytics:
         if not missing_driver_analytics:
             print("Driver analytics are already up to date.")
             return
-        
+
         total_records = len(missing_driver_analytics)
         print(f"Found {total_records} missing driver analytic records to process.")
+
+        # compute filter_values once and reuse
         filter_values = self.determine_data_filter_values()
 
+        # commit batching: change batch_size to taste (1000 original, smaller for dev)
+        batch_size = 1000
         for i, (driver_id, date) in enumerate(missing_driver_analytics):
-            analytic_package = self.build_driver_analytic_package(driver_id, date, filter_values)
-            self.insert_driver_analytics(analytic_package, driver_id, date)
+            try:
+                # compute and upsert but don't commit each time
+                self.insert_driver_analytics(
+                    analytic_package={},      # if you build a package, pass it; kept for API parity
+                    driver_id=driver_id,
+                    start_date=date,
+                    filter_values=filter_values,
+                    commit=False
+                )
+            except Exception as exc:
+                # log and continue (or you may want to re-raise)
+                print(f"[analytics] Error processing driver {driver_id} on {date}: {exc}")
+                db.session.rollback()
+                continue
 
-            if (i + 1) % 1000 == 0:
-                db.session.commit()
-                print(f"Committed {i + 1}/{total_records} driver records...")
+            # batch commit periodically to avoid huge transactions
+            if (i + 1) % batch_size == 0:
+                try:
+                    db.session.commit()
+                    print(f"Committed {i + 1}/{total_records} driver records...")
+                except Exception as exc:
+                    db.session.rollback()
+                    print(f"[analytics] Commit failed after {i + 1} records: {exc}", file=sys.stderr)
+                    raise
 
-        db.session.commit()
-        print(f"Finished committing all {total_records} driver records.")
+        # final commit for remaining records
+        try:
+            db.session.commit()
+            print(f"Finished committing all {total_records} driver records.")
+        except Exception:
+            db.session.rollback()
+            print("[analytics] Final commit failed for driver analytics", file=sys.stderr)
+            raise
 
     def fetch_full_date_list(self):
         results = db.session.query(SpeedGaugeData.start_date).distinct().order_by(SpeedGaugeData.start_date).all()
@@ -110,16 +140,88 @@ class Analytics:
         # This method can be simplified or expanded based on exact analytics needs.
         # For now, it mimics the structure of the old one.
         return {}
+    
+    def insert_company_analytics(self, analytic_package, start_date, generated_records_allowed, filter_values, commit=True):
+        """
+        Compute company-level analytics for `start_date` and either insert or update
+        a CompanyAnalytics row. This computes all stats first, then upserts the DB row,
+        so we avoid autoflush inserting a partially-populated record.
+        """
 
-    def insert_company_analytics(self, analytic_package, start_date, generated_records_allowed, filter_values):
-        # This method now needs to calculate the analytics that used to be in build_company_analytic_package
-        # This is a more efficient approach as we iterate through columns.
-        
-        # Check for existing record
+        # 1) Compute the total row count (honoring generated_records_allowed)
+        count_q = db.session.query(func.count(SpeedGaugeData.id)).filter(
+            SpeedGaugeData.start_date == start_date
+        )
+        if not generated_records_allowed:
+            count_q = count_q.filter(SpeedGaugeData.is_interpolated == 0)
+        total_count = count_q.scalar() or 0
+        print(f"[analytics] total_count for {start_date} (generated_allowed={generated_records_allowed}) = {total_count}")
+
+        # 2) For each column compute stats into a local dict
+        columns = ["percent_speeding", "distance_driven"]
+        computed = {
+            "records_count": total_count,
+            "std_filter_value": filter_values.get("stdev_threshold"),
+            # per-column values will go under keys like avg_percent_speeding, median_distance_driven, etc.
+        }
+
+        for col_name in columns:
+            column = getattr(SpeedGaugeData, col_name)
+            filter_min = filter_values.get(f"{col_name}_min")
+            filter_max = filter_values.get(f"{col_name}_max")
+
+            print(f"[analytics] computing stats for {col_name}: min={filter_min}, max={filter_max}")
+
+            # Aggregate stats: count, avg, max, min, stddev
+            agg_q = db.session.query(
+                func.count(column).label("count"),
+                func.avg(column).label("avg"),
+                func.max(column).label("max"),
+                func.min(column).label("min"),
+                func.stddev(column).label("stddev")
+            ).filter(
+                SpeedGaugeData.start_date == start_date,
+                column >= filter_min,
+                column <= filter_max
+            )
+            if not generated_records_allowed:
+                agg_q = agg_q.filter(SpeedGaugeData.is_interpolated == 0)
+
+            # .one() returns a row-like object with named attributes
+            stats = agg_q.one()
+            # Make Python-friendly values (None -> keep None, numeric strings -> float)
+            count_val = int(stats.count or 0)
+            avg_val = float(stats.avg) if stats.avg is not None else None
+            max_val = float(stats.max) if stats.max is not None else None
+            min_val = float(stats.min) if stats.min is not None else None
+            std_val = float(stats.stddev) if stats.stddev is not None else None
+
+            # Median: gather values (ok for modest row counts)
+            median_q = db.session.query(column).filter(
+                SpeedGaugeData.start_date == start_date,
+                column >= filter_min,
+                column <= filter_max
+            )
+            if not generated_records_allowed:
+                median_q = median_q.filter(SpeedGaugeData.is_interpolated == 0)
+            values = [r[0] for r in median_q.all()]
+            median_val = statistics.median(values) if values else None
+
+            # store computed values into the dict with consistent keys
+            computed[f"count_{col_name}"] = count_val
+            computed[f"avg_{col_name}"] = avg_val
+            computed[f"max_{col_name}"] = max_val
+            computed[f"min_{col_name}"] = min_val
+            computed[f"std_{col_name}"] = std_val
+            computed[f"median_{col_name}"] = median_val
+
+            print(f"[analytics] {col_name} -> count={count_val}, avg={avg_val}, median={median_val}")
+
+        # 3) Upsert the CompanyAnalytics row now that we have all values
         record = db.session.query(CompanyAnalytics).filter_by(
             start_date=start_date,
             generated_records_allowed=generated_records_allowed
-        ).first()
+        ).one_or_none()
 
         if not record:
             record = CompanyAnalytics(
@@ -128,53 +230,29 @@ class Analytics:
             )
             db.session.add(record)
 
-        # Common stats for all columns
-        record.std_filter_value = filter_values.get('stdev_threshold')
+        # assign the computed fields to the record
+        record.records_count = computed.get("records_count", 0)
+        record.std_filter_value = computed.get("std_filter_value")
 
-        for col_name in ["percent_speeding", "distance_driven"]:
-            column = getattr(SpeedGaugeData, col_name)
-            filter_max = filter_values[f'{col_name}_max']
-            filter_min = filter_values[f'{col_name}_min']
+        for col_name in columns:
+            setattr(record, f"avg_{col_name}", computed.get(f"avg_{col_name}"))
+            setattr(record, f"max_{col_name}", computed.get(f"max_{col_name}"))
+            setattr(record, f"min_{col_name}", computed.get(f"min_{col_name}"))
+            setattr(record, f"std_{col_name}", computed.get(f"std_{col_name}"))
+            setattr(record, f"median_{col_name}", computed.get(f"median_{col_name}"))
 
-            query = db.session.query(
-                func.count(column).label('count'),
-                func.avg(column).label('avg'),
-                func.max(column).label('max'),
-                func.min(column).label('min'),
-                func.stddev(column).label('stddev')
-            ).filter(
-                SpeedGaugeData.start_date == start_date,
-                column <= filter_max,
-                column >= filter_min
-            )
+        # Optionally commit here or let caller commit (company_standard_flow currently commits after loop)
+        if commit:
+            try:
+                db.session.commit()
+                print(f"[analytics] committed CompanyAnalytics for {start_date} (generated={generated_records_allowed})")
+            except Exception:
+                db.session.rollback()
+                print("[analytics] commit failed", file=sys.stderr)
+                raise
 
-            if not generated_records_allowed:
-                query = query.filter(SpeedGaugeData.is_interpolated == 0)
-
-            stats = query.one()
-
-            # Get median
-            median_query = db.session.query(column).filter(
-                SpeedGaugeData.start_date == start_date,
-                column <= filter_max,
-                column >= filter_min
-            ).order_by(column)
-            if not generated_records_allowed:
-                median_query = median_query.filter(SpeedGaugeData.is_interpolated == 0)
-            
-            all_values = [r[0] for r in median_query.all()]
-            median = statistics.median(all_values) if all_values else None
-
-            # Set attributes on the record object
-            setattr(record, f'records_count', stats.count) # Note: this will be overwritten in loop, may need adjustment
-            setattr(record, f'avg_{col_name}', stats.avg)
-            setattr(record, f'max_{col_name}', stats.max)
-            setattr(record, f'min_{col_name}', stats.min)
-            setattr(record, f'std_{col_name}', stats.stddev)
-            setattr(record, f'median_{col_name}', median)
-
-        print(f"Upserting company analytics for {start_date} (Generated: {generated_records_allowed})")
-
+        return record
+    
     def fetch_missing_driver_analytic_dates(self):
         subquery = db.session.query(DriverAnalytics.driver_id, DriverAnalytics.start_date).subquery()
         
@@ -189,56 +267,167 @@ class Analytics:
         # This method is also simplified. The logic is moved to insert_driver_analytics
         return {}
 
-    def insert_driver_analytics(self, analytic_package, driver_id, start_date):
-        record = db.session.query(DriverAnalytics).filter_by(
-            driver_id=driver_id,
-            start_date=start_date
-        ).first()
+    def insert_driver_analytics(self, analytic_package, driver_id, start_date, filter_values=None, commit=True):
+        if filter_values is None:
+            filter_values = self.determine_data_filter_values()
 
-        if not record:
-            record = DriverAnalytics(driver_id=driver_id, start_date=start_date)
-            db.session.add(record)
-        
-        filter_values = self.determine_data_filter_values() # Recalculate for safety, or pass down
+        # 1-year window for main stats
+        start_date_minus = start_date - timedelta(days=365)
 
-        for col_name in ["percent_speeding", "distance_driven"]:
+        # total rows in 1-year window
+        count_q = db.session.query(func.count(SpeedGaugeData.id)).filter(
+            SpeedGaugeData.driver_id == driver_id,
+            SpeedGaugeData.start_date.between(start_date_minus, start_date)
+        )
+        total_count = count_q.scalar() or 0
+
+        computed = {
+            "records_count": total_count,
+            # placeholders for week metrics - we'll fill them
+            "current_week_percent_speeding": 0,
+            "previous_week_percent_speeding": 0,
+            "current_week_distance_driven": 0,
+            "previous_week_distance_driven": 0,
+        }
+
+        # --- compute current & previous week ranges (7-day windows) ---
+        current_week_start = start_date - timedelta(days=6)  # inclusive 7 days: start_date-6 .. start_date
+        prev_week_end = current_week_start - timedelta(days=1)
+        prev_week_start = prev_week_end - timedelta(days=6)
+
+        # helper to compute avg for a column in a date range (returns None or numeric)
+        def avg_in_range(column, date_from, date_to, driver_only=True):
+            q = db.session.query(func.avg(column)).filter(
+                column is not None  # no-op placeholder - we'll add proper filters next
+            )
+            # build filters
+            if driver_only:
+                q = db.session.query(func.avg(column)).filter(
+                    SpeedGaugeData.driver_id == driver_id,
+                    SpeedGaugeData.start_date.between(date_from, date_to)
+                )
+            else:
+                q = db.session.query(func.avg(column)).filter(
+                    SpeedGaugeData.start_date.between(date_from, date_to)
+                )
+            # You may also want to apply min/max filters here (filter_values)
+            # For simplicity, we won't apply the stdev filters to weekly averages here.
+            val = q.scalar()
+            return float(val) if val is not None else None
+
+        # compute weekly averages (or totals for distance if desired)
+        # percent_speeding -> avg percentage
+        cur_pct = avg_in_range(getattr(SpeedGaugeData, "percent_speeding"), current_week_start, start_date)
+        prev_pct = avg_in_range(getattr(SpeedGaugeData, "percent_speeding"), prev_week_start, prev_week_end)
+        computed["current_week_percent_speeding"] = cur_pct if cur_pct is not None else 0
+        computed["previous_week_percent_speeding"] = prev_pct if prev_pct is not None else 0
+
+        # distance_driven -> sum or avg? here I use avg; change to SUM if you prefer totals
+        def sum_in_range(column, date_from, date_to):
+            q = db.session.query(func.sum(column)).filter(
+                SpeedGaugeData.driver_id == driver_id,
+                SpeedGaugeData.start_date.between(date_from, date_to)
+            )
+            val = q.scalar()
+            return float(val) if val is not None else None
+
+        cur_dist = sum_in_range(getattr(SpeedGaugeData, "distance_driven"), current_week_start, start_date)
+        prev_dist = sum_in_range(getattr(SpeedGaugeData, "distance_driven"), prev_week_start, prev_week_end)
+        computed["current_week_distance_driven"] = cur_dist if cur_dist is not None else 0
+        computed["previous_week_distance_driven"] = prev_dist if prev_dist is not None else 0
+
+        # percent change and abs change (guard divide-by-zero)
+        def pct_change(current, previous):
+            if previous in (None, 0):
+                return 0 if current is not None else 0
+            return (current - previous) / previous
+
+        computed["percent_change_percent_speeding"] = pct_change(computed["current_week_percent_speeding"],
+                                                                computed["previous_week_percent_speeding"])
+        computed["abs_change_percent_speeding"] = abs(computed["current_week_percent_speeding"] - computed["previous_week_percent_speeding"])
+        computed["percent_change_distance_driven"] = pct_change(computed["current_week_distance_driven"],
+                                                                computed["previous_week_distance_driven"])
+        computed["abs_change_distance_driven"] = abs(computed["current_week_distance_driven"] - computed["previous_week_distance_driven"])
+
+        # --- compute the long-term aggregates per column (1-year window, filtered by min/max) ---
+        columns = ["percent_speeding", "distance_driven"]
+        for col_name in columns:
             column = getattr(SpeedGaugeData, col_name)
-            filter_max = filter_values[f'{col_name}_max']
-            filter_min = filter_values[f'{col_name}_min']
+            filter_min = filter_values.get(f"{col_name}_min")
+            filter_max = filter_values.get(f"{col_name}_max")
 
-            # Base query for stats over the last year
-            query = db.session.query(
-                func.count(column).label('count'),
-                func.avg(column).label('avg'),
-                func.max(column).label('max'),
-                func.min(column).label('min'),
-                func.stddev(column).label('stddev')
+            agg_q = db.session.query(
+                func.count(column).label("count"),
+                func.avg(column).label("avg"),
+                func.max(column).label("max"),
+                func.min(column).label("min"),
+                func.stddev(column).label("stddev")
             ).filter(
                 SpeedGaugeData.driver_id == driver_id,
-                SpeedGaugeData.start_date.between(func.date_sub(start_date, 365), start_date),
-                column <= filter_max,
-                column >= filter_min
+                SpeedGaugeData.start_date.between(start_date_minus, start_date),
+                column >= filter_min,
+                column <= filter_max
             )
 
-            stats = query.one()
+            stats = agg_q.one()
+            computed[f"avg_{col_name}"] = float(stats.avg) if stats.avg is not None else None
+            computed[f"max_{col_name}"] = float(stats.max) if stats.max is not None else None
+            computed[f"min_{col_name}"] = float(stats.min) if stats.min is not None else None
+            computed[f"std_{col_name}"] = float(stats.stddev) if stats.stddev is not None else None
 
-            # Median
-            median_query = db.session.query(column).filter(
+            # median
+            median_q = db.session.query(column).filter(
                 SpeedGaugeData.driver_id == driver_id,
-                SpeedGaugeData.start_date.between(func.date_sub(start_date, 365), start_date),
-                column <= filter_max,
-                column >= filter_min
+                SpeedGaugeData.start_date.between(start_date_minus, start_date),
+                column >= filter_min,
+                column <= filter_max
             ).order_by(column)
-            
-            all_values = [r[0] for r in median_query.all()]
-            median = statistics.median(all_values) if all_values else None
+            vals = [r[0] for r in median_q.all()]
+            computed[f"median_{col_name}"] = statistics.median(vals) if vals else None
 
-            # Set attributes
-            setattr(record, f'records_count', stats.count) # Again, overwritten
-            setattr(record, f'avg_{col_name}', stats.avg)
-            setattr(record, f'max_{col_name}', stats.max)
-            setattr(record, f'min_{col_name}', stats.min)
-            setattr(record, f'std_{col_name}', stats.stddev)
-            setattr(record, f'median_{col_name}', median)
+            # count per column might be useful, but db schema likely has a single records_count
+            computed[f"count_{col_name}"] = int(stats.count or 0)
 
-        print(f"Upserting driver analytics for {driver_id} on {start_date}")
+        # --- Upsert the DriverAnalytics row using computed dict ---
+        try:
+            record = db.session.query(DriverAnalytics).filter_by(driver_id=driver_id, start_date=start_date).one_or_none()
+            if not record:
+                record = DriverAnalytics(driver_id=driver_id, start_date=start_date)
+                db.session.add(record)
+
+            # map computed to record; use defaults where DB requires NOT NULL
+            record.std_filter_threshold = filter_values.get("stdev_threshold")
+            record.current_week_percent_speeding = computed.get("current_week_percent_speeding", 0)
+            record.previous_week_percent_speeding = computed.get("previous_week_percent_speeding", 0)
+            record.percent_change_percent_speeding = computed.get("percent_change_percent_speeding", 0)
+            record.abs_change_percent_speeding = computed.get("abs_change_percent_speeding", 0)
+
+            record.max_percent_speeding = computed.get("max_percent_speeding", computed.get("max_percent_speeding") or computed.get("max_percent_speeding"))
+            record.min_percent_speeding = computed.get("min_percent_speeding", computed.get("min_percent_speeding") or computed.get("min_percent_speeding"))
+            record.avg_percent_speeding = computed.get("avg_percent_speeding")
+            record.median_percent_speeding = computed.get("median_percent_speeding")
+            record.std_percent_speeding = computed.get("std_percent_speeding")
+
+            record.current_week_distance_driven = computed.get("current_week_distance_driven", 0)
+            record.previous_week_distance_driven = computed.get("previous_week_distance_driven", 0)
+            record.percent_change_distance_driven = computed.get("percent_change_distance_driven", 0)
+            record.abs_change_distance_driven = computed.get("abs_change_distance_driven", 0)
+
+            record.max_distance_driven = computed.get("max_distance_driven")
+            record.min_distance_driven = computed.get("min_distance_driven")
+            record.avg_distance_driven = computed.get("avg_distance_driven")
+            record.median_distance_driven = computed.get("median_distance_driven")
+            record.std_distance_driven = computed.get("std_distance_driven")
+
+            record.records_count = computed.get("records_count", 0)
+
+            # optionally commit here or let caller batch commit
+            if commit:
+                db.session.commit()
+            return record
+
+        except Exception as exc:
+            # helpful debug before re-raising or returning
+            print("[analytics] Failed to upsert DriverAnalytics for", driver_id, start_date, "computed:", computed, file=sys.stderr)
+            db.session.rollback()
+            raise

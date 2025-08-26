@@ -48,7 +48,9 @@ def create_app():
 
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ECHO'] = True
+
+    # set this to True if I feel like seeing all the sql statemnets that sqlalchemy makes
+    app.config['SQLALCHEMY_ECHO'] = False
 
     # Initialize extensions
     db.init_app(app)
