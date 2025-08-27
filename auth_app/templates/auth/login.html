@@ -2,6 +2,7 @@
 <div class="container mt-5">
   <h2>Driver Login</h2>
   <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <div class="form-group">
       <label for="user_name">Username</label>
       <input type="text" class="form-control" name="identifier" required />
