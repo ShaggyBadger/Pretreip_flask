@@ -4,7 +4,7 @@ from admin_app import admin_bp
 from flask_app import settings
 from flask_app.extensions import db
 from flask_app.models.users import Users
-from flask_app.models.tankgauge import TankCharts, TankData
+from flask_app.models.tankgauge import StoreData, TankCharts, TankData
 
 # Import the refactored classes
 from speedGauge_app.sgProcessor import Processor
@@ -235,3 +235,55 @@ def edit_tankdata_submit():
     else:
         abort(404)
 
+@admin_bp.route('/stores/select.html')
+def select_store():
+    query = StoreData.query
+    query.order_by(StoreData.city.asc())
+    query.order_by(StoreData.store_num.asc())
+    stores = query.all()
+    return render_template('admin/stores/select.html', stores=stores)
+
+@admin_bp.route('/stores/edit-store.html', methods=["POST"])
+def edit_store():
+    store_id = request.form.get('store_id')
+
+    query = StoreData.query
+    query = query.filter_by(id = store_id)
+    store = query.first()
+
+    return render_template('/admin/stores/edit-store.html', store=store)
+
+@admin_bp.route('/stores/submit-edits.html', methods=["POST"])
+def submit_store_edit():
+    if request.method == "POST":
+        store_id = request.form.get('store_id')
+        store = StoreData.query.get_or_404(store_id)
+
+        # Capture "before" state
+        before_data = {}
+        for column in StoreData.__table__.columns:
+            before_data[column.name] = getattr(store, column.name)
+
+        form = request.form
+
+        for column in StoreData.__table__.columns:
+            if column.name == 'id':
+                # continue, we don't want to update the id for the row
+                continue
+            if column.name in form:
+                value = form.get(column.name)
+                setattr(store, column.name, value)
+        
+        db.session.commit()
+
+        # make the after data
+        after_data = {}
+        # Loop through all columns in the StoreData table
+        for column in StoreData.__table__.columns:
+            column_name = column.name
+            column_value = getattr(store, column_name)
+            after_data[column_name] = column_value
+            
+        return render_template('admin/stores/submit-edits.html', before=before_data, after=after_data, store_id=store_id)
+    else:
+        abort

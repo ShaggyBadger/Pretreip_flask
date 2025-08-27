@@ -1,0 +1,184 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-4">
+  <div class="mb-4 text-center">
+    <!-- Page header -->
+    <h1 class="text-light fw-bold mb-2">Edit Store</h1>
+
+    <!-- Store name -->
+    <h2 class="text-info fw-semibold mb-1">{{ store.store_name }}</h2>
+
+    <!-- Store number / Riso number -->
+    <p>{{ store.store_num }} / {{ store.riso_num }}</p>
+
+    <hr class="border-secondary" />
+  </div>
+
+  <form
+    method="POST"
+    class="mt-4"
+    action="{{ url_for('admin.submit_store_edit') }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="store_id" value="{{ store.id }}" />
+
+    <div class="mb-3">
+      <label for="store_num" class="form-label text-light">Store Number</label>
+      <input
+        type="number"
+        class="form-control"
+        id="store_num"
+        name="store_num"
+        value="{{ store.store_num }}"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="riso_num" class="form-label text-light">Riso Number</label>
+      <input
+        type="number"
+        class="form-control"
+        id="riso_num"
+        name="riso_num"
+        value="{{ store.riso_num }}"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="store_name" class="form-label text-light">Store Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="store_name"
+        name="store_name"
+        value="{{ store.store_name }}"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="store_type" class="form-label text-light">Store Type</label>
+      <input
+        type="text"
+        class="form-control"
+        id="store_type"
+        name="store_type"
+        value="{{ store.store_type }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="address" class="form-label text-light">Address</label>
+      <input
+        type="text"
+        class="form-control"
+        id="address"
+        name="address"
+        value="{{ store.address }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="city" class="form-label text-light">City</label>
+      <input
+        type="text"
+        class="form-control"
+        id="city"
+        name="city"
+        value="{{ store.city }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="state" class="form-label text-light">State</label>
+      <input
+        type="text"
+        class="form-control"
+        id="state"
+        name="state"
+        value="{{ store.state }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="zip" class="form-label text-light">Zip Code</label>
+      <input
+        type="number"
+        class="form-control"
+        id="zip"
+        name="zip"
+        value="{{ store.zip }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="county" class="form-label text-light">County</label>
+      <input
+        type="text"
+        class="form-control"
+        id="county"
+        name="county"
+        value="{{ store.county }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="lat" class="form-label text-light">Latitude</label>
+      <input
+        type="number"
+        step="any"
+        class="form-control"
+        id="lat"
+        name="lat"
+        value="{{ store.lat }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="lon" class="form-label text-light">Longitude</label>
+      <input
+        type="number"
+        step="any"
+        class="form-control"
+        id="lon"
+        name="lon"
+        value="{{ store.lon }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="install_date" class="form-label text-light"
+        >Install Date</label
+      >
+      <input
+        type="date"
+        class="form-control"
+        id="install_date"
+        name="install_date"
+        value="{{ store.install_date }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="overfill_protection" class="form-label text-light"
+        >Overfill Protection</label
+      >
+      <input
+        type="text"
+        class="form-control"
+        id="overfill_protection"
+        name="overfill_protection"
+        value="{{ store.overfill_protection }}"
+      />
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Changes</button>
+    <a href="{{ url_for('admin.select_store') }}" class="btn btn-secondary"
+      >Cancel</a
+    >
+  </form>
+</div>
+
+{% endblock %}
