@@ -195,10 +195,4 @@ def reinitialize_tank_gauge_tables():
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
-    # initialization = Initialize(automatic_mode=True) 
-    # tankGauge_controler = tankGauge_control()
-    # tankGauge_controler.initialize()
 
-    # Call the new function to repopulate users
-    # repopulate_users_from_json()
-    # reinitialize_tank_gauge_tables()
