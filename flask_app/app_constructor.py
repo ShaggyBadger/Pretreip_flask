@@ -5,6 +5,7 @@ from datetime import timedelta
 from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
 from flask_app.extensions import db, migrate
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # make tracebacks more better
 from rich.traceback import install
@@ -20,6 +21,7 @@ def create_app():
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
     app.permanent_session_lifetime = timedelta(days=7)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     csrf = CSRFProtect(app)
 
     # Configure the database
