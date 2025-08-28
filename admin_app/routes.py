@@ -1,10 +1,12 @@
+from logging import raiseExceptions
 from os import EX_TEMPFAIL
+import json
 from flask import render_template, request, jsonify, redirect, url_for, flash, abort
 from admin_app import admin_bp
 from flask_app import settings
 from flask_app.extensions import db
 from flask_app.models.users import Users
-from flask_app.models.tankgauge import StoreData, TankCharts, TankData
+from flask_app.models.tankgauge import StoreData, TankCharts, TankData, StoreTankMap
 
 # Import the refactored classes
 from speedGauge_app.sgProcessor import Processor
@@ -243,47 +245,143 @@ def select_store():
     stores = query.all()
     return render_template('admin/stores/select.html', stores=stores)
 
-@admin_bp.route('/stores/edit-store.html', methods=["POST"])
+@admin_bp.route('/stores/edit-store.html', methods=["POST", "GET"])
 def edit_store():
-    store_id = request.form.get('store_id')
+    store_id = request.form.get('store_id') or request.args.get("store_id")
+    try:
+        store_id = int(store_id)   # 🔑 convert to integer
+    except ValueError:
+        return "Invalid store_id", 400
 
     query = StoreData.query
     query = query.filter_by(id = store_id)
     store = query.first()
 
-    return render_template('/admin/stores/edit-store.html', store=store)
+    mapped_rows = (
+        db.session.query(StoreTankMap, TankData)
+        .join(TankData, StoreTankMap.tank_id == TankData.id)
+        .filter(StoreTankMap.store_id == store.id)
+        .all()
+        )
+    
+    store_tanks = store.store_tanks_map
+    tanks = []
+
+    for tank in store_tanks:
+        fuel_type = tank.fuel_type
+        tank_id = tank.tank_id
+
+        query = TankData.query
+        query = query.filter_by(id=tank_id)
+        tank_obj = query.first()
+        tank_dict = {
+            'fuel_type': fuel_type,
+            'tank_id': tank_obj.id,
+            'name': tank_obj.name,
+            'manufacturer': tank_obj.manufacturer,
+            'model': tank_obj.model,
+            'capacity': tank_obj.capacity,
+            'max_depth': tank_obj.max_depth,
+            'misc_info': tank_obj.misc_info,
+            'chart_source': tank_obj.chart_source,
+            'description': tank_obj.description
+        }
+        tanks.append(tank_dict)
+
+    return render_template('/admin/stores/edit-store.html', store=store, tanks_list=tanks)
 
 @admin_bp.route('/stores/submit-edits.html', methods=["POST"])
 def submit_store_edit():
-    if request.method == "POST":
-        store_id = request.form.get('store_id')
-        store = StoreData.query.get_or_404(store_id)
+    store_id = request.form.get('store_id')
+    store = StoreData.query.get_or_404(store_id)
+    form = request.form
 
-        # Capture "before" state
-        before_data = {}
-        for column in StoreData.__table__.columns:
-            before_data[column.name] = getattr(store, column.name)
+    # Capture "before" state
+    before_data = {col.name: getattr(store, col.name) for col in StoreData.__table__.columns}
 
-        form = request.form
-
+    try:
+        # Update store fields (skip id)
         for column in StoreData.__table__.columns:
             if column.name == 'id':
-                # continue, we don't want to update the id for the row
                 continue
             if column.name in form:
                 value = form.get(column.name)
+                if value == '':
+                    value = None
                 setattr(store, column.name, value)
         
+
+        # Parse tanks JSON safely
+        tanks_dict = json.loads(form.get('tanks_json', '[]'))
+
+        # Delete old mappings in one shot
+        StoreTankMap.query.filter_by(store_id=store.id).delete(synchronize_session=False)
+
+        # Insert new mappings
+        for tank in tanks_dict:
+            new_map = StoreTankMap(
+                store_id=store.id,
+                tank_id=tank.get('tank_id'),
+                fuel_type=tank.get('fuel_type')
+            )
+            db.session.add(new_map)
+
+        # Commit all at once
         db.session.commit()
 
-        # make the after data
-        after_data = {}
-        # Loop through all columns in the StoreData table
-        for column in StoreData.__table__.columns:
-            column_name = column.name
-            column_value = getattr(store, column_name)
-            after_data[column_name] = column_value
-            
-        return render_template('admin/stores/submit-edits.html', before=before_data, after=after_data, store_id=store_id)
-    else:
-        abort
+    except Exception as e:
+        db.session.rollback()
+        raise
+
+    # Capture "after" state
+    after_data = {col.name: getattr(store, col.name) for col in StoreData.__table__.columns}
+
+    return render_template(
+        'admin/stores/submit-edits.html',
+        before=before_data,
+        after=after_data,
+        store_id=store_id
+    )
+
+@admin_bp.route('/api/get_tanks')
+def get_tanks():
+    tank_list = []
+    fuel_type_list = []
+
+    tanks = TankData.query.all()
+    for tank in tanks:
+        tank_dict = {
+            'id': tank.id,
+            'name': tank.name,
+            'capacity': tank.capacity,
+            'max_depth': tank.max_depth,
+            'misc_info': tank.misc_info,
+            'description': tank.description
+        }
+
+        tank_list.append(tank_dict)
+    
+    query = StoreTankMap.query  # start with the base query
+    query = query.with_entities(StoreTankMap.fuel_type)  # select only the fuel_type column
+    query = query.distinct()  # get only distinct values
+    fuel_types = query.all()  # execute the query
+
+    for i in fuel_types:
+        fuel_type = i[0]
+        fuel_type_list.append(fuel_type)
+
+    response_object = {
+        'tank_list': tank_list,
+        'fuel_type_list': fuel_type_list
+    }
+
+    return jsonify(response_object)
+
+@admin_bp.route('/create-store', methods=["POST"])
+def create_store():
+    new_store_row = StoreData()
+    db.session.add(new_store_row)
+    db.session.commit()
+
+    # now redirect to edit page with the store_id
+    return redirect(url_for("admin.edit_store", store_id=new_store_row.id))
