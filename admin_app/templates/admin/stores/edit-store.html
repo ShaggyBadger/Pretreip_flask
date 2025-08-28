@@ -1,0 +1,484 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-4">
+  <div class="mb-4 text-center">
+    <!-- Page header -->
+    <h1 class="text-light fw-bold mb-2">Edit Store</h1>
+
+    <!-- Store name -->
+    <h2 class="text-info fw-semibold mb-1">{{ store.store_name }}</h2>
+
+    <!-- Store number / Riso number -->
+    <p>{{ store.store_num }} / {{ store.riso_num }}</p>
+
+    <hr class="border-secondary" />
+  </div>
+
+  <form
+    method="POST"
+    class="mt-4"
+    action="{{ url_for('admin.submit_store_edit') }}"
+  >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="store_id" value="{{ store.id }}" />
+    <input type="hidden" id="tanks-json" name="tanks_json" value="" />
+
+    <div class="mb-3">
+      <label for="store_num" class="form-label text-light">Store Number</label>
+      <input
+        type="number"
+        class="form-control"
+        id="store_num"
+        name="store_num"
+        value="{{ store.store_num }}"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="riso_num" class="form-label text-light">Riso Number</label>
+      <input
+        type="number"
+        class="form-control"
+        id="riso_num"
+        name="riso_num"
+        value="{{ store.riso_num }}"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="store_name" class="form-label text-light">Store Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="store_name"
+        name="store_name"
+        value="{{ store.store_name }}"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="store_type" class="form-label text-light">Store Type</label>
+      <input
+        type="text"
+        class="form-control"
+        id="store_type"
+        name="store_type"
+        value="{{ store.store_type }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="address" class="form-label text-light">Address</label>
+      <input
+        type="text"
+        class="form-control"
+        id="address"
+        name="address"
+        value="{{ store.address }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="city" class="form-label text-light">City</label>
+      <input
+        type="text"
+        class="form-control"
+        id="city"
+        name="city"
+        value="{{ store.city }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="state" class="form-label text-light">State</label>
+      <input
+        type="text"
+        class="form-control"
+        id="state"
+        name="state"
+        value="{{ store.state }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="zip" class="form-label text-light">Zip Code</label>
+      <input
+        type="number"
+        class="form-control"
+        id="zip"
+        name="zip"
+        value="{{ store.zip }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="county" class="form-label text-light">County</label>
+      <input
+        type="text"
+        class="form-control"
+        id="county"
+        name="county"
+        value="{{ store.county }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="lat" class="form-label text-light">Latitude</label>
+      <input
+        type="number"
+        step="any"
+        class="form-control"
+        id="lat"
+        name="lat"
+        value="{{ store.lat }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="lon" class="form-label text-light">Longitude</label>
+      <input
+        type="number"
+        step="any"
+        class="form-control"
+        id="lon"
+        name="lon"
+        value="{{ store.lon }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="install_date" class="form-label text-light"
+        >Install Date</label
+      >
+      <input
+        type="date"
+        class="form-control"
+        id="install_date"
+        name="install_date"
+        value="{{ store.install_date }}"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="overfill_protection" class="form-label text-light"
+        >Overfill Protection</label
+      >
+      <input
+        type="text"
+        class="form-control"
+        id="overfill_protection"
+        name="overfill_protection"
+        value="{{ store.overfill_protection }}"
+      />
+    </div>
+
+    <!-- Table wrapper -->
+    <div id="tank-container" class="table-container"></div>
+    <div class="mb-3">
+      <button
+        type="button"
+        class="btn btn-success"
+        onclick="(openAddTankDiv())"
+      >
+        Add Tank
+      </button>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Changes</button>
+    <a href="{{ url_for('admin.select_store') }}" class="btn btn-secondary"
+      >Cancel</a
+    >
+  </form>
+</div>
+
+<!-- Hidden container for adding tanks -->
+<div
+  id="add-tank-container"
+  style="display: none; border: 1px solid #ccc; padding: 1rem; margin: 1rem 0"
+>
+  <div class="mb-2">
+    <label for="tank-select" class="form-label text-light">Select Tank:</label>
+    <select id="tank-select" class="form-select"></select>
+  </div>
+
+  <div class="mb-2">
+    <label for="fuel-select" class="form-label text-light"
+      >Select Fuel Type:</label
+    >
+    <select id="fuel-select" class="form-select"></select>
+  </div>
+
+  <div class="mt-2">
+    <button
+      type="button"
+      class="btn btn-success me-2"
+      onclick="confirmAddTank()"
+    >
+      Add to List
+    </button>
+    <button type="button" class="btn btn-secondary" onclick="closeAddTankDiv()">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<!-- existing mapped tanks passed from Flask (store-specific mappings) -->
+<script id="tanks-data" type="application/json">
+  {{ tanks_list | tojson }}
+</script>
+
+<script>
+  // --------- State ----------
+  const container = document.getElementById("tank-container");
+
+  // `tanks` is the current list shown in the table (may include newly added rows)
+  // It is initialized from the Flask-passed `tanks_list` (should be list of dicts with keys like tank_id, name, fuel_type, capacity, etc)
+  let tanks = JSON.parse(
+    document.getElementById("tanks-data").textContent || "[]"
+  );
+
+  // We'll also keep a temporary local copy of available tanks returned by the API (for the select)
+  let availableTanks = []; // items from /admin/api/get_tanks -> data.tank_list
+  let availableFuelTypes = []; // items from /admin/api/get_tanks -> data.fuel_type_list
+
+  // --------- Rendering helpers ----------
+  function createHeaderRow() {
+    const tr = document.createElement("tr");
+    tr.classList.add("text-light", "bg-dark");
+    const headers = [
+      "Delete",
+      "Fuel Type",
+      "Name",
+      "Capacity",
+      "Max Depth",
+      "Misc Info",
+      "Description",
+    ];
+    headers.forEach((h) => {
+      const th = document.createElement("th");
+      th.textContent = h;
+      tr.appendChild(th);
+    });
+    return tr;
+  }
+
+  // render rows into a tbody element (table body)
+  function renderTankRows(tbody, tanksArray) {
+    tbody.innerHTML = ""; // clear body
+    for (let i = 0; i < tanksArray.length; i++) {
+      const tank = tanksArray[i];
+      const row = document.createElement("tr");
+
+      // store the tank mapping id (if present) on the DOM for later reference
+      // we use data attributes; tank.tank_id is expected for mapping entries
+      if (tank.tank_id !== undefined) {
+        row.dataset.tankId = tank.tank_id;
+      }
+      // Add row cells - delete button leftmost (delete by index intentionally)
+      row.innerHTML = `
+        <td style="width: 1%;">
+          <button type="button" class="btn btn-danger btn-sm" onclick="deleteTank(${i})">Delete</button>
+        </td>
+        <td>${escapeHtml(tank.fuel_type || "")}</td>
+        <td>${escapeHtml(tank.name || "")}</td>
+        <td>${escapeHtml(
+          tank.capacity !== undefined ? String(tank.capacity) : ""
+        )}</td>
+        <td>${escapeHtml(
+          tank.max_depth !== undefined ? String(tank.max_depth) : ""
+        )}</td>
+        <td>${escapeHtml(tank.misc_info || "")}</td>
+        <td>${escapeHtml(tank.description || "")}</td>
+      `;
+      tbody.appendChild(row);
+    }
+  }
+
+  // master render function that builds the table
+  function renderTanks() {
+    container.innerHTML = ""; // Clear container
+
+    // table with heading and body
+    const table = document.createElement("table");
+    // choose classes to match your dark theme; adjust as desired
+    table.className = "table table-bordered table-dark text-light";
+
+    // thead
+    const thead = document.createElement("thead");
+    thead.className = "table-secondary text-light";
+    thead.appendChild(createHeaderRow());
+    table.appendChild(thead);
+
+    // tbody
+    const tbody = document.createElement("tbody");
+    renderTankRows(tbody, tanks);
+    table.appendChild(tbody);
+
+    container.appendChild(table);
+  }
+
+  // safe HTML escaper for small text insertions
+  function escapeHtml(unsafe) {
+    if (unsafe === null || unsafe === undefined) return "";
+    return String(unsafe)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  // --------- Actions ----------
+  function deleteTank(index) {
+    // removes the specific row by index from the current `tanks` array
+    tanks.splice(index, 1);
+    renderTanks();
+  }
+
+  function openAddTankDiv() {
+    const addDiv = document.getElementById("add-tank-container");
+    addDiv.style.display = "block";
+
+    // fetch the available tanks + fuel types from the server
+    fetch("/admin/api/get_tanks")
+      .then((resp) => {
+        if (!resp.ok)
+          throw new Error("Network response was not ok: " + resp.status);
+        return resp.json();
+      })
+      .then((data) => {
+        console.log("API /admin/api/get_tanks returned:", data);
+
+        // adapt to your route shape: the route returns { tank_list: [...], fuel_type_list: [...] }
+        availableTanks = Array.isArray(data.tank_list) ? data.tank_list : [];
+        availableFuelTypes = Array.isArray(data.fuel_type_list)
+          ? data.fuel_type_list
+          : [];
+
+        // populate selects
+        const tankSelect = document.getElementById("tank-select");
+        const fuelSelect = document.getElementById("fuel-select");
+        tankSelect.innerHTML = "";
+        fuelSelect.innerHTML = "";
+
+        // add a placeholder option
+        const placeholderTankOpt = document.createElement("option");
+        placeholderTankOpt.value = "";
+        placeholderTankOpt.textContent = "-- select tank --";
+        placeholderTankOpt.disabled = true;
+        placeholderTankOpt.selected = true;
+        tankSelect.appendChild(placeholderTankOpt);
+
+        availableTanks.forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          // include misc_info & description directly in the visible option label
+          opt.textContent =
+            `${t.name} — Cap: ${t.capacity || ""}, Max: ${t.max_depth || ""}` +
+            `${t.misc_info ? " — " + t.misc_info : ""}` +
+            `${t.description ? " — " + t.description : ""}`;
+
+          // keep metadata for later use
+          opt.dataset.name = t.name || "";
+          opt.dataset.capacity = t.capacity || "";
+          opt.dataset.maxDepth = t.max_depth || "";
+          opt.dataset.miscInfo = t.misc_info || "";
+          opt.dataset.description = t.description || "";
+
+          tankSelect.appendChild(opt);
+        });
+
+        // fuel select: placeholder + values
+        const placeholderFuelOpt = document.createElement("option");
+        placeholderFuelOpt.value = "";
+        placeholderFuelOpt.textContent = "-- select fuel --";
+        placeholderFuelOpt.disabled = true;
+        placeholderFuelOpt.selected = true;
+        fuelSelect.appendChild(placeholderFuelOpt);
+
+        availableFuelTypes.forEach((f) => {
+          const opt = document.createElement("option");
+          opt.value = f;
+          opt.textContent = f;
+          fuelSelect.appendChild(opt);
+        });
+      })
+      .catch((err) => {
+        console.error("Error fetching tank options:", err);
+        // keep the add div visible, but you may want to show an error to the user
+      });
+  }
+
+  function confirmAddTank() {
+    const tankSelect = document.getElementById("tank-select");
+    const fuelSelect = document.getElementById("fuel-select");
+
+    if (!tankSelect.value) {
+      alert("Please select a tank.");
+      return;
+    }
+    if (!fuelSelect.value) {
+      alert("Please select a fuel type.");
+      return;
+    }
+
+    const selected = tankSelect.selectedOptions[0];
+
+    // Build new mapping row (use tank_id to reference TankData.id; keep same keys you use elsewhere)
+    const newTank = {
+      // use the `tank_id` key for consistency with your mapping objects
+      tank_id: selected.value,
+      name: selected.dataset.name || selected.textContent,
+      fuel_type: fuelSelect.value,
+      capacity: selected.dataset.capacity || "",
+      max_depth: selected.dataset.maxDepth || "",
+      misc_info: selected.dataset.miscInfo || "",
+      description: selected.dataset.description || "",
+    };
+
+    // add to in-memory array and re-render
+    tanks.push(newTank);
+    renderTanks();
+
+    // close the add div
+    closeAddTankDiv();
+  }
+
+  function closeAddTankDiv() {
+    const addDiv = document.getElementById("add-tank-container");
+    addDiv.style.display = "none";
+
+    // optional: clear selects so memory is clean on next open
+    const tankSelect = document.getElementById("tank-select");
+    const fuelSelect = document.getElementById("fuel-select");
+    if (tankSelect) tankSelect.innerHTML = "";
+    if (fuelSelect) fuelSelect.innerHTML = "";
+  }
+
+  // initial render from server-provided list
+  renderTanks();
+</script>
+
+<script>
+  // assume `tanks` is the in-memory array you already maintain
+  const editForm = document.querySelector(
+    'form[action="{{ url_for("admin.submit_store_edit") }}"]'
+  );
+
+  if (editForm) {
+    editForm.addEventListener("submit", function (e) {
+      // put the current tanks array into the hidden input as a JSON string
+      const tanksInput = document.getElementById("tanks-json");
+      if (tanksInput) {
+        // convert to JSON; this will be a string value in the form payload
+        tanksInput.value = JSON.stringify(tanks);
+      }
+      // allow the form to submit normally after value is set
+    });
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav
+      class="col-md-3 col-lg-2 d-md-block sidebar collapse"
+      style="
+        background-color: #1c1f23;
+        border-right: 1px solid #2c3036;
+        height: 100vh;
+      "
+    >
+      <div class="position-sticky pt-3" style="overflow-y: auto">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a
+              class="nav-link text-light fw-bold"
+              href="#"
+              onclick="loadAdminSection(event, '/admin/manage_users')"
+            >
+              <i class="bi bi-people me-2"></i> Manage Users
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link text-light fw-bold"
+              href="{{ url_for('admin.select_tank') }}"
+            >
+              <i class="bi bi-fuel-pump me-2"></i> Tank Charts
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link text-light fw-bold"
+              href="{{ url_for('admin.select_store') }}"
+            >
+              <i class="bi bi-shop me-2"></i> Store Info
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link text-light fw-bold"
+              href="#"
+              onclick="loadAdminSection(event, '/admin/upload_speedgauge')"
+            >
+              <i class="bi bi-speedometer2 me-2"></i> SpeedGauge Files
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div id="admin-main-content" class="pt-3">
+        <h2 class="fw-bold">Admin Panel</h2>
+        <p class="lead">
+          Select an option from the left to begin managing system data.
+        </p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  function loadAdminSection(event, route, data = null) {
+    // stop submit btn from submitting
+    event.preventDefault();
+
+    // define the area of the web page we will be updating
+    let contentArea = document.getElementById("admin-main-content");
+
+    // set data format to send stuff to server if needed
+    let fetchOptions = {};
+
+    if (data) {
+      // If we have data, send it as a POST request
+      fetchOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      };
+    }
+
+    // send for stuff from the server
+    fetch(route, fetchOptions)
+      .then((response) => {
+        // if response is bad, give this error
+        if (!response.ok) throw new Error("Network response was not ok");
+
+        // if response is good, then extract the text from it and give it to the
+        // next .then and call it html since that's what it is.
+        return response.text();
+      })
+
+      // html is the value returned from the response.text() above
+      .then((html) => {
+        // stuff the html into the content area
+        contentArea.innerHTML = html;
+
+        // After injecting the new HTML into contentArea, re-run only the scripts inside it.
+        Array.from(contentArea.querySelectorAll("script")).forEach(function (
+          oldScript
+        ) {
+          // Step 1: Create a brand-new script element.
+          // Browsers only *execute* script element tags if they're created this way.
+          let newScript = document.createElement("script");
+
+          // Step 2: Copy over all attributes from the old script element.
+          // Example: src, type, async, defer, etc.
+          for (let i = 0; i < oldScript.attributes.length; i++) {
+            let attr = oldScript.attributes[i];
+            newScript.setAttribute(attr.name, attr.value);
+          }
+
+          // Step 3: Copy inline script content (if there is any).
+          // This handles script element console.log("hi")
+          if (oldScript.textContent) {
+            newScript.appendChild(
+              document.createTextNode(oldScript.textContent)
+            );
+          }
+
+          // Step 4: Replace the old script element  with the new one.
+          // This triggers execution: inline scripts run immediately,
+          // external scripts (with src) get fetched and executed.
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+      })
+
+      // final catch. If something goes wrong dont crash the system! just do this instead.
+      .catch((error) => {
+        console.error("Error loading section:", error);
+        contentArea.innerHTML = `<div class="alert alert-danger">Error loading content.</div>`;
+      });
+  }
+
+  function handleUploadSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const contentArea = document.getElementById("admin-main-content");
+
+    // Optional: Add a loading indicator
+    contentArea.innerHTML = `<div class="d-flex justify-content-center align-items-center" style="height: 200px;"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
+
+    fetch(form.action, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json()) // Expect a JSON response from the server
+      .then((data) => {
+        if (data.message) {
+          // On success, load the success view
+          loadAdminSection("/admin/upload_success");
+        } else {
+          // On failure, display the error from the server
+          contentArea.innerHTML = `<div class="alert alert-danger">${
+            data.error || "An unknown error occurred."
+          }</div>`;
+        }
+      })
+      .catch((error) => {
+        console.error("Error submitting form:", error);
+        contentArea.innerHTML = `<div class="alert alert-danger">An error occurred while submitting the form.</div>`;
+      });
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %} {% block content %}
+<style>
+  .input-valid {
+    box-shadow: 0 0 5px 2px #4caf50; /* pleasant green glow */
+    border-color: #4caf50;
+  }
+
+  .input-invalid {
+    box-shadow: 0 0 5px 2px #f44336; /* red glow */
+    border-color: #f44336;
+  }
+</style>
+
+<div class="container mt-5">
+  <h2>Register Account</h2>
+  <form method="POST" onsubmit="return check_password()">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input
+        type="email"
+        placeholder="email"
+        class="form-control"
+        name="email"
+        id="email"
+        required
+        oninput="check_email()"
+      />
+    </div>
+    <div class="form-group">
+      <label for="employee-id">Employee Id</label>
+      <input
+        type="text"
+        class="form-control"
+        name="driver_id"
+        id="employee-id"
+      />
+    </div>
+    <div class="form-group">
+      <label for="dot-number">DOT Number</label>
+      <input
+        type="text"
+        class="form-control"
+        name="dot-number"
+        id="dot-number"
+        oninput="box_color()"
+      />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        type="password"
+        class="form-control"
+        name="password"
+        required
+        id="p1"
+        oninput="box_color()"
+      />
+    </div>
+    <div class="form-group">
+      <label for="password">Verify Password</label>
+      <input
+        type="password"
+        class="form-control"
+        name="verify_password"
+        required
+        id="p2"
+        oninput="box_color()"
+      />
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top: 15px">
+      Register
+    </button>
+  </form>
+</div>
+
+<script>
+  function check_password() {
+    let p1 = document.getElementById("p1").value;
+    let p2 = document.getElementById("p2").value;
+
+    if (p1 === p2) {
+      return true;
+    } else {
+      alert("Please enter matching passwords");
+      return false;
+    }
+  }
+
+  function box_color() {
+    let p1 = document.getElementById("p1");
+    let p2 = document.getElementById("p2");
+
+    if (p1.value === "" && p2.value === "") {
+      p1.classList.remove("input-valid", "input-invalid");
+      return;
+    }
+
+    if (p1.value === p2.value) {
+      p1.classList.add("input-valid");
+      p2.classList.add("input-valid");
+      p1.classList.remove("input-invalid");
+      p2.classList.remove("input-invalid");
+    } else {
+      p1.classList.add("input-invalid");
+      p2.classList.add("input-invalid");
+      p1.classList.remove("input-valid");
+      p2.classList.remove("input-valid");
+    }
+    return;
+  }
+
+  function check_email() {
+    re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    let email = document.getElementById("email");
+
+    if (email.value === "") {
+      email.classList.remove("input-valid", "input-invalid");
+      return;
+    }
+
+    if (re.test(email.value) === false) {
+      email.classList.remove("input-valid");
+      email.classList.add("input-invalid");
+    } else {
+      email.classList.remove("input-invalid");
+      email.classList.add("input-valid");
+    }
+  }
+</script>
+{% endblock %}

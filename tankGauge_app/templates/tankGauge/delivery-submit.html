@@ -25,6 +25,9 @@
    */
   function renderTankCards(tanks) {
     const container = document.getElementById("tank-cards");
+    const csrfToken = document
+      .querySelector('meta[name="csrf-token"]')
+      .getAttribute("content");
 
     // Clear any existing content before rendering
     container.innerHTML = "";
@@ -32,6 +35,7 @@
     tanks.forEach((tank, index) => {
       // C. Create the card element once. No need for a redundant inner div.
       const card = document.createElement("div");
+
       card.className = "card shadow-sm p-4 mb-4";
 
       card.innerHTML = `
@@ -155,6 +159,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken, // Flask-WTF looks for this
             },
             body: JSON.stringify({
               delivery_gallons: deliveryGallons,

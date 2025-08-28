@@ -6,5 +6,5 @@ tankGauge_bp = Blueprint(
     static_folder='static',
 )
 
-from tankGauge_app import routes
-from . import models
+from . import routes
+

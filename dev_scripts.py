@@ -1,13 +1,16 @@
 import json
-import pymysql
-from flask_app import models, settings
-from dbConnector import init_db
 from dotenv import load_dotenv
 load_dotenv()
 import speedGauge_app
 from speedGauge_app import SpeedgaugeApi as sga
 from speedGauge_app import analytics
-from tankGauge_app import models
+
+from flask_app import settings
+from flask_app.utils import Utils, CLI_Utils
+from flask_app.app_constructor import app # Import app instance
+from flask_app.models.users import Users # Import Users model here
+from flask_app.models.tankgauge import StoreData, TankData, TankCharts, StoreTankMap
+from flask_app.extensions import db
 
 from tankGauge_app.initialization_processing import Processing
 
@@ -28,14 +31,13 @@ class Initialize:
         self.processed_dir = settings.PROCESSED_SPEEDGAUGE_PATH
         self.unprocessed_dir = settings.UNPROCESSED_SPEEDGAUGE_PATH
 
-        # establist connection to the database
-        self.models_util = models.Utils(debug_mode=False)
-        self.models_cli_util = models.CLI_Utils(debug_mode=False)
+        # Initialize utilities
+        self.models_util = Utils(debug_mode=False)
+        self.models_cli_util = CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(self.models_util)
         self.analytics_obj = analytics.Analytics(self.models_util)
 
         if automatic_mode is True:
-            # if this is set to true, then go ahead and just automatically run this thing.
             self.standard_flow()
 
     def standard_flow(self):
@@ -49,28 +51,12 @@ class Initialize:
         company. Later on anyone can register to use the program as well."""
         print("Initializing the database...")
 
-        # build the database
-        print("Building the Database....")
-        self.models_util.build_db()
-
-        # build the tables in the database
-        print("\nCreating tables for database....")
-        tables = {
-            "speedGauge_data": settings.DATABASE_DIR / "speedGauge_table.json",
-            "company_analytics_table": settings.DATABASE_DIR
-            / "company_analytics_table.json",
-            "driver_analytics_table": settings.DATABASE_DIR
-            / "driver_analytics_table.json",
-            "visit_log_table": settings.DATABASE_DIR / "visit_log_table.json",
-        }
-
-        for table_name, schema_path in tables.items():
-            print(f"Creating table: {table_name}")
-            self.create_table_from_json(json_file=schema_path, table_name=table_name)
-
         # Enter users from the json file
         print("\nEntering users from json file....")
-        self.models_cli_util.enter_users_from_json()
+        # This part needs to be called with an app context, but the app is not available here
+        # This class is for general initialization, not specific app context tasks. 
+        # The repopulate_users_from_json function below handles the app context.
+        # self.models_cli_util.enter_users_from_json()
 
         print("Database initialized successfully.\n")
 
@@ -84,8 +70,6 @@ class Initialize:
 
         for directory in dirs_to_construct:
             try:
-                # parents=True creates parent directories if they don't exist
-                # exist_ok=True prevents an error if the directory already exists
                 directory.mkdir(parents=True, exist_ok=True)
                 print(f"Directory ensured: {directory}")
             except OSError as e:
@@ -95,61 +79,7 @@ class Initialize:
         """stick all speedguage files into the database for initial setup"""
         self.sgProcessor.standard_flow()
         self.analytics_obj.standard_flow()
-        
 
-    def create_table_from_json(self, json_file=None, table_name=None, debug=False):
-
-        # Load JSON data from file
-        with open(json_file, "r", encoding="utf-8") as file:
-            column_info = json.load(file)
-
-        columns = []
-        table_options = ""
-        unique_constraints = []
-
-        # Separate columns from table_options and unique_constraints
-        if "table_options" in column_info:
-            table_options = column_info.pop("table_options")
-
-        if "unique_constraints" in column_info:
-            unique_constraints = column_info.pop("unique_constraints")
-
-        for column, definition in column_info.items():
-            columns.append(f"{column} {definition}")
-
-        # Join column definitions with proper indentation
-        columns_sql = ",\n      ".join(columns)
-
-        # Add unique constraints to the SQL statement
-        if unique_constraints:
-            constraints_sql = ",\n      ".join(unique_constraints)
-            columns_sql += f",\n      {constraints_sql}"
-
-        # Construct SQL CREATE TABLE statement
-        # Remove quotes around table_name for MySQL compatibility
-        create_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS {table_name} (
-            {columns_sql}
-            ) {table_options};
-            """
-
-        # Print the SQL for debugging
-        if debug is True:
-            print("Executing SQL:\n", create_table_sql)
-
-        # Connect to the database and execute SQL
-        conn = self.models_util.get_db_connection()
-        try:
-            c = conn.cursor()
-            c.execute(create_table_sql)
-            conn.commit()
-            print(f"Table '{table_name}' created/verified successfully.\n")
-        except pymysql.Error as e:
-            print(f"Error creating table '{table_name}': {e}")
-            conn.rollback()
-        finally:
-            if conn:  # Ensure connection is closed even if an error occurs
-                conn.close()
 
     def run_analyitics(self):
         """Run the analytics on the speedGauge data"""
@@ -157,11 +87,10 @@ class Initialize:
         self.sgProcessor.run_analytics()
         print("Analytics completed successfully.\n")
 
-
 class TempTester:
     def __init__(self):
-        self.models_util = models.Utils(debug_mode=False)
-        self.models_cli_util = models.CLI_Utils(debug_mode=False)
+        self.models_util = Utils(debug_mode=False)
+        self.models_cli_util = CLI_Utils(debug_mode=False)
         self.sgProcessor = speedGauge_app.sgProcessor.Processor(
             self.models_util, initialize=False
         )
@@ -171,17 +100,10 @@ class TempTester:
         self.sgProcessor.standard_flow()
 
     def print_db_info(self):
-        conn = self.models_util.get_db_connection()
-        c = conn.cursor()
-        sql = """
-    SHOW DATABASES;
-    """
-        c.execute(sql)
-        results = c.fetchall()
-        for dict in results:
-            print(dict)
-
-        conn.close()
+        # This method needs to be refactored to use SQLAlchemy if needed.
+        # For now, it's commented out as it uses raw SQL.
+        print("print_db_info is not implemented with SQLAlchemy yet.")
+        pass
 
     def test_api(self):
         a = self.sga.build_speedgauge_report()
@@ -210,7 +132,7 @@ class TempTester:
 
 class tankGauge_control:
     def __init__(self):
-        init_db()
+        # init_db() is no longer needed with Flask-SQLAlchemy
         self.processing_obj = Processing()
     
     def initialize(self):
@@ -231,13 +153,46 @@ class tankGauge_control:
     def run_store_tank_map(self):
         self.processing_obj.store_tank_map()
 
+def repopulate_users_from_json():
+    print("Running repopulate_users_from_json...")
+    # Get the app instance
     
+    with app.app_context(): # USE the globally imported 'app'
+        cli_utils = CLI_Utils()
+        
+        print("Clearing existing users table...")
+        cli_utils.clear_users()
+        print("Users table cleared.")
+        
+        print("Re-entering users from JSON file...")
+        cli_utils.enter_users_from_json()
+        print("Users re-entered from JSON.")
+        
+        # Optional: Verify the count and a sample user
+        print(f"Total users in DB: {Users.query.count()}")
+        print(f"First user in DB: {Users.query.first()}")
 
-    
+def reinitialize_tank_gauge_tables():
+    print("Re-initializing tank gauge tables...")
+    with app.app_context():
+        try:
+            print("Dropping tank gauge tables...")
+            db.session.query(StoreTankMap).delete()
+            db.session.query(TankCharts).delete()
+            db.session.query(TankData).delete()
+            db.session.query(StoreData).delete()
+            db.session.commit()
+            print("Tank gauge tables dropped.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error dropping tables: {e}")
+            return
+
+        print("Repopulating tank gauge tables...")
+        tank_gauge_controller = tankGauge_control()
+        tank_gauge_controller.initialize()
+        print("Tank gauge tables repopulated.")
 
 if __name__ == "__main__":
     print("Running dev_scripts\n**********\n\n")
-    initialization = Initialize(automatic_mode=False) 
-    intiialization.processess_speedgauge()
-    #tankGauge_controler = #tankGauge_control()
-    #tankGauge_controler.initialize()
+

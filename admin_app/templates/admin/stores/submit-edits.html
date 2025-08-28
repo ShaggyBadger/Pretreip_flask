@@ -1,0 +1,49 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-4">
+  <div class="mb-4 text-center">
+    <h1 class="text-light fw-bold mb-2">Store Edit Summary</h1>
+    <h2 class="text-info fw-semibold mb-1">{{ after.store_name }}</h2>
+    <p>{{ after.store_num }} / {{ after.riso_num }}</p>
+    <hr class="border-secondary" />
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped table-dark text-light">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Before</th>
+          <th>After</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for column_name, after_value in after.items() %} {% if column_name !=
+        'id' %}
+        <tr>
+          <td>{{ column_name.replace('_', ' ') | title }}</td>
+          <td>{{ before[column_name] }}</td>
+          <td>{{ after_value }}</td>
+        </tr>
+        {% endif %} {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 text-center">
+    <a href="{{ url_for('admin.select_store') }}" class="btn btn-primary"
+      >Back to Stores</a
+    >
+    <form
+      action="{{ url_for('admin.edit_store') }}"
+      method="POST"
+      style="display: inline"
+    >
+      <button type="submit" class="btn btn-secondary">Edit Again</button>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="store_id" value="{{ store_id }}" />
+    </form>
+  </div>
+</div>
+
+{% endblock %}

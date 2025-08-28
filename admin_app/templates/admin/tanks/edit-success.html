@@ -1,0 +1,46 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-4">
+  <h2>Tank Chart Updated: {{ tank.name or 'Unnamed Tank' }}</h2>
+
+  <!-- Tank Info Summary -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">Tank Information</div>
+    <div class="card-body">
+      <p><strong>Name:</strong> {{ tank.name or "N/A" }}</p>
+      <p><strong>Manufacturer:</strong> {{ tank.manufacturer or "N/A" }}</p>
+      <p><strong>Model:</strong> {{ tank.model or "N/A" }}</p>
+      <p><strong>Capacity (gallons):</strong> {{ tank.capacity or "N/A" }}</p>
+      <p><strong>Max Depth (inches):</strong> {{ tank.max_depth or "N/A" }}</p>
+      <p><strong>Misc Info:</strong> {{ tank.misc_info or "N/A" }}</p>
+      <p><strong>Chart Source:</strong> {{ tank.chart_source or "N/A" }}</p>
+      <p><strong>Description:</strong> {{ tank.description or "N/A" }}</p>
+    </div>
+  </div>
+
+  <!-- Tank Chart -->
+  <div class="card">
+    <div class="card-header bg-secondary text-white">Tank Chart</div>
+    <div
+      class="card-body"
+      style="max-height: 600px; overflow-y: auto; color: white"
+    >
+      {% for chart in charts %}
+      <div class="d-flex justify-content-between border-bottom py-2">
+        <p class="mb-0"><strong>Inches:</strong> {{ chart.inches }}</p>
+        <p class="mb-0"><strong>Gallons:</strong> {{ chart.gallons }}</p>
+        <p class="mb-0">
+          <strong>Misc Info:</strong> {{ chart.misc_info or 'N/A' }}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="card-footer text-end">
+      <a href="{{ url_for('admin.select_tank') }}" class="btn btn-secondary"
+        >Back to Tank List</a
+      >
+    </div>
+  </div>
+</div>
+
+{% endblock %}

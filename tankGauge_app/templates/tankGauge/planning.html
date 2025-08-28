@@ -9,6 +9,7 @@
     class="needs-validation"
     novalidate
   >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <!-- Store Number Input -->
     <div class="mb-4">
       <label for="storeNumber" class="form-label mono fw-bold"
@@ -57,7 +58,9 @@
 <script>
   document.querySelector("form").addEventListener("submit", function (e) {
     const storeNumber = document.getElementById("storeNumber").value.trim();
-    const fuelCheckboxes = document.querySelectorAll("input[name='fuel_types']:checked");
+    const fuelCheckboxes = document.querySelectorAll(
+      "input[name='fuel_types']:checked"
+    );
 
     if (!storeNumber || fuelCheckboxes.length === 0) {
       e.preventDefault(); // Stop form from submitting

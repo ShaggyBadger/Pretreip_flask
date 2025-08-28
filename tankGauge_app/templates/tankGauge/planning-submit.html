@@ -9,6 +9,9 @@
 
 <script>
   const tanks = JSON.parse(`{{ tanks | tojson | safe }}`);
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
 
   function renderTankCards(tanks) {
     const container = document.getElementById("tank-cards");
@@ -58,6 +61,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken, // Flask-WTF looks for this
             },
             body: JSON.stringify({
               gallons: gallons,

@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<div class="container mt-4">
+  <h2>Tank Information Updated</h2>
+
+  <div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+      {{ tank.name or "Unnamed Tank" }}
+    </div>
+    <div class="card-body">
+      <p><strong>Manufacturer:</strong> {{ tank.manufacturer or "N/A" }}</p>
+      <p><strong>Model:</strong> {{ tank.model or "N/A" }}</p>
+      <p><strong>Capacity (gallons):</strong> {{ tank.capacity or "N/A" }}</p>
+      <p><strong>Max Depth (inches):</strong> {{ tank.max_depth or "N/A" }}</p>
+      <p><strong>Misc Info:</strong> {{ tank.misc_info or "N/A" }}</p>
+      <p><strong>Chart Source:</strong> {{ tank.chart_source or "N/A" }}</p>
+      <p><strong>Description:</strong> {{ tank.description or "N/A" }}</p>
+    </div>
+    <div class="card-footer text-end">
+      <a href="{{ url_for('admin.select_tank') }}" class="btn btn-secondary"
+        >Back to Tank List</a
+      >
+    </div>
+  </div>
+</div>
+{% endblock %}

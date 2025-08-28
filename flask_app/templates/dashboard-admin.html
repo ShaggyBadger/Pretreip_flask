@@ -10,7 +10,7 @@
           <p class="card-text">
             Track and review your vehicle's speed logs and trends.
           </p>
-          <a href="/speedgauge" class="btn btn-primary">Open App</a>
+          <a href="/speedgauge/" class="btn btn-primary">Open App</a>
         </div>
       </div>
     </div>
@@ -46,6 +46,23 @@
             tabindex="-1"
             aria-disabled="true"
             >Start Inspection</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin -->
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">Admin Panel</h5>
+          <p class="card-text">Administration tasks.</p>
+          <a
+            href="{{ url_for('admin.home') }}"
+            class="btn btn-primary"
+            tabindex="-1"
+            aria-disabled="true"
+            >Access Admin Panel</a
           >
         </div>
       </div>

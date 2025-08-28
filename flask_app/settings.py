@@ -3,6 +3,8 @@ from pathlib import Path
 
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
 
+# A list of DOT numbers that are granted the 'swto' role upon registration
+AUTHORIZED_DOT_NUMBERS = ['943113']
 
 """
 establish paths to various  directories for use in other parts of da program
