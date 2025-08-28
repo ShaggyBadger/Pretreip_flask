@@ -20,6 +20,10 @@ def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
+    app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
+    'https://thejoshproject.xyz',
+    'https://www.thejoshproject.xyz'
+]
     app.permanent_session_lifetime = timedelta(days=7)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     csrf = CSRFProtect(app)
