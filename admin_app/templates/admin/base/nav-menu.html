@@ -1,0 +1,79 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="/">Driver Portal</a>
+
+  <button
+    class="navbar-toggler"
+    type="button"
+    data-bs-toggle="collapse"
+    data-bs-target="#navbarNav"
+    aria-controls="navbarNav"
+    aria-expanded="false"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav ml-auto">
+
+      <li class="nav-item">
+        <a class="nav-link" href="/">Home</a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href="/speedgauge/">speedGauge</a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('tankgauge.home') }}">tankGauge</a>
+      </li>
+
+      <!-- Admin dropdown only shown in this nav partial -->
+      <li class="nav-item dropdown">
+        <a
+          class="nav-link dropdown-toggle"
+          href="#"
+          id="adminDropdown"
+          role="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          Admin
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="adminDropdown">
+          <li>
+            <a class="dropdown-item" href="#" onclick="loadAdminSection(event, '/admin/manage_users')">
+              <i class="bi bi-people me-2"></i> Manage Users
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('admin.select_tank') }}">
+              <i class="bi bi-fuel-pump me-2"></i> Tank Charts
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('admin.select_store') }}">
+              <i class="bi bi-shop me-2"></i> Store Info
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#" onclick="loadAdminSection(event, '/admin/upload_speedgauge')">
+              <i class="bi bi-speedometer2 me-2"></i> SpeedGauge Files
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="nav-item">
+        <div class="d-flex">
+          <a
+            class="nav-link btn btn-danger btn-sm text-white px-3"
+            href="{{ url_for('auth_bp.logout') }}"
+          >
+            Logout
+          </a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
