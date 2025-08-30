@@ -348,7 +348,13 @@ def get_tanks():
     tank_list = []
     fuel_type_list = []
 
-    tanks = TankData.query.all()
+    query = TankData.query
+    query = query.order_by(
+        TankData.max_depth.asc(),
+        TankData.capacity.asc()
+        )
+    tanks = query.all()
+    
     for tank in tanks:
         tank_dict = {
             'id': tank.id,
