@@ -244,7 +244,7 @@ def select_store():
     # 2: city
     # 3: store_num
     query = StoreData.query
-    query.order_by(
+    query = query.order_by(
         StoreData.store_type.asc(),
         StoreData.city.asc(),
         StoreData.store_num.asc()
