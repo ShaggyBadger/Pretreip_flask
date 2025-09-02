@@ -239,17 +239,25 @@ def edit_tankdata_submit():
 
 @admin_bp.route('/stores/select.html')
 def select_store():
+    # build the query. order by:
+    # 1: store_type (exxon, speedway, etc)
+    # 2: city
+    # 3: store_num
     query = StoreData.query
-    query.order_by(StoreData.city.asc())
-    query.order_by(StoreData.store_num.asc())
+    query.order_by(
+        StoreData.store_type.asc(),
+        StoreData.city.asc(),
+        StoreData.store_num.asc()
+        )
     stores = query.all()
+    
     return render_template('admin/stores/select.html', stores=stores)
 
 @admin_bp.route('/stores/edit-store.html', methods=["POST", "GET"])
 def edit_store():
     store_id = request.form.get('store_id') or request.args.get("store_id")
     try:
-        store_id = int(store_id)   # 🔑 convert to integer
+        store_id = int(store_id)   # convert to integer
     except ValueError:
         return "Invalid store_id", 400
 
