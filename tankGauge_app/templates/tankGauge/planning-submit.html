@@ -56,7 +56,7 @@
 
           if (isNaN(gallons)) return alert("Please enter a valid number.");
 
-          // 🔥 Send Ajax (fetch) to Flask
+          // Send Ajax (fetch) to Flask
           fetch("/tankgauge/calculate_inches", {
             method: "POST",
             headers: {

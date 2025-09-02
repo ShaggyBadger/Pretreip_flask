@@ -126,6 +126,17 @@ def calculate_inches():
             }
         )
     
+    # run a query to get all inches and gallons. this prob is innefficient
+    # maybe wrap them up into ine query later
+    query = TankCharts.query
+    query = query.filter(
+        TankCharts.tank_type_id == tank_type_id
+        )
+    query = query.order_by(
+        TankCharts.inches.asc()
+        )
+    full_chart = query.all()
+    
     except:
         return jsonify(
             {
