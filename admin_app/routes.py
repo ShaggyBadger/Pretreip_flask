@@ -145,6 +145,21 @@ def select_tank():
     existing_tanks = query.all()
     return render_template("admin/tanks/select.html", tanks=existing_tanks)
 
+@admin_bp.route('/tanks/no-tank-charts-edit', methods=["GET"])
+def no_tank_charts_edit():
+    if request.method != "GET":
+        abort(404)
+    
+    tank_id = request.args.get("tank_id", type=int)  # read from URL ?tank_id=42
+    if not tank_id:
+        abort(404)
+    
+    query = TankData.query
+    query = query.filter(TankData.id == tank_id)
+    tank = query.first()
+    
+    return render_template("admin/tanks/no-tank-charts-edit.html", tank=tank)
+
 @admin_bp.route("/tanks/edit", methods=["GET", "POST"])
 def edit_tank():
     if request.method == "POST":
@@ -161,8 +176,7 @@ def edit_tank():
 
 
         if not charts:
-        flash("chart not found.", "error")
-            return redirect(url_for('admin.select_tank'))
+            return redirect(url_for('admin.no_tank_charts_edit', tank_id=tank.id))
 
         return render_template("admin/tanks/edit.html", charts=charts, tank=tank)
     else:
