@@ -115,17 +115,6 @@ def calculate_inches():
     query = query.order_by(TankCharts.gallons.asc())
     result = query.first()
 
-    # do a try/except just in case somethine wierd happens with the query
-    try:
-        result_inch = result[0]
-        result_gal = result[1]
-        return jsonify(
-            {
-                'inch': result_inch,
-                'gal': result_gal
-            }
-        )
-    
     # run a query to get all inches and gallons. this prob is innefficient
     # maybe wrap them up into ine query later
     query = TankCharts.query
@@ -136,12 +125,29 @@ def calculate_inches():
         TankCharts.inches.asc()
         )
     full_chart = query.all()
+    inch_list = [row.inches for row in full_chart]
+    gal_list = [row.gallons for row in full_chart]
+
+    # do a try/except just in case somethine wierd happens with the query
+    try:
+        result_inch = result[0]
+        result_gal = result[1]
+        return jsonify(
+            {
+                'inch': result_inch,
+                'gal': result_gal,
+                'inch_list': inch_list,
+                'gal_list': gal_list
+            }
+        )
     
     except:
         return jsonify(
             {
                 "inch": None,
-                'gal': None
+                'gal': None,
+                'inch_list': [],
+                'gal_list': []
             }
         )
 

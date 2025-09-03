@@ -1,5 +1,5 @@
 {% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <div class="container">
   <h1 class="text-center fw-bold display-4 mb-5">Tank Delivery Planning</h1>
   <h5 class="text-center fw-bold display-4 mb-5">{{ store_num }}</h5>
@@ -21,28 +21,29 @@
       card.className = "card shadow-sm p-4 mb-4";
 
       card.innerHTML = `
-  <h5>Fuel Type: ${tank.fuel_type}</h5>
-  <p>Max Capacity: ${tank.max_gal} gallons</p>
-  <p>90% Capacity: ${tank.ninety_percent} gallons</p>
+      <h5>Fuel Type: ${tank.fuel_type}</h5>
+      <p>Max Capacity: ${tank.max_gal} gallons</p>
+      <p>90% Capacity: ${tank.ninety_percent} gallons</p>
 
-  <div class="row align-items-center mb-3">
-    <!-- Input column -->
-    <div class="col-md-8">
-      <label for="gallons-${index}" class="form-label">Enter delivery gallons:</label>
-      <input type="number" id="gallons-${index}" class="form-control" placeholder="e.g. 4600">
-    </div>
+      <div class="row align-items-center mb-3">
+        <!-- Input column -->
+        <div class="col-md-8">
+          <label for="gallons-${index}" class="form-label">Enter delivery gallons:</label>
+          <input type="number" id="gallons-${index}" class="form-control" placeholder="e.g. 4600">
+        </div>
 
-    <!-- Result column -->
-    <div class="col-md-4 text-center">
-      <div id="result-${index}" class="fw-bold mono"
-           style="font-size: 1.8rem; color: #28a745;">
-        <!-- Result shows here -->
+        <!-- Result column -->
+        <div class="col-md-4 text-center">
+          <div id="result-${index}" class="fw-bold mono"
+               style="font-size: 1.8rem; color: #28a745;">
+            <!-- Result shows here -->
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+      <div class='row' id=chart-${index}><canvas id="tankChart-${index}" width="600" height="400"></canvas></div>
 
-  <button id="calc-btn-${index}" class="btn btn-primary mb-3">Calculate Max Inches</button>
-`;
+      <button id="calc-btn-${index}" class="btn btn-primary mb-3">Calculate Max Inches</button>
+    `;
 
       container.appendChild(card);
 
@@ -77,6 +78,35 @@
               } else {
                 result.textContent = `Too many gallons!`;
               }
+              let ctx = document
+                .getElementById("tankChart-${index}")
+                .getContext("2d");
+
+              const tankChart = new Chart(ctx, {
+                type: "line", // or 'scatter'
+                data: {
+                  labels: inches, // x-axis
+                  datasets: [
+                    {
+                      label: "Gallons per Inch",
+                      data: gallons, // y-axis
+                      borderColor: "blue",
+                      fill: false,
+                      tension: 0.1,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    legend: { display: true },
+                  },
+                  scales: {
+                    x: { title: { display: true, text: "Inches" } },
+                    y: { title: { display: true, text: "Gallons" } },
+                  },
+                },
+              });
             })
             .catch((error) => {
               console.error("Error:", error);
@@ -86,6 +116,8 @@
   }
 
   renderTankCards(tanks);
+
+  loadTankData();
 </script>
 
 {% endblock %}
