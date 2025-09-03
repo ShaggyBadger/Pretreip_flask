@@ -161,7 +161,7 @@ def edit_tank():
 
 
         if not charts:
-            flash("chart not found.", "error")
+        flash("chart not found.", "error")
             return redirect(url_for('admin.select_tank'))
 
         return render_template("admin/tanks/edit.html", charts=charts, tank=tank)
