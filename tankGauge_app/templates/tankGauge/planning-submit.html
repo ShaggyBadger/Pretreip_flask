@@ -6,6 +6,88 @@
 
   <div id="tank-cards"></div>
 </div>
+<script>
+  async function generate_chart(tank_id, containerId, targetInch) {
+    try {
+      let response = await fetch("/tankgauge/get-tank-chart-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ tank_id: tank_id }),
+      });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      let chartData = await response.json();
+
+      let container = document.getElementById(containerId);
+      container.innerHTML = ""; // clear existing
+      const canvas = document.createElement("canvas");
+      container.appendChild(canvas);
+
+      // Main dataset
+      const datasets = [
+        {
+          label: "Gallons per Inch",
+          data: chartData.map((row) => ({ x: row.inches, y: row.gallons })),
+          borderColor: "#007bff",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          fill: true,
+          tension: 0.2,
+        },
+      ];
+
+      // Add red dot for target inch
+      if (targetInch !== null) {
+        const match = chartData.find((row) => row.inches === targetInch);
+        if (match) {
+          datasets.push({
+            label: `Measured Inch: ${targetInch}`,
+            data: [{ x: match.inches, y: match.gallons }],
+            borderColor: "red",
+            backgroundColor: "red",
+            pointRadius: 6,
+            type: "scatter",
+            showLine: false,
+          });
+        }
+      }
+
+      new Chart(canvas.getContext("2d"), {
+        type: "line",
+        data: { datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: "bottom",
+            },
+          },
+          scales: {
+            x: {
+              type: "linear",
+              title: {
+                display: true,
+                text: "Inches",
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Gallons",
+              },
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error generating chart:", error);
+    }
+  }
+</script>
 
 <script>
   const tanks = JSON.parse(`{{ tanks | tojson | safe }}`);
@@ -40,8 +122,6 @@
           </div>
         </div>
       </div>
-      <div class='row' id=chart-${index}><canvas id="tankChart-${index}" width="600" height="400"></canvas></div>
-
       <button id="calc-btn-${index}" class="btn btn-primary mb-3">Calculate Max Inches</button>
     `;
 
@@ -78,46 +158,17 @@
               } else {
                 result.textContent = `Too many gallons!`;
               }
-              let ctx = document
-                .getElementById("tankChart-${index}")
-                .getContext("2d");
-
-              const tankChart = new Chart(ctx, {
-                type: "line", // or 'scatter'
-                data: {
-                  labels: inches, // x-axis
-                  datasets: [
-                    {
-                      label: "Gallons per Inch",
-                      data: gallons, // y-axis
-                      borderColor: "blue",
-                      fill: false,
-                      tension: 0.1,
-                    },
-                  ],
-                },
-                options: {
-                  responsive: true,
-                  plugins: {
-                    legend: { display: true },
-                  },
-                  scales: {
-                    x: { title: { display: true, text: "Inches" } },
-                    y: { title: { display: true, text: "Gallons" } },
-                  },
-                },
-              });
+              generate_chart(tank.tank_type_id, result.id, data.inch);
             })
+
             .catch((error) => {
               console.error("Error:", error);
             });
         });
     });
   }
-
   renderTankCards(tanks);
-
-  loadTankData();
+  //loadTankData();
 </script>
 
 {% endblock %}

@@ -4,6 +4,7 @@ from flask_app.extensions import db
 from flask_app.models import TankCharts, TankData, StoreData, StoreTankMap
 from sqlalchemy import or_, func
 import math
+import json
 from rich.traceback import install
 from rich import print
 install()
@@ -150,6 +151,33 @@ def calculate_inches():
                 'gal_list': []
             }
         )
+
+@tankGauge_bp.route('/get-tank-chart-info', methods=["POST"])
+def get_tank_chart_info():
+    if request.method != "POST":
+        abort(404)
+    
+    data = request.get_json()
+    if not data or "tank_id" not in data:
+        abort(404)
+    
+    tank_id = data.get('tank_id')
+
+    query = TankCharts.query
+    query = query.filter(TankCharts.tank_type_id == tank_id)
+    query = query.order_by(TankCharts.inches.asc())
+    charts = query.all()
+
+    chart_list  = []
+    for row in charts:
+        row_dict = {
+            'inches': row.inches,
+            'gallons': row.gallons
+        }
+        chart_list.append(row_dict)
+
+    json_charts = json.dumps(chart_list)
+    return json_charts
 
 @tankGauge_bp.route('/delivery')
 def delivery():
