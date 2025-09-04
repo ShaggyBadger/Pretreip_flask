@@ -10,6 +10,163 @@
   <!-- This is the container where all the dynamically generated tank cards will be placed. -->
   <div id="tank-cards"></div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  async function generate_chart(
+    tank_id,
+    containerId,
+    startingInch,
+    endingInch,
+    csrfToken
+  ) {
+    try {
+      // Fetch chart data (expects [{ inches: N, gallons: M }, ...])
+      const resp = await fetch("/tankgauge/get-tank-chart-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ tank_id }),
+      });
+      if (!resp.ok) throw new Error("Network response was not ok");
+
+      const chartData = await resp.json();
+
+      // Build arrays (note keys: 'inches' and 'gallons')
+      const inches = chartData.map((r) => Number(r.inches));
+      const gallons = chartData.map((r) => Number(r.gallons));
+
+      // Helper: find index closest to target (tolerance to avoid type/float issues)
+      function findClosestIndex(arr, target) {
+        if (target === null || target === undefined) return -1;
+        let bestIdx = -1;
+        let bestDiff = Infinity;
+        for (let i = 0; i < arr.length; i++) {
+          const diff = Math.abs(arr[i] - target);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            bestIdx = i;
+          }
+        }
+        // Accept it only if reasonably close (adjust tolerance if needed)
+        return bestDiff <= 0.001 ? bestIdx : bestIdx;
+      }
+
+      const startIndex = findClosestIndex(inches, Number(startingInch));
+      const endIndex = findClosestIndex(inches, Number(endingInch));
+      console.log("startIndex, endIndex:", startIndex, endIndex);
+
+      // Prepare chart container (only the chart div, don't wipe other result UI)
+      const container = document.getElementById(containerId);
+      if (!container)
+        throw new Error("Chart container not found: " + containerId);
+      container.innerHTML = ""; // ONLY clears chart area
+      const canvas = document.createElement("canvas");
+      container.appendChild(canvas);
+
+      // Destroy previous chart instance if present (prevents duplicates / leaks)
+      if (canvas._chartInstance) {
+        canvas._chartInstance.destroy();
+        canvas._chartInstance = null;
+      }
+
+      // Build datasets
+      // Base line: full gray line, no points shown (pointRadius: 0)
+      const baseDataset = {
+        label: "Tank Curve",
+        data: gallons.slice(), // full array
+        borderColor: "#6c757d", // gray
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1,
+        pointRadius: 0,
+      };
+
+      // Delivery segment: keep values only between startIndex..endIndex, null elsewhere
+      const segmentData = gallons.map((g, i) =>
+        startIndex >= 0 &&
+        endIndex >= 0 &&
+        i >= Math.min(startIndex, endIndex) &&
+        i <= Math.max(startIndex, endIndex)
+          ? g
+          : null
+      );
+
+      const segmentDataset = {
+        label: "Delivery Segment",
+        data: segmentData,
+        borderColor: "#28a745", // green
+        borderWidth: 3,
+        fill: false,
+        tension: 0.1,
+        pointRadius: 0,
+      };
+
+      // Start dot dataset (single point)
+      const startDotData = gallons.map((g, i) => (i === startIndex ? g : null));
+      const startDotDataset = {
+        label: "Start",
+        data: startDotData,
+        borderColor: "#0d6efd",
+        backgroundColor: "#0d6efd",
+        pointRadius: startIndex >= 0 ? 6 : 0,
+        showLine: false,
+      };
+
+      // End dot dataset (single point)
+      const endDotData = gallons.map((g, i) => (i === endIndex ? g : null));
+      const endDotDataset = {
+        label: "End",
+        data: endDotData,
+        borderColor: "#dc3545",
+        backgroundColor: "#dc3545",
+        pointRadius: endIndex >= 0 ? 6 : 0,
+        showLine: false,
+      };
+
+      const datasets = [
+        baseDataset,
+        segmentDataset,
+        startDotDataset,
+        endDotDataset,
+      ];
+
+      // Create Chart.js chart (use canvas.getContext)
+      const ctx = canvas.getContext("2d");
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          // labels are numeric inches (Chart.js will treat them as category labels)
+          labels: inches,
+          datasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "top" },
+            title: { display: true, text: "Tank Gallons vs Inches" },
+          },
+          scales: {
+            x: {
+              title: { display: true, text: "Inches" },
+            },
+            y: {
+              title: { display: true, text: "Gallons" },
+            },
+          },
+        },
+      });
+
+      // attach instance to canvas so we can destroy it later
+      canvas._chartInstance = chart;
+    } catch (err) {
+      console.error("Error generating chart:", err);
+    }
+  }
+</script>
 
 <script>
   // A. Pass the Python list of dictionaries 'tanks' directly to a JavaScript variable.
@@ -104,6 +261,7 @@
               <span id="final-inches-value-${index}" class="text-success"></span>
             </div>
           </div>
+          <div id="chart-container-${index}" class="mt-4"></div>
         </div>
       </div>
       `;
@@ -179,6 +337,14 @@
                 finalGallonsValueElement.textContent = `${data.final_gallons} gallons`;
                 finalInchesValueElement.textContent = `${data.final_inches}"`;
                 successfulResultsElement.style.display = "block"; // Show the results container
+
+                generate_chart(
+                  tank.tank_type_id,
+                  `chart-container-${index}`,
+                  data.starting_inches,
+                  data.final_inches,
+                  csrfToken
+                );
               } else {
                 errorMessageElement.textContent =
                   data.message || `Calculation failed.`;
