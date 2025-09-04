@@ -1,0 +1,116 @@
+{% extends "base.html" %} {% block content %} {% include
+'admin/base/nav-menu.html' %}
+
+<div class="container mt-4">
+  <div class="mb-4">
+    <h1 class="h3 mb-1">Tank: {{ tank.name or "Unnamed" }}</h1>
+    <p class="text-muted mb-0">
+      ID: <code>{{ tank.id }}</code> · {{ (tank.capacity ~ ' gal') if
+      tank.capacity is not none else 'Capacity: —' }}
+    </p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <!-- Left: Tank details -->
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header"><strong>Tank Details</strong></div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Manufacturer</dt>
+            <dd class="col-sm-8">{{ tank.manufacturer or "—" }}</dd>
+
+            <dt class="col-sm-4">Model</dt>
+            <dd class="col-sm-8">{{ tank.model or "—" }}</dd>
+
+            <dt class="col-sm-4">Capacity</dt>
+            <dd class="col-sm-8">
+              {{ tank.capacity if tank.capacity is not none else "—" }}
+            </dd>
+
+            <dt class="col-sm-4">Max Depth</dt>
+            <dd class="col-sm-8">
+              {{ tank.max_depth if tank.max_depth is not none else "—" }}
+            </dd>
+
+            <dt class="col-sm-4">Chart Source</dt>
+            <dd class="col-sm-8">{{ tank.chart_source or "—" }}</dd>
+
+            <dt class="col-sm-4">Misc</dt>
+            <dd class="col-sm-8">{{ tank.misc_info or "—" }}</dd>
+
+            <dt class="col-sm-4">Description</dt>
+            <dd class="col-sm-8">{{ tank.description or "—" }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Quick stats -->
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header"><strong>Chart Summary</strong></div>
+        <div class="card-body">
+          {% set rows = charts if (charts is defined) else (tank.tank_charts) %}
+          <p class="mb-2"><strong>{{ rows|length }}</strong> chart rows</p>
+
+          {% if rows|length > 0 %} {# attempt to show min/max inches (works with
+          numeric inches) #} {% set inches_list =
+          rows|map(attribute='inches')|list %}
+          <p class="mb-1">
+            Inch range: <strong>{{ inches_list|min }}</strong> —
+            <strong>{{ inches_list|max }}</strong>
+          </p>
+          {% set gallons_list = rows|map(attribute='gallons')|list %}
+          <p class="mb-0">
+            Gallons range: <strong>{{ gallons_list|min }}</strong> —
+            <strong>{{ gallons_list|max }}</strong>
+          </p>
+          {% else %}
+          <p class="text-muted">No chart rows yet for this tank.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts table (row-by-row) -->
+  <div class="card mb-5">
+    <div class="card-header"><strong>Tank Charts</strong></div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0 text-light">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 60px">#</th>
+              <th>Inches</th>
+              <th>Gallons</th>
+              <th>Tank Name</th>
+              <th>Misc Info</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if rows|length == 0 %}
+            <tr>
+              <td colspan="5" class="text-center py-3">
+                No chart data available.
+              </td>
+            </tr>
+            {% else %} {# prefer backend-sorted charts; fallback to Jinja sort
+            by inches #} {% for chart in (rows if rows is iterable else []) |
+            sort(attribute='inches') %}
+            <tr>
+              <td class="align-middle">{{ loop.index }}</td>
+              <td class="align-middle">{{ chart.inches }}</td>
+              <td class="align-middle">{{ chart.gallons }}</td>
+              <td class="align-middle">{{ chart.tank_name }}</td>
+              <td class="align-middle">{{ chart.misc_info or "—" }}</td>
+            </tr>
+            {% endfor %} {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

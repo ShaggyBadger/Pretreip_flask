@@ -1,6 +1,7 @@
 from logging import raiseExceptions
 from os import EX_TEMPFAIL
 import json
+import pandas as pd
 from flask import render_template, request, jsonify, redirect, url_for, flash, abort
 from admin_app import admin_bp
 from flask_app import settings
@@ -159,6 +160,71 @@ def no_tank_charts_edit():
     tank = query.first()
     
     return render_template("admin/tanks/no-tank-charts-edit.html", tank=tank)
+
+@admin_bp.route("/tanks/upload-tank-chart-csv", methods=["POST"])
+def upload_tank_chart_csv():
+    if request.method != "POST":
+        abort(404)
+    
+    tank_id = request.form.get("tank_id", type=int)
+    file = request.files.get("csv_file")
+
+    if not tank_id and not file:
+        abort(404)
+    
+    df = pd.read_csv(file, encoding="utf-8")
+
+    # records is a list of dictionaries
+    # each dict has 2 keys: inch, gallon
+    records = df[["inch", "gallon"]].to_dict(orient="records")
+    
+    #insert the data into the database
+    tank = TankData.query.filter(TankData.id == tank_id).first()
+    tank_name = tank.name
+
+    for record in records:
+        inches = record.get('inch')
+        gallons = record.get('gallon')
+
+        # check if this inch is already in the database for this tank
+        existing = TankCharts.query.filter_by(
+            tank_type_id=tank_id,
+            inches=inches
+            ).first()
+        
+        # if it is already in, then update the record with the gallons
+        if existing:
+            existing.gallons = gallons
+        
+        else:
+            new_row = TankCharts(
+                tank_type_id=tank_id,
+                inches=inches,
+                gallons=gallons,
+                tank_name=tank_name
+            )
+
+            # add the row to database sesson
+            db.session.add(new_row)
+    
+    db.session.commit()
+
+    # update the TankData model for this tank for max depth and max inches
+    query = TankCharts.query
+    query = query.filter(TankCharts.tank_type_id == tank_id)
+    query = query.order_by(TankCharts.inches.desc())
+    chart = query.first()
+
+    tank.capacity = chart.gallons
+    tank.max_depth = chart.inches
+    db.session.commit()
+
+    # gather some data to send to the template
+    charts = TankCharts.query.filter_by(tank_type_id=tank.id).order_by(TankCharts.inches).all()
+
+    # render the template!
+    return render_template("admin/tanks/upload-tank-chart-csv.html", tank=tank, chart=charts)
+    
 
 @admin_bp.route("/tanks/edit", methods=["GET", "POST"])
 def edit_tank():

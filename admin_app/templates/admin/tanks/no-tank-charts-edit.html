@@ -90,8 +90,28 @@
 
         <button type="submit" class="btn btn-success">Save Tank Info</button>
       </form>
+      <form
+        method="POST"
+        action="{{ url_for('admin.upload_tank_chart_csv') }}"
+        enctype="multipart/form-data"
+      >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="tank_id" value="{{ tank.id }}" />
+      <label for="csv_file" class="form-label">Select CSV File</label>
+        <input
+          type="file"
+          class="form-control"
+          id="csv_file"
+          name="csv_file"
+          accept=".csv"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Upload CSV</button>
+    </form>
     </div>
   </div>
 </div>
+
 
 {% endblock %}
