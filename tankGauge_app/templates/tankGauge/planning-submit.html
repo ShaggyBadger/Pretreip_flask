@@ -25,6 +25,10 @@
       let container = document.getElementById(containerId);
       container.innerHTML = ""; // clear existing
       const canvas = document.createElement("canvas");
+      // set CSS height (and width)
+      canvas.style.width = "100%";
+      canvas.style.height = "420px"; // visual height
+      canvas.height = 420 * window.devicePixelRatio; // for crispness on HiDPI
       container.appendChild(canvas);
 
       // Main dataset

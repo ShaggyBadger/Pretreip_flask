@@ -56,7 +56,6 @@
 
       const startIndex = findClosestIndex(inches, Number(startingInch));
       const endIndex = findClosestIndex(inches, Number(endingInch));
-      console.log("startIndex, endIndex:", startIndex, endIndex);
 
       // Prepare chart container (only the chart div, don't wipe other result UI)
       const container = document.getElementById(containerId);
@@ -64,6 +63,10 @@
         throw new Error("Chart container not found: " + containerId);
       container.innerHTML = ""; // ONLY clears chart area
       const canvas = document.createElement("canvas");
+      // set CSS height (and width)
+      canvas.style.width = "100%";
+      canvas.style.height = "420px"; // visual height
+      canvas.height = 420 * window.devicePixelRatio; // for crispness on HiDPI
       container.appendChild(canvas);
 
       // Destroy previous chart instance if present (prevents duplicates / leaks)
