@@ -1,4 +1,19 @@
 {% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+<style>
+  .chart-container {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* adjusts height based on width */
+    max-height: 500px; /* optional cap on very large screens */
+    min-height: 180px; /* optional floor for very small screens */
+    position: relative; /* Chart.js will fill this */
+  }
+
+  .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <div class="container">
   <h1 class="text-center fw-bold display-4 mb-5">Tank Delivery Planning</h1>
@@ -23,12 +38,9 @@
       let chartData = await response.json();
 
       let container = document.getElementById(containerId);
+      container.classList.add("chart-container");
       container.innerHTML = ""; // clear existing
       const canvas = document.createElement("canvas");
-      // set CSS height (and width)
-      canvas.style.width = "100%";
-      canvas.style.height = "420px"; // visual height
-      canvas.height = 420 * window.devicePixelRatio; // for crispness on HiDPI
       container.appendChild(canvas);
 
       // Main dataset
@@ -64,6 +76,7 @@
         data: { datasets },
         options: {
           responsive: true,
+          maintainAspectRation: false,
           plugins: {
             legend: {
               display: true,

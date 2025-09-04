@@ -2,7 +2,21 @@
 
 <!-- This is where the navigation menu is included. -->
 {% include 'nav_menu.html' %}
+<style>
+  .chart-container {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* adjusts height based on width */
+    max-height: 500px; /* optional cap on very large screens */
+    min-height: 180px; /* optional floor for very small screens */
+    position: relative; /* Chart.js will fill this */
+  }
 
+  .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+</style>
 <div class="container">
   <h1 class="text-center fw-bold display-4 mb-5">Tank Delivery Estimation</h1>
   <h5 class="text-center mb-5">{{ store_num }}</h5>
@@ -59,14 +73,11 @@
 
       // Prepare chart container (only the chart div, don't wipe other result UI)
       const container = document.getElementById(containerId);
+      container.classList.add("chart-container");
       if (!container)
         throw new Error("Chart container not found: " + containerId);
       container.innerHTML = ""; // ONLY clears chart area
       const canvas = document.createElement("canvas");
-      // set CSS height (and width)
-      canvas.style.width = "100%";
-      canvas.style.height = "420px"; // visual height
-      canvas.height = 420 * window.devicePixelRatio; // for crispness on HiDPI
       container.appendChild(canvas);
 
       // Destroy previous chart instance if present (prevents duplicates / leaks)
