@@ -1,0 +1,117 @@
+{% extends "base.html" %} {% block content %} {% include
+'admin/base/nav-menu.html' %}
+
+<div class="container mt-4">
+  <h2>Edit Tank & Tank Charts</h2>
+
+  <!-- Form for TankData -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3>Edit Tank Info</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('admin.edit_tankdata_submit') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="tank_id" value="{{ tank.id }}" />
+
+        <div class="mb-3">
+          <label class="form-label">Name</label>
+          <input
+            type="text"
+            class="form-control"
+            name="name"
+            value="{{ tank.name or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Manufacturer</label>
+          <input
+            type="text"
+            class="form-control"
+            name="manufacturer"
+            value="{{ tank.manufacturer or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Model</label>
+          <input
+            type="text"
+            class="form-control"
+            name="model"
+            value="{{ tank.model or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Capacity (gallons)</label>
+          <input
+            type="number"
+            class="form-control"
+            name="capacity"
+            value="{{ tank.capacity or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Max Depth (inches)</label>
+          <input
+            type="number"
+            class="form-control"
+            name="max_depth"
+            value="{{ tank.max_depth or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Misc Info</label>
+          <textarea class="form-control" name="misc_info">
+{{ tank.misc_info or '' }}</textarea
+          >
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Chart Source</label>
+          <input
+            type="text"
+            class="form-control"
+            name="chart_source"
+            value="{{ tank.chart_source or '' }}"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" name="description">
+{{ tank.description or '' }}</textarea
+          >
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Tank Info</button>
+      </form>
+      <form
+        method="POST"
+        action="{{ url_for('admin.upload_tank_chart_csv') }}"
+        enctype="multipart/form-data"
+      >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="tank_id" value="{{ tank.id }}" />
+      <label for="csv_file" class="form-label">Select CSV File</label>
+        <input
+          type="file"
+          class="form-control"
+          id="csv_file"
+          name="csv_file"
+          accept=".csv"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Upload CSV</button>
+    </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
