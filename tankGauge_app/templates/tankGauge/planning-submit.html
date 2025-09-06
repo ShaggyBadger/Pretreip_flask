@@ -76,7 +76,7 @@
         data: { datasets },
         options: {
           responsive: true,
-          maintainAspectRation: false,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: true,
@@ -137,6 +137,7 @@
                style="font-size: 1.8rem; color: #28a745;">
             <!-- Result shows here -->
           </div>
+          <div id="chart-div-${index}"></div>
         </div>
       </div>
       <button id="calc-btn-${index}" class="btn btn-primary mb-3">Calculate Max Inches</button>
@@ -170,12 +171,13 @@
             .then((response) => response.json())
             .then((data) => {
               const result = document.getElementById(`result-${index}`);
+              const chart_div = document.getElementById(`chart-div-${index}`);
               if (data.inches !== null) {
                 result.textContent = `Max Inches: ${data.inch}"`;
               } else {
                 result.textContent = `Too many gallons!`;
               }
-              generate_chart(tank.tank_type_id, result.id, data.inch);
+              generate_chart(tank.tank_type_id, chart_div.id, data.inch);
             })
 
             .catch((error) => {
