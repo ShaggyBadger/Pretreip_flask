@@ -55,11 +55,13 @@ class Processor:
 
                 sanitized_dict = self.sanitize_dict(driver_dict)
 
-                for k, v in sanitized_dict.items():
+                # Create a copy for JSON serialization
+                json_dict = sanitized_dict.copy()
+                for k, v in json_dict.items():
                     if isinstance(v, datetime):
-                        sanitized_dict[k] = v.isoformat()
+                        json_dict[k] = v.isoformat()
 
-                driver_dict_json_string = json.dumps(sanitized_dict)
+                driver_dict_json_string = json.dumps(json_dict)
                 sanitized_dict["raw_json"] = driver_dict_json_string
 
                 self.store_row_in_db(sanitized_dict)

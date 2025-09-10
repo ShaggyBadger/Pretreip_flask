@@ -5,7 +5,7 @@ on the speedGauge data using SQLAlchemy.
 import statistics
 import sys
 import json
-from sqlalchemy import func, case, and_, not_
+from sqlalchemy import func, case, and_, not_, cast, Date
 from flask_app.extensions import db
 from flask_app.models.speedgauge import SpeedGaugeData, CompanyAnalytics, DriverAnalytics
 from datetime import timedelta
@@ -217,6 +217,31 @@ class Analytics:
 
             print(f"[analytics] {col_name} -> count={count_val}, avg={avg_val}, median={median_val}")
 
+        # --- Generate Trend JSON ---
+        trend_end_date = start_date
+        trend_start_date = trend_end_date - timedelta(days=365)
+
+        trend_data_q = db.session.query(
+            cast(SpeedGaugeData.start_date, Date).label('date'),
+            func.avg(SpeedGaugeData.percent_speeding).label('avg_speeding'),
+            func.sum(SpeedGaugeData.distance_driven).label('total_distance')
+        ).filter(
+            SpeedGaugeData.start_date.between(trend_start_date, trend_end_date)
+        ).group_by(
+            cast(SpeedGaugeData.start_date, Date)
+        ).order_by(
+            cast(SpeedGaugeData.start_date, Date).asc()
+        ).all()
+
+        speeding_trend = {}
+        distance_trend = {}
+        for row in trend_data_q:
+            speeding_trend[row.date.isoformat()] = float(row.avg_speeding) if row.avg_speeding is not None else 0
+            distance_trend[row.date.isoformat()] = float(row.total_distance) if row.total_distance is not None else 0
+
+        computed['speeding_trend_json'] = json.dumps(speeding_trend)
+        computed['distance_trend_json'] = json.dumps(distance_trend)
+
         # 3) Upsert the CompanyAnalytics row now that we have all values
         record = db.session.query(CompanyAnalytics).filter_by(
             start_date=start_date,
@@ -240,6 +265,9 @@ class Analytics:
             setattr(record, f"min_{col_name}", computed.get(f"min_{col_name}"))
             setattr(record, f"std_{col_name}", computed.get(f"std_{col_name}"))
             setattr(record, f"median_{col_name}", computed.get(f"median_{col_name}"))
+
+        record.speeding_trend_json = computed.get("speeding_trend_json")
+        record.distance_trend_json = computed.get("distance_trend_json")
 
         # Optionally commit here or let caller commit (company_standard_flow currently commits after loop)
         if commit:
@@ -388,6 +416,28 @@ class Analytics:
             # count per column might be useful, but db schema likely has a single records_count
             computed[f"count_{col_name}"] = int(stats.count or 0)
 
+        # --- Generate Trend JSON ---
+        trend_end_date = start_date
+        trend_start_date = trend_end_date - timedelta(days=365)
+
+        trend_data_q = db.session.query(
+            SpeedGaugeData.start_date,
+            SpeedGaugeData.percent_speeding,
+            SpeedGaugeData.distance_driven
+        ).filter(
+            SpeedGaugeData.driver_id == driver_id,
+            SpeedGaugeData.start_date.between(trend_start_date, trend_end_date)
+        ).order_by(SpeedGaugeData.start_date.asc()).all()
+
+        speeding_trend = {}
+        distance_trend = {}
+        for row in trend_data_q:
+            speeding_trend[row.start_date.isoformat()] = float(row.percent_speeding) if row.percent_speeding is not None else 0
+            distance_trend[row.start_date.isoformat()] = float(row.distance_driven) if row.distance_driven is not None else 0
+
+        computed['speeding_trend_json'] = json.dumps(speeding_trend)
+        computed['distance_trend_json'] = json.dumps(distance_trend)
+
         # --- Upsert the DriverAnalytics row using computed dict ---
         try:
             record = db.session.query(DriverAnalytics).filter_by(driver_id=driver_id, start_date=start_date).one_or_none()
@@ -418,6 +468,9 @@ class Analytics:
             record.avg_distance_driven = computed.get("avg_distance_driven")
             record.median_distance_driven = computed.get("median_distance_driven")
             record.std_distance_driven = computed.get("std_distance_driven")
+
+            record.speeding_trend_json = computed.get("speeding_trend_json")
+            record.distance_trend_json = computed.get("distance_trend_json")
 
             record.records_count = computed.get("records_count", 0)
 

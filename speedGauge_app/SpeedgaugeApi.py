@@ -85,7 +85,12 @@ class Api:
         """
         Returns the driver analytic package for a given driver_id and start_date.
         """
-        analytic_data = DriverAnalytics.query.filter_by(driver_id=driver_id, start_date=start_date).first()
+        start_of_day = datetime.combine(start_date.date(), datetime.min.time())
+        end_of_day = datetime.combine(start_date.date(), datetime.max.time())
+        analytic_data = DriverAnalytics.query.filter(
+            DriverAnalytics.driver_id == driver_id,
+            DriverAnalytics.start_date.between(start_of_day, end_of_day)
+        ).first()
         
         return analytic_data
 
@@ -93,6 +98,11 @@ class Api:
         """
         Returns the company analytic package for a given start_date and generated_records_allowed status.
         """
-        analytic_data = CompanyAnalytics.query.filter_by(start_date=start_date, generated_records_allowed=generated_records_allowed).first()
+        start_of_day = datetime.combine(start_date.date(), datetime.min.time())
+        end_of_day = datetime.combine(start_date.date(), datetime.max.time())
+        analytic_data = CompanyAnalytics.query.filter(
+            CompanyAnalytics.start_date.between(start_of_day, end_of_day),
+            CompanyAnalytics.generated_records_allowed == generated_records_allowed
+        ).first()
 
         return analytic_data
