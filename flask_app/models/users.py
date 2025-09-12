@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy.orm import relationship
 from flask_app.extensions import db
 
 class Users(db.Model):
@@ -16,6 +16,9 @@ class Users(db.Model):
     admin_level = Column(Integer, nullable=False, server_default='0')
     dot_number = db.Column(String(255))
     role = db.Column(String(50), nullable=False, server_default='standard')
+
+    # FIX: Use string for class name to prevent circular import
+    inspections = relationship('PretripInspection', back_populates='user', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<Users(username='{self.username}', id={self.id})>"
