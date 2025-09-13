@@ -8,6 +8,9 @@ class Users(db.Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(255), unique=True, nullable=False)
+    # store only password hashes (use passlib or werkzeug.security)
+    # from werkzeug.security import generate_password_hash, check_password_hash
+    # user.password = generate_password_hash(plain_password)
     password = Column(String(255), nullable=False)
     creation_timestamp = Column(DateTime, server_default=func.now())
     first_name = Column(String(255))

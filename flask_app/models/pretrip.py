@@ -1,6 +1,7 @@
 from flask_app.extensions import db
 from sqlalchemy import (
-    Column, Integer, String, Date, Boolean, Text, DateTime, ForeignKey, func
+    Column, Integer, String, Date, Boolean, Text, DateTime, ForeignKey, func,
+    UniqueConstraint, Enum, JSON
 )
 from sqlalchemy.orm import relationship
 
@@ -41,8 +42,8 @@ class PretripItem(db.Model):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    template_items = relationship('TemplateItem', back_populates='item', cascade='all, delete-orphan')
-    templates = relationship('PretripTemplate', secondary='template_items', back_populates='items')
+    template_items = relationship('TemplateItem', back_populates='item', cascade='all, delete-orphan', overlaps="templates")
+    templates = relationship('PretripTemplate', secondary='template_items', back_populates='items', overlaps="template_items")
     results = relationship('PretripResult', back_populates='item')
 
     def __repr__(self):
@@ -59,8 +60,8 @@ class PretripTemplate(db.Model):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    template_items = relationship('TemplateItem', back_populates='template', cascade='all, delete-orphan')
-    items = relationship('PretripItem', secondary='template_items', back_populates='templates')
+    template_items = relationship('TemplateItem', back_populates='template', cascade='all, delete-orphan', overlaps="items,templates")
+    items = relationship('PretripItem', secondary='template_items', back_populates='templates', overlaps="template_items")
     default_for_equipments = relationship('Equipment', back_populates='default_template')
     inspections = relationship('PretripInspection', back_populates='template')
 
@@ -77,8 +78,16 @@ class TemplateItem(db.Model):
     required_override = Column(Boolean, nullable=True)
     input_type_override = Column(String(50), nullable=True)
 
-    template = relationship('PretripTemplate', back_populates='template_items')
-    item = relationship('PretripItem', back_populates='template_items')
+    template = relationship(
+        'PretripTemplate',
+        back_populates='template_items',
+        overlaps="items,templates"
+    )
+    item = relationship(
+        'PretripItem',
+        back_populates='template_items',
+        overlaps="items,templates"
+    )
 
     def __repr__(self):
         return f"<TemplateItem(template_id={self.template_id}, item_id={self.item_id})>"
@@ -112,12 +121,14 @@ class PretripResult(db.Model):
     inspection_id = Column(Integer, ForeignKey('pretrip_inspections.id', ondelete='CASCADE'), nullable=False, index=True)
     item_id = Column(Integer, ForeignKey('pretrip_items.id', ondelete='RESTRICT'), nullable=False, index=True)
 
+    item_snapshot = Column(JSON, nullable=True)  # {"name": "...", "numeric_field_required": True, ...}
+
     boolean_value = Column(Boolean, nullable=True)
     numeric_value = Column(String(50), nullable=True)
     date_value = Column(Date, nullable=True)
     text_value = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
-    severity = Column(String(50), nullable=True)
+    severity = Column(Enum('ok', 'defect', 'action_required', name='result_severity'), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -141,4 +152,4 @@ class PretripPhoto(db.Model):
     result = relationship('PretripResult', back_populates='photos')
 
     def __repr__(self):
-        return f"<PretripPhoto(id={self.id}, result_id={self.result_id})>"
+        return f"<PretripPhoto(id={self.id}, result_id={self.result_id})>{f.result_id})>"
