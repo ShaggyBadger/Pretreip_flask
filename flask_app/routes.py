@@ -1,6 +1,7 @@
 from flask import render_template, request, redirect, url_for, session, current_app
 from flask_app.app_constructor import app
 from flask_app.models.users import Users
+from flask_app.models.pretrip import Equipment, PretripItem, PretripInspection, PretripResult, PretripTemplate, TemplateItem
 from flask_app import models
 from flask_app import settings
 from datetime import timedelta
@@ -29,7 +30,31 @@ def home():
         elif user.admin_level >= 1:
             return render_template('dashboard-admin.html')
         else:
-            return render_template('dashboard-standard.html')
+            user_id = session.get("user_id")
+            user = Users.query.get(user_id)
+            # Inspection stats
+            total_inspections = PretripInspection.query.filter_by(user_id=user_id).count()
+            total_defects = PretripResult.query.join(PretripInspection).filter(
+                PretripInspection.user_id==user_id,
+                PretripResult.severity=='defect'
+            ).count()
+            total_action_required = PretripResult.query.join(PretripInspection).filter(
+                PretripInspection.user_id==user_id,
+                PretripResult.severity=='action_required'
+            ).count()
+            
+            recent_inspection = PretripInspection.query.filter_by(user_id=user_id).order_by(
+                PretripInspection.inspection_datetime.desc()
+            ).first()
+
+            stats = {
+                "total_inspections": total_inspections,
+                "total_defects": total_defects,
+                "total_action_required": total_action_required,
+                "recent_inspection": recent_inspection
+            }
+
+            return render_template('dashboard-standard.html', user=user, stats=stats)
         
     return render_template("home_guest.html")
 

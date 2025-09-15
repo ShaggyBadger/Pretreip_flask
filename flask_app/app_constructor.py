@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.traceback import Traceback
 
 console = Console()
-install(show_locals=True)
+install(show_locals=False)
 
 def create_app():
     app = Flask(__name__)
@@ -66,6 +66,9 @@ def create_app():
     from flask_app.models.users import Users
     _ = Users.__table__
 
+    from flask_app.blueprints import register_blueprints
+    register_blueprints(app)
+
     return app
 
 # Create the Flask app instance for global use
@@ -74,7 +77,7 @@ app = create_app()
 # make tracebacks beuatiful again
 def log_exception(sender, exception, **extra):
     tb = Traceback.from_exception(
-        type(exception), exception, exception.__traceback__, show_locals=True
+        type(exception), exception, exception.__traceback__, show_locals=False
     )
     console.print(tb)
 

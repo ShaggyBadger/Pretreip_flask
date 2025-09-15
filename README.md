@@ -3,7 +3,6 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-brightgreen.svg)](https://flask.palletsprojects.com/)
 [![Database](https://img.shields.io/badge/Database-MySQL-orange.svg)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](./LICENSE)
 
 **Pretreip_flask** is a command and control platform engineered for the transportation and logistics sector. It provides mission-critical tools for fleet readiness, safety protocol enforcement, and operational dominance, centralizing vehicle inspections, driver performance analytics, and fuel logistics.
 
