@@ -1,1 +1,7 @@
-pretrip
+{% extends "base.html" %} {% block content %} {% include 'nav_menu.html' %}
+
+<p>Hi Pretrip</p>
+
+{% endblock %} {% block scripts %}
+<script src="{{ url_for('pretrip.static', filename='js/tester.js') }}"></script>
+{% endblock %}

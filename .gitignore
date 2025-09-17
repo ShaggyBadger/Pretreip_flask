@@ -35,5 +35,9 @@ Thumbs.db
 *xlsx
 
 
-
+# other stuff
+eslint.config.mjs
+package-lock.json
+node_modules/
+package.json
 
