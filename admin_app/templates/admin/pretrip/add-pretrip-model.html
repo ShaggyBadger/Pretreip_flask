@@ -1,0 +1,86 @@
+{% extends "base.html" %} {% block title %}Add Pretrip Model{% endblock %} {%
+block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Create New Pretrip Model</h2>
+          <p class="text-muted text-center mb-4">
+            Upload a CSV file to create a new pretrip inspection model. The CSV
+            should contain the inspection items.
+          </p>
+
+          <form
+            action="{{ url_for('admin.add_pretrip_model') }}"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="mb-4">
+              <label for="csvFile" class="form-label"
+                >Inspection Items (CSV file)</label
+              >
+              <input
+                class="form-control"
+                type="file"
+                id="csvFile"
+                name="csv_file"
+                accept=".csv"
+                required
+              />
+            </div>
+
+            <div class="d-grid">
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg"
+                disabled
+                id="submitBtn"
+              >
+                Create Model
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="text-center mt-3">
+        <a href="{{ url_for('admin.home') }}" class="text-decoration-none"
+          >Back to Admin Home</a
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Enable submit button only when a file is selected
+  let fileInput = document.getElementById('csvFile');
+  let submitBtn = document.getElementById('submitBtn');
+
+  fileInput.addEventListener('change', function () {
+    submitBtn.disabled = !fileInput.files.length;
+  });
+
+  // use submit button to call processing function
+  let csrf_token = '{{ csrf_token() }}';
+  submitBtn.addEventListener('click', function (event) {
+    event.preventDefault();
+    let file = fileInput.files[0];
+    if (file) {
+      let ext = file.name.split('.').pop().toLowerCase();
+      if (ext !== 'csv') {
+        event.preventDefault();
+        alert('Please upload a valid CSV file.');
+      } else {
+        // process the form with the js function in other file
+        readFile(file, csrf_token);
+      }
+    }
+  });
+</script>
+{% endblock %} {% block scripts %}
+
+<script src="{{ url_for('admin.static', filename='js/pretrip/process_model.js') }}"></script>
+{% endblock %}

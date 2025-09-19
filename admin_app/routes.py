@@ -2,6 +2,7 @@ from logging import raiseExceptions
 from os import EX_TEMPFAIL
 import json
 import pandas as pd
+from pathlib import Path
 from flask import render_template, request, jsonify, redirect, url_for, flash, abort
 from admin_app import admin_bp
 from flask_app import settings
@@ -172,7 +173,18 @@ def upload_tank_chart_csv():
     if not tank_id and not file:
         abort(404)
     
-    df = pd.read_csv(file, encoding="utf-8")
+    # Get the file extension
+    ext = Path(file).suffix.lower()  # gives '.csv' or '.xlsx'
+
+    if ext == '.csv':
+        df = pd.read_csv(file, encoding="utf-8")
+    elif ext in ['.xls', '.xlsx']:
+        df = pd.read_excel(file)
+    else:
+        return render_template(
+            "admin/tanks/bad-file-type.html",
+            error="Unsupported file type. Please upload a CSV or Excel file."
+            )
 
     # records is a list of dictionaries
     # each dict has 2 keys: inch, gallon
@@ -224,7 +236,6 @@ def upload_tank_chart_csv():
 
     # render the template!
     return render_template("admin/tanks/upload-tank-chart-csv.html", tank=tank, chart=charts)
-    
 
 @admin_bp.route("/tanks/edit", methods=["GET", "POST"])
 def edit_tank():
@@ -479,3 +490,31 @@ def create_store():
 
     # now redirect to edit page with the store_id
     return redirect(url_for("admin.edit_store", store_id=new_store_row.id))
+
+@admin_bp.route('/add-pretrip-model', methods=["POST", "GET"])
+def add_pretrip_model():
+    if request.method == "GET":
+        return render_template('admin/pretrip/add-pretrip-model.html')
+    elif request.method == "POST":
+        # process the form submission
+        pass
+
+@admin_bp.route('/pretrip/fetch-column-names', methods=["POST"])
+def fetch_column_names():
+    print('\n\nstarting fetch_column_names\n\n')
+    # Get the current file's directory
+    current_dir = Path(__file__).parent
+
+    # Build the path to your JSON file in static/js/pretrip
+    json_path = current_dir.parent.parent / "static" / "js" / "pretrip" / "column_names.json"
+
+    # Read the JSON file
+    try:
+        data = json.loads(json_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return jsonify({"error": "JSON file not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON"}), 500
+
+    print(jsonify(data))
+    return jsonify(data)

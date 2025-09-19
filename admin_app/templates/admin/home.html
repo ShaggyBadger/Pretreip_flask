@@ -48,6 +48,14 @@
               <i class="bi bi-speedometer2 me-2"></i> SpeedGauge Files
             </a>
           </li>
+          <li>
+            <a
+              class="nav-link text-light fw-bold"
+              href="{{ url_for('admin.add_pretrip_model') }}"
+            >
+              <i class="bi-journal-text me-2"></i> New Pretrip Model
+            </a>
+          </li>
         </ul>
       </div>
     </nav>
@@ -70,7 +78,7 @@
     event.preventDefault();
 
     // define the area of the web page we will be updating
-    let contentArea = document.getElementById("admin-main-content");
+    let contentArea = document.getElementById('admin-main-content');
 
     // set data format to send stuff to server if needed
     let fetchOptions = {};
@@ -78,9 +86,9 @@
     if (data) {
       // If we have data, send it as a POST request
       fetchOptions = {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       };
@@ -90,7 +98,7 @@
     fetch(route, fetchOptions)
       .then((response) => {
         // if response is bad, give this error
-        if (!response.ok) throw new Error("Network response was not ok");
+        if (!response.ok) throw new Error('Network response was not ok');
 
         // if response is good, then extract the text from it and give it to the
         // next .then and call it html since that's what it is.
@@ -103,12 +111,12 @@
         contentArea.innerHTML = html;
 
         // After injecting the new HTML into contentArea, re-run only the scripts inside it.
-        Array.from(contentArea.querySelectorAll("script")).forEach(function (
-          oldScript
+        Array.from(contentArea.querySelectorAll('script')).forEach(function (
+          oldScript,
         ) {
           // Step 1: Create a brand-new script element.
           // Browsers only *execute* script element tags if they're created this way.
-          let newScript = document.createElement("script");
+          let newScript = document.createElement('script');
 
           // Step 2: Copy over all attributes from the old script element.
           // Example: src, type, async, defer, etc.
@@ -121,7 +129,7 @@
           // This handles script element console.log("hi")
           if (oldScript.textContent) {
             newScript.appendChild(
-              document.createTextNode(oldScript.textContent)
+              document.createTextNode(oldScript.textContent),
             );
           }
 
@@ -134,7 +142,7 @@
 
       // final catch. If something goes wrong dont crash the system! just do this instead.
       .catch((error) => {
-        console.error("Error loading section:", error);
+        console.error('Error loading section:', error);
         contentArea.innerHTML = `<div class="alert alert-danger">Error loading content.</div>`;
       });
   }
@@ -143,29 +151,29 @@
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
-    const contentArea = document.getElementById("admin-main-content");
+    const contentArea = document.getElementById('admin-main-content');
 
     // Optional: Add a loading indicator
     contentArea.innerHTML = `<div class="d-flex justify-content-center align-items-center" style="height: 200px;"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
 
     fetch(form.action, {
-      method: "POST",
+      method: 'POST',
       body: formData,
     })
       .then((response) => response.json()) // Expect a JSON response from the server
       .then((data) => {
         if (data.message) {
           // On success, load the success view
-          loadAdminSection("/admin/upload_success");
+          loadAdminSection('/admin/upload_success');
         } else {
           // On failure, display the error from the server
           contentArea.innerHTML = `<div class="alert alert-danger">${
-            data.error || "An unknown error occurred."
+            data.error || 'An unknown error occurred.'
           }</div>`;
         }
       })
       .catch((error) => {
-        console.error("Error submitting form:", error);
+        console.error('Error submitting form:', error);
         contentArea.innerHTML = `<div class="alert alert-danger">An error occurred while submitting the form.</div>`;
       });
   }
