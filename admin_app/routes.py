@@ -174,7 +174,7 @@ def upload_tank_chart_csv():
         abort(404)
     
     # Get the file extension
-    ext = Path(file).suffix.lower()  # gives '.csv' or '.xlsx'
+    ext = Path(file.filename).suffix.lower()  # gives '.csv' or '.xlsx'
 
     if ext == '.csv':
         df = pd.read_csv(file, encoding="utf-8")
