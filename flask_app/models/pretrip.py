@@ -23,6 +23,42 @@ class Equipment(db.Model):
     def __repr__(self):
         return f"<Equipment(name='{self.name}', id={self.id})>"
 
+class Blueprint(db.Model):
+    __tablename__ = 'pretrip_blueprints'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False, unique=True)
+    description = Column(Text)
+    equipment_type = Column(String(255), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    items = relationship('BlueprintItem', back_populates='blueprint', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f"<Blueprint(name='{self.name}', id={self.id})>"
+
+class BlueprintItem(db.Model):
+    __tablename__ = 'pretrip_blueprint_items'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    blueprint_id = Column(Integer, ForeignKey('pretrip_blueprints.id', ondelete='CASCADE'), nullable=False)
+
+    section = Column(String(255))
+    name = Column(String(255), nullable=False)
+    details = Column(Text)
+    notes = Column(Text)
+
+    date_field_required = Column(Boolean, default=False)
+    numeric_field_required = Column(Boolean, default=False)
+    boolean_field_required = Column(Boolean, default=False)
+    text_field_required = Column(Boolean, default=False)
+
+    blueprint = relationship('Blueprint', back_populates='items')
+
+    def __repr__(self):
+        return f"<BlueprintItem(name='{self.name}', blueprint_id={self.blueprint_id})>"
+
 class PretripItem(db.Model):
     __tablename__ = 'pretrip_items'
 

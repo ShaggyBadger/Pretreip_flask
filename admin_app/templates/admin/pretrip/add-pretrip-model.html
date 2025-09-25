@@ -1,6 +1,5 @@
-{% extends "base.html" %}
-{% block title %}Add Pretrip Model{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Add Pretrip Model{% endblock %} {%
+block content %}
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
@@ -21,10 +20,17 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
             <!-- This hidden input will receive the generated JSON before form submit -->
-            <input type="hidden" name="model_json" id="model_json_input" value="" />
+            <input
+              type="hidden"
+              name="model_json"
+              id="model_json_input"
+              value=""
+            />
 
             <div class="mb-4">
-              <label for="csvFile" class="form-label">Inspection Items (CSV file)</label>
+              <label for="csvFile" class="form-label"
+                >Inspection Items (CSV file)</label
+              >
               <input
                 class="form-control"
                 type="file"
@@ -49,31 +55,15 @@
         </div>
       </div>
       <div class="text-center mt-3">
-        <a href="{{ url_for('admin.home') }}" class="text-decoration-none">Back to Admin Home</a>
+        <a href="{{ url_for('admin.home') }}" class="text-decoration-none"
+          >Back to Admin Home</a
+        >
       </div>
     </div>
   </div>
 </div>
 
-<script>
-  // small local logic to toggle the button (keeps current UX)
-  let fileInput = document.getElementById('csvFile');
-  let submitBtn = document.getElementById('submitBtn');
-
-  fileInput.addEventListener('change', function () {
-    submitBtn.disabled = !fileInput.files.length;
-  });
-
-  // Expose the URLs and CSRF token for the external JS file.
-  // process_model.js will read window.PRETRIP_CONFIG.
-  window.PRETRIP_CONFIG = {
-    fetch_columns_url: "{{ url_for('admin.fetch_column_names') }}",
-    add_model_url: "{{ url_for('admin.add_pretrip_model') }}", // for form action (already set), included for reference
-    csrf_token: "{{ csrf_token() }}"
-  };
-</script>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="{{ url_for('admin.static', filename='js/pretrip/process_model.js') }}"></script>
 {% endblock %}

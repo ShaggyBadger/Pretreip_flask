@@ -13,6 +13,8 @@ from flask_app.models.tankgauge import StoreData, TankCharts, TankData, StoreTan
 # Import the refactored classes
 from speedGauge_app.sgProcessor import Processor
 from speedGauge_app.analytics import Analytics
+# Import the pretrip validation utility
+from .pretrip.utils import validate_csv_headers
 
 @admin_bp.route('/')
 def home():
@@ -499,22 +501,44 @@ def add_pretrip_model():
         # process the form submission
         pass
 
-@admin_bp.route('/pretrip/fetch-column-names', methods=["POST"])
-def fetch_column_names():
-    print('\n\nstarting fetch_column_names\n\n')
-    # Get the current file's directory
-    current_dir = Path(__file__).parent
+@admin_bp.route('/pretrip/validate-headers', methods=['POST'])
+def pretrip_validate_headers_route():
+    """
+    API endpoint to validate the column headers of a CSV file.
+    Expects a JSON payload with a "columns" key: {"columns": ["col1", "col2", ...]}
+    """
+    json_data = request.get_json()
+    if not json_data or 'columns' not in json_data:
+        return jsonify({"error": "Invalid request. JSON body must contain a 'columns' key."}), 400
 
-    # Build the path to your JSON file in static/js/pretrip
-    json_path = current_dir.parent.parent / "static" / "js" / "pretrip" / "column_names.json"
+    column_names = json_data['columns']
+    is_valid, message = validate_csv_headers(column_names)
 
-    # Read the JSON file
-    try:
-        data = json.loads(json_path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return jsonify({"error": "JSON file not found"}), 404
-    except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON"}), 500
+    if not is_valid:
+        # Return a 400 Bad Request status if validation fails
+        return jsonify({
+            "error": message,
+            "status": "error",
+            'valid': False
+            }), 400
 
-    print(jsonify(data))
-    return jsonify(data)
+    # If validation succeeds, return a 200 OK status
+    return jsonify({
+        "message": message,
+        "status": "success",
+        "valid": True
+        }), 200
+
+@admin_bp.route('/pretrip/blueprint-payload-upload', methods=['POST'])
+def pretrip_blueprint_payload_upload():
+    json_data = request.get_json()
+    if not json_data or 'rows' not in json_data:
+        return jsonify({"error": "Invalid request. JSON body must contain a 'rows' key."}), 400
+
+    rows = json_data['rows']
+    
+    # For now, just print the data to the console
+    print(f"Received {len(rows)} rows of data.")
+    # In the future, this is where we'll process the rows and interact with the database.
+    
+    return jsonify({"status": "success", "message": f"Successfully received {len(rows)} rows."}), 200
