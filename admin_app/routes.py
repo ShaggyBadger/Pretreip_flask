@@ -497,9 +497,6 @@ def create_store():
 def add_pretrip_model():
     if request.method == "GET":
         return render_template('admin/pretrip/add-pretrip-model.html')
-    elif request.method == "POST":
-        # process the form submission
-        pass
 
 @admin_bp.route('/pretrip/validate-headers', methods=['POST'])
 def pretrip_validate_headers_route():
@@ -529,16 +526,87 @@ def pretrip_validate_headers_route():
         "valid": True
         }), 200
 
+@admin_bp.route('/pretrip/check-blueprint-name', methods=['GET'])
+def check_blueprint_name():
+    name = request.args.get('name', '').strip()
+    if not name:
+        return jsonify({"error": "Name parameter is required."}), 400
+
+    exists = db.session.query(Blueprint.query.filter_by(name=name).exists()).scalar()
+    return jsonify({"exists": exists})
+
+from flask_app.models.pretrip import Blueprint, BlueprintItem
+
 @admin_bp.route('/pretrip/blueprint-payload-upload', methods=['POST'])
 def pretrip_blueprint_payload_upload():
-    json_data = request.get_json()
-    if not json_data or 'rows' not in json_data:
-        return jsonify({"error": "Invalid request. JSON body must contain a 'rows' key."}), 400
+    payload_str = request.form.get('payload')
+    if not payload_str:
+        return jsonify({"error": "Invalid request. Form must contain a 'payload' key."}), 400
+
+    try:
+        json_data = json.loads(payload_str)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON in payload."}), 400
+
+    if 'rows' not in json_data or 'name' not in json_data:
+        return jsonify({"error": "Invalid request. JSON body must contain 'rows' and 'name' keys."}), 400
 
     rows = json_data['rows']
-    
-    # For now, just print the data to the console
-    print(f"Received {len(rows)} rows of data.")
-    # In the future, this is where we'll process the rows and interact with the database.
-    
-    return jsonify({"status": "success", "message": f"Successfully received {len(rows)} rows."}), 200
+    blueprint_name = json_data['name']
+    override = json_data.get('override', False)
+
+    # Basic validation
+    if not blueprint_name or not isinstance(blueprint_name, str):
+        return jsonify({"error": "Invalid blueprint name provided."}), 400
+    if not rows or not isinstance(rows, list):
+        return jsonify({"error": "Invalid rows data provided."}), 400
+
+    try:
+        existing_blueprint = Blueprint.query.filter_by(name=blueprint_name).first()
+
+        if existing_blueprint:
+            if override:
+                # Delete existing items for the blueprint
+                for item in existing_blueprint.items:
+                    db.session.delete(item)
+                db.session.flush() # Ensure deletions are processed before adding new items
+                new_blueprint = existing_blueprint # Use the existing blueprint object
+            else:
+                return jsonify({"error": f"A blueprint with the name '{blueprint_name}' already exists. Use override option to replace."}), 409
+        else:
+            # Create a new Blueprint
+            new_blueprint = Blueprint(name=blueprint_name)
+            db.session.add(new_blueprint)
+            db.session.flush()  # Flush to get the new_blueprint.id for the items
+
+        # Create BlueprintItems
+        for item_data in rows:
+            new_item = BlueprintItem(
+                blueprint_id=new_blueprint.id,
+                section=item_data.get('section'),
+                name=item_data.get('inspection_item'),
+                details=item_data.get('details'),
+                notes=item_data.get('notes'),
+                date_field_required=item_data.get('date_required', False),
+                numeric_field_required=item_data.get('numeric_required', False),
+                boolean_field_required=item_data.get('boolean_field_required', False),
+                text_field_required=item_data.get('text_field_required', False)
+            )
+            db.session.add(new_item)
+
+        db.session.commit()
+
+        # Instead of returning JSON, render the summary page
+        print(f"Attempting to render template for blueprint: {new_blueprint}")
+        return render_template(
+            'admin/pretrip/blueprint_creation_summary.html',
+            blueprint=new_blueprint
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        print("Error creating blueprint:")
+        traceback.print_exc()
+        # In a production app, you'd log this error more robustly.
+        return jsonify({"error": "An internal error occurred while creating the blueprint."}), 500

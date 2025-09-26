@@ -46,6 +46,35 @@
         margin: 0;
       }
 
+      /* Ensure all common text elements inherit the light color */
+      p,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      a,
+      label,
+      th,
+      td {
+        color: #f8f9fa;
+      }
+
+      /* Style for form inputs to ensure they are visible on dark backgrounds */
+      .form-control {
+        background-color: #212529;
+        color: #f8f9fa;
+        border-color: #495057;
+      }
+
+      .form-control:focus {
+        background-color: #212529;
+        color: #f8f9fa;
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      }
+
       .navbar {
         background-color: #1c1f23;
         border-bottom: 1px solid #2c3036;
