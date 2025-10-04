@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Manage Templates{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Manage Templates</h1>
+    <p>This is a placeholder page for managing templates.</p>
+    <a href="{{ url_for('pretrip.new_template') }}" class="btn btn-primary">Create New Template</a>
+</div>
+{% endblock %}

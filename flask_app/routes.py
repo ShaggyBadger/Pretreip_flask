@@ -58,12 +58,12 @@ def home():
         
     return render_template("home_guest.html")
 
-@app.route("/tempUpload", methods=["GET", "POST"])
-def tempUpload():
-    if request.method == "POST":
-        file = request.files.get("file")
-        destination = settings.UNPROCESSED_SPEEDGAUGE_PATH / file.filename
-        file.save(destination)
-
-
-    return render_template("tempUpload.html")
+# @app.route("/tempUpload", methods=["GET", "POST"])
+# def tempUpload():
+#     if request.method == "POST":
+#         file = request.files.get("file")
+#         destination = settings.UNPROCESSED_SPEEDGAUGE_PATH / file.filename
+#         file.save(destination)
+#
+#
+#     return render_template("tempUpload.html")
