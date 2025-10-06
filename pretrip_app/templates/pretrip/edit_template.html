@@ -1,0 +1,29 @@
+{% extends "base.html" %} {% block title %}Edit Template - {{ template.name }}{%
+endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h1>Edit Template: {{ template.name }}</h1>
+    </div>
+    <div class="card-body">
+      <p><strong>Description:</strong> {{ template.description }}</p>
+      <p>
+        <strong>Equipment Type:</strong> {{ template.equipment_type if
+        template.equipment_type else 'N/A' }}
+      </p>
+      <p>
+        <strong>Owner:</strong>
+        {% if template.user %} {{ template.user.username }} {% else %} Global {%
+        endif %}
+      </p>
+      <p><strong>Created At:</strong> {{ template.created_at }}</p>
+      <p><strong>Last Updated:</strong> {{ template.updated_at }}</p>
+      <a
+        href="{{ url_for('pretrip.manage_templates') }}"
+        class="btn btn-secondary mt-3"
+        >Back to Manage Templates</a
+      >
+    </div>
+  </div>
+</div>
+{% endblock %}

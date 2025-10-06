@@ -22,6 +22,7 @@ class Users(db.Model):
 
     # FIX: Use string for class name to prevent circular import
     inspections = relationship('PretripInspection', back_populates='user', cascade='all, delete-orphan')
+    templates = relationship('PretripTemplate', back_populates='user', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<Users(username='{self.username}', id={self.id})>"

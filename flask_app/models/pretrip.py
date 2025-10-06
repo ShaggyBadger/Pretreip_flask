@@ -92,10 +92,12 @@ class PretripTemplate(db.Model):
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text)
     equipment_type = Column(String(255), nullable=True)
+    user_id = Column(Integer, ForeignKey('pretrip_db.users.id'), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+    user = relationship('Users', back_populates='templates')
     template_items = relationship('TemplateItem', back_populates='template', cascade='all, delete-orphan', overlaps="items,templates")
     items = relationship('PretripItem', secondary='template_items', back_populates='templates', overlaps="template_items")
     default_for_equipments = relationship('Equipment', back_populates='default_template')

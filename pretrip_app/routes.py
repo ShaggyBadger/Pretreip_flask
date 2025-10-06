@@ -1,4 +1,6 @@
 from flask import render_template, request, redirect, url_for, session, current_app, flash
+from platformdirs import user_cache_dir
+from sqlalchemy import or_
 from . import pretrip_bp
 from flask_app.models.pretrip import PretripTemplate, PretripItem, TemplateItem
 from .forms import NewTemplateForm, NewItemForm
@@ -28,10 +30,28 @@ def search():
 
 @pretrip_bp.route('/templates')
 def manage_templates():
-    return render_template('pretrip/manage_templates.html')
+    user_id = session.get('user_id')
+    templates = PretripTemplate.query.filter(
+        or_(PretripTemplate.user_id == user_id, PretripTemplate.user_id == None)
+    ).all()
+    return render_template('pretrip/manage_templates.html', templates=templates)
 
 @pretrip_bp.route('/template/new', methods=['GET', 'POST'])
 def new_template():
     return render_template('pretrip/new_template.html')
+
+@pretrip_bp.route('/template/edit/<int:template_id>', methods=['GET'])
+def edit_template(template_id):
+    template = PretripTemplate.query.get_or_404(template_id)
+    user_id = session.get('user_id')
+    if template.user_id is not None and template.user_id != user_id:
+        # Redirect to a new route for unauthorized access
+        return redirect(url_for('pretrip_bp.unauthorized_template_access', template_id=template.id))
+    return render_template('pretrip/edit_template.html', template=template)
+
+@pretrip_bp.route('/template/unauthorized/<int:template_id>')
+def unauthorized_template_access(template_id):
+    template = PretripTemplate.query.get_or_404(template_id)
+    return render_template('pretrip/unauthorized-template.html', template=template)
 
 
