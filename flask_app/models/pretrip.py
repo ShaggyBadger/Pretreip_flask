@@ -78,8 +78,6 @@ class PretripItem(db.Model):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    template_items = relationship('TemplateItem', back_populates='item', cascade='all, delete-orphan', overlaps="templates")
-    templates = relationship('PretripTemplate', secondary='template_items', back_populates='items', overlaps="template_items")
     results = relationship('PretripResult', back_populates='item')
 
     def __repr__(self):
@@ -89,17 +87,17 @@ class PretripTemplate(db.Model):
     __tablename__ = 'pretrip_templates'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
     description = Column(Text)
     equipment_type = Column(String(255), nullable=True)
     user_id = Column(Integer, ForeignKey('pretrip_db.users.id'), nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user = relationship('Users', back_populates='templates')
-    template_items = relationship('TemplateItem', back_populates='template', cascade='all, delete-orphan', overlaps="items,templates")
-    items = relationship('PretripItem', secondary='template_items', back_populates='templates', overlaps="template_items")
+    items = relationship('TemplateItem', back_populates='template', cascade='all, delete-orphan')
     default_for_equipments = relationship('Equipment', back_populates='default_template')
     inspections = relationship('PretripInspection', back_populates='template')
 
@@ -109,32 +107,30 @@ class PretripTemplate(db.Model):
 class TemplateItem(db.Model):
     __tablename__ = 'template_items'
 
-    template_id = Column(Integer, ForeignKey('pretrip_templates.id', ondelete='CASCADE'), primary_key=True)
-    item_id = Column(Integer, ForeignKey('pretrip_items.id', ondelete='CASCADE'), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    template_id = Column(Integer, ForeignKey('pretrip_templates.id', ondelete='CASCADE'), nullable=False)
 
+    section = Column(String(255))
+    name = Column(String(255), nullable=False)
+    details = Column(Text)
+    notes = Column(Text)
     display_order = Column(Integer, default=0)
-    required_override = Column(Boolean, nullable=True)
-    input_type_override = Column(String(50), nullable=True)
 
-    template = relationship(
-        'PretripTemplate',
-        back_populates='template_items',
-        overlaps="items,templates"
-    )
-    item = relationship(
-        'PretripItem',
-        back_populates='template_items',
-        overlaps="items,templates"
-    )
+    date_field_required = Column(Boolean, default=False)
+    numeric_field_required = Column(Boolean, default=False)
+    boolean_field_required = Column(Boolean, default=False)
+    text_field_required = Column(Boolean, default=False)
+
+    template = relationship('PretripTemplate', back_populates='items')
 
     def __repr__(self):
-        return f"<TemplateItem(template_id={self.template_id}, item_id={self.item_id})>"
+        return f"<TemplateItem(name='{self.name}', template_id={self.template_id})>"
 
 class PretripInspection(db.Model):
     __tablename__ = 'pretrip_inspections'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    equipment_id = Column(Integer, ForeignKey('equipment.id', ondelete='RESTRICT'), nullable=False, index=True)
+    equipment_id = Column(Integer, ForeignKey('equipment.id', ondelete='RESTRICT'), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey('pretrip_db.users.id', ondelete='RESTRICT'), nullable=False, index=True)
     template_id = Column(Integer, ForeignKey('pretrip_templates.id', ondelete='SET NULL'), nullable=True)
 
@@ -157,9 +153,9 @@ class PretripResult(db.Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     inspection_id = Column(Integer, ForeignKey('pretrip_inspections.id', ondelete='CASCADE'), nullable=False, index=True)
-    item_id = Column(Integer, ForeignKey('pretrip_items.id', ondelete='RESTRICT'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('template_items.id', ondelete='RESTRICT'), nullable=False, index=True)
 
-    item_snapshot = Column(JSON, nullable=True)  # {"name": "...", "numeric_field_required": True, ...}
+    item_snapshot = Column(JSON, nullable=False)  # {"name": "...", "numeric_field_required": True, ...}
 
     boolean_value = Column(Boolean, nullable=True)
     numeric_value = Column(String(50), nullable=True)

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Review Blueprint{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Review Blueprint: {{ blueprint.name }}</h1>
+    <p><strong>Description:</strong> {{ blueprint.description if blueprint.description else 'No description provided.' }}</p>
+
+    <div class="mb-3">
+        <label for="template-name" class="form-label">Template Name</label>
+        <input type="text" id="template-name" class="form-control" placeholder="Enter a name for your new template" value="{{ blueprint.name }} Custom">
+    </div>
+    <div class="mb-3">
+        <label for="template-description" class="form-label">Template Description</label>
+        <textarea id="template-description" class="form-control" rows="3" placeholder="Enter a description for your new template">{{ blueprint.description }}</textarea>
+    </div>
+
+    <div id="blueprint-editor">
+        <!-- Sections and items will be dynamically loaded here by JavaScript -->
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button id="add-section-btn" class="btn btn-info">+ Add Section</button>
+        <div>
+            <a href="{{ url_for('pretrip.new_template') }}" class="btn btn-secondary">Back to Blueprint Selection</a>
+            <button id="submit-template-btn" class="btn btn-success">Submit Template</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Inject initial blueprint data from Flask
+    const initialBlueprintData = {{ sorted_sections | tojson }};
+    const blueprintId = {{ blueprint.id | tojson }}; // Pass blueprint ID as well
+    const csrfToken = "{{ csrf_token() }}";
+</script>
+<script src="{{ url_for('static', filename='js/blueprint_review.js') }}"></script>
+{% endblock %}

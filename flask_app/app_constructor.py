@@ -6,6 +6,7 @@ from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
 from flask_app.extensions import db, migrate
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
+from markupsafe import Markup
 
 # make tracebacks more better
 from rich.traceback import install
@@ -16,8 +17,12 @@ from rich.traceback import Traceback
 console = Console()
 install(show_locals=False)
 
+def nl2br(value):
+    return Markup(value).replace('\n', '<br>\n')
+
 def create_app():
     app = Flask(__name__)
+    app.jinja_env.filters['nl2br'] = nl2br
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
     app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
