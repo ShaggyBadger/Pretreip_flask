@@ -3,6 +3,7 @@
 <div class="container mt-4">
   <!-- Welcome Banner -->
   <div class="p-4 mb-4 rounded bg-dark text-center shadow-sm">
+    <img src="{{ url_for('static', filename='images/swtoEagleWhite.png') }}" alt="SWTO Eagle" style="width: 100px; opacity: 0.5; float: right;">
     <h2 class="mb-2">Welcome, {{ user.first_name or user.username }}!</h2>
     <p class="lead">
       Let's get your fleet ready. Review stats and start your pretrip inspection

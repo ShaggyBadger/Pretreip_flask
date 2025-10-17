@@ -1,9 +1,9 @@
 <div class="container mt-4">
-  <h2>User Management</h2>
-  <p>Search for users to view or edit their details.</p>
+  <h2>Operator Management</h2>
+  <p>Search for operators to view or edit their details.</p>
 
   <div class="card">
-    <div class="card-header">Filter Users</div>
+    <div class="card-header">Filter Operators</div>
     <div class="card-body">
       <form id="user-search-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -29,7 +29,7 @@
             />
           </div>
           <div class="col-md-4">
-            <label for="driver_id" class="form-label">Driver ID</label>
+            <label for="driver_id" class="form-label">Operator ID</label>
             <input
               type="text"
               class="form-control"
@@ -72,7 +72,7 @@
   </div>
 
   <div class="mt-4">
-    <h3>User Results</h3>
+    <h3>Operator Results</h3>
     <div class="table-responsive" id="admin-main-content">
       <table class="table table-striped table-hover table-dark">
         <thead>
@@ -80,8 +80,8 @@
             <th>ID</th>
             <th>First Name</th>
             <th>Last Name</th>
-            <th>Username/Email</th>
-            <th>Driver ID</th>
+            <th>Operator/Email</th>
+            <th>Operator ID</th>
             <th>DOT Number</th>
             <th>Role</th>
             <th>Actions</th>
@@ -109,7 +109,7 @@
           </tr>
           {% endfor %} {% else %}
           <tr>
-            <td colspan="8" class="text-center">No users found.</td>
+            <td colspan="8" class="text-center">No operators found.</td>
           </tr>
           {% endif %}
         </tbody>

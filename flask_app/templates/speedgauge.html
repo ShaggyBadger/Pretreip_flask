@@ -18,7 +18,7 @@
     </form>
 
     {% if selected_data %}
-        <h4 class="mt-4 text-center">Driver Info for week starting on {{ selected_date.strftime('%B %d, %Y') }}</h4>
+        <h4 class="mt-4 text-center">Operator Info for week starting on {{ selected_date.strftime('%B %d, %Y') }}</h4>
 
 <div class="text-center mt-3">
     {% if selected_data.percent_speeding is defined %}
@@ -196,7 +196,7 @@
     });
 </script>
 
-<h4 class="mt-4 text-center">Analytics Comparison: Driver vs. Company</h4>
+<h4 class="mt-4 text-center">Analytics Comparison: Operator vs. Company</h4>
  {% if driver_analytics %}
   
 <div class="table-responsive">
@@ -204,7 +204,7 @@
         <thead>
             <tr>
                 <th>Metric</th>
-                <th>Your Driver's Stats</th>
+                <th>Your Operator's Stats</th>
                 <th>Company Average Stats</th>
             </tr>
         </thead>

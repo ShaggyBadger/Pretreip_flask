@@ -1,5 +1,5 @@
 <div class="container mt-4">
-  <h2>Edit User: {{ user.username }}</h2>
+  <h2>Edit Operator: {{ user.username }}</h2>
 
   {% with messages = get_flashed_messages(with_categories=true) %} {% if
   messages %} {% for category, message in messages %}
@@ -7,7 +7,7 @@
   {% endfor %} {% endif %} {% endwith %}
 
   <div class="card">
-    <div class="card-header">User Details</div>
+    <div class="card-header">Operator Details</div>
     <div class="card-body">
       <form id="edit-user-form" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -16,7 +16,7 @@
         <input type="hidden" name="user_id" value="{{ user.id }}" />
 
         <div class="mb-3">
-          <label for="username" class="form-label">Username (Email)</label>
+          <label for="username" class="form-label">Operator (Email)</label>
           <input
             type="text"
             class="form-control"
@@ -50,7 +50,7 @@
         </div>
 
         <div class="mb-3">
-          <label for="driver_id" class="form-label">Driver ID</label>
+          <label for="driver_id" class="form-label">Operator ID</label>
           <input
             type="text"
             class="form-control"
