@@ -78,10 +78,7 @@ class PretripItem(db.Model):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    results = relationship('PretripResult', back_populates='item')
-
-    def __repr__(self):
-        return f"<PretripItem(name='{self.name}', id={self.id})>"
+    def __repr__(self):        return f"<PretripItem(name='{self.name}', id={self.id})>"
 
 class PretripTemplate(db.Model):
     __tablename__ = 'pretrip_templates'
@@ -122,6 +119,7 @@ class TemplateItem(db.Model):
     text_field_required = Column(Boolean, default=False)
 
     template = relationship('PretripTemplate', back_populates='items')
+    results = relationship('PretripResult', back_populates='item', cascade='all, delete-orphan') # Added for PretripResult
 
     def __repr__(self):
         return f"<TemplateItem(name='{self.name}', template_id={self.template_id})>"
@@ -136,6 +134,7 @@ class PretripInspection(db.Model):
 
     inspection_datetime = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     notes = Column(Text)
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True) # Added for soft delete
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -168,7 +167,7 @@ class PretripResult(db.Model):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     inspection = relationship('PretripInspection', back_populates='results')
-    item = relationship('PretripItem', back_populates='results')
+    item = relationship('TemplateItem', back_populates='results') # Corrected relationship
     photos = relationship('PretripPhoto', back_populates='result', cascade='all, delete-orphan')
 
     def __repr__(self):

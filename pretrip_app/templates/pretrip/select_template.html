@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Select a Pretrip Template for Inspection</h2>
+    <hr>
+
+    {% if templates %}
+    <table class="table table-dark table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Template Name</th>
+                <th scope="col">Description</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for template in templates %}
+            <tr>
+                <td>{{ template.name }}</td>
+                <td>{{ template.description }}</td>
+                <td>
+                    <a href="{{ url_for('pretrip.inspect_form', template_id=template.id) }}" class="btn btn-primary btn-sm">Start Inspection</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        No pretrip templates available.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

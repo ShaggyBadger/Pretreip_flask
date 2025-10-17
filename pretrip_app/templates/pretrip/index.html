@@ -35,7 +35,7 @@ block head %} {{ super() }}
   <div class="row g-4">
     <!-- Log New Inspection -->
     <div class="col-md-6">
-      <a href="{{ url_for('pretrip.select_equipment') }}" class="card-action">
+      <a href="{{ url_for('pretrip.select_inspection_template') }}" class="card-action">
         <div class="card h-100 text-center">
           <div class="card-body p-4">
             <div>
@@ -83,30 +83,7 @@ block head %} {{ super() }}
       </a>
     </div>
 
-    <!-- Search All Inspections -->
-    <div class="col-md-6">
-      <a href="{{ url_for('pretrip.search') }}" class="card-action">
-        <div class="card h-100 text-center">
-          <div class="card-body p-4">
-            <div>
-              <i
-                class="bi bi-search"
-                style="font-size: 3rem; color: var(--bs-success)"
-              ></i>
-              <h5 class="card-title mt-3">Search All Inspections</h5>
-              <p class="card-text">
-                Find past inspections for any equipment in the system.
-              </p>
-            </div>
-            <div class="mt-3">
-              <span class="btn btn-success"
-                >Search Reports <i class="bi bi-arrow-right-circle"></i
-              ></span>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
+
 
     <!-- Manage Templates -->
     <div class="col-md-6">

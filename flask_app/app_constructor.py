@@ -7,6 +7,7 @@ from flask_app.extensions import db, migrate
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from markupsafe import Markup
+import json # Added for from_json filter
 
 # make tracebacks more better
 from rich.traceback import install
@@ -20,9 +21,13 @@ install(show_locals=False)
 def nl2br(value):
     return Markup(value).replace('\n', '<br>\n')
 
+def from_json(value):
+    return json.loads(value)
+
 def create_app():
     app = Flask(__name__)
     app.jinja_env.filters['nl2br'] = nl2br
+    app.jinja_env.filters['from_json'] = from_json
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
     app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
