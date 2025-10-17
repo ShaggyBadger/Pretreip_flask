@@ -24,12 +24,7 @@ def home():
     if "user_id" in session:
         user = Users.query.filter_by(id=session['user_id']).first()
         print(user.admin_level)
-        print(user.role)
-        if user.admin_level < 1 and user.role == 'swto':
-            return render_template("dashboard-swto.html")
-        elif user.admin_level >= 1:
-            return render_template('dashboard-admin.html')
-        else:
+        if user.admin_level < 1:
             user_id = session.get("user_id")
             user = Users.query.get(user_id)
             # Inspection stats
@@ -42,7 +37,7 @@ def home():
                 PretripInspection.user_id==user_id,
                 PretripResult.severity=='action_required'
             ).count()
-            
+
             recent_inspection = PretripInspection.query.filter_by(user_id=user_id).order_by(
                 PretripInspection.inspection_datetime.desc()
             ).first()
@@ -53,10 +48,15 @@ def home():
                 "total_action_required": total_action_required,
                 "recent_inspection": recent_inspection
             }
-
-            return render_template('dashboard-standard.html', user=user, stats=stats)
-        
+            # Render the new dashboard-tools.html for standard users
+            return render_template('dashboard-tools.html', user=user, stats=stats)
+        else:
+            return render_template('dashboard-admin.html')
     return render_template("home_guest.html")
+
+@app.route("/no_speedgauge")
+def no_speedgauge():
+    return render_template("no_speedgauge.html")
 
 # @app.route("/tempUpload", methods=["GET", "POST"])
 # def tempUpload():

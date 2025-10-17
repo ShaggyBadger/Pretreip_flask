@@ -89,8 +89,8 @@ def manage_users():
 
     return render_template('admin/users/manage_users.html', users=users)
 
-@admin_bp.route('/user/edit_user', methods=['POST'])
-def edit_user():
+@admin_bp.route('/user/display_edit_user_form', methods=['POST'])
+def display_edit_user_form():
     user_id = request.form.get("user_id")  # or request.json.get("user_id")
     user = Users.query.get_or_404(user_id)
 
@@ -110,12 +110,37 @@ def update_user():
     user.first_name = request.form.get('first_name')
     user.last_name = request.form.get('last_name')
     user.driver_id = request.form.get('driver_id')
-    user.dot_number = request.form.get('dot_number')
-    try:
-        user.admin_level = int(request.form.get('admin_level', 0))
-    except (TypeError, ValueError):
-        user.admin_level = 0
+    user.admin_level = int(request.form.get('admin_level', 0))
     user.role = request.form.get('role')
+
+    try:
+        db.session.commit()
+        flash("User updated successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating user {user_id}: {e}")
+        flash("Error updating user.", "error")
+
+    # If request is AJAX, return the fragment for injection.
+    # Otherwise, fall back to redirecting to the full manage users page.
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        # Return the same fragment (form) - it will include flashed messages
+        return render_template('admin/users/edit_user_form.html', user=user)
+    else:
+        return redirect(url_for("admin.manage_users"))
+
+@admin_bp.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
+def edit_user(user_id):
+    user = Users.query.get_or_404(user_id)
+    if request.method == 'POST':
+        user.username = request.form.get('username')
+        user.role = request.form.get('role')
+        user.admin_level = int(request.form.get('admin_level', 0))
+
+        db.session.commit()
+        flash('User updated successfully!', 'success')
+        return redirect(url_for('admin_bp.manage_users'))
+    return render_template('admin/edit_user_form.html', user=user)
 
     try:
         db.session.commit()

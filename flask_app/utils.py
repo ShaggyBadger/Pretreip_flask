@@ -36,8 +36,7 @@ class Utils:
                     first_name=result.first_name,
                     last_name=result.last_name,
                     driver_id=result.driver_id,
-                    admin_level=result.admin_level,
-                    dot_number=result.dot_number,
+            admin_level=result.admin_level,
                     role=result.role
                 )
             print(f"DEBUG: User found by username (raw SQL with schema): {user}")
@@ -58,9 +57,7 @@ class Utils:
                         first_name=result.first_name,
                         last_name=result.last_name,
                         driver_id=result.driver_id,
-                        admin_level=result.admin_level,
-                        dot_number=result.dot_number,
-                        role=result.role
+                                    admin_level=result.admin_level,                        role=result.role
                     )
                 print(f"DEBUG: User found by driver_id (raw SQL with schema): {user}")
 
@@ -74,12 +71,7 @@ class Utils:
         else:
             return None
 
-    def retrieve_driver_id(self, user_id):
-        user = Users.query.get(user_id)
-        if user:
-            return user.driver_id
-        else:
-            return None
+
 
 
 class CLI_Utils:
@@ -109,7 +101,7 @@ class CLI_Utils:
                 first_name=d.get("first_name"),
                 last_name=d.get("last_name"),
                 driver_id=driver_id,
-                dot_number=943113,
+    
                 role='premium'
             )
 

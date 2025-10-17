@@ -2,19 +2,21 @@ from flask import render_template, request, redirect, url_for, session
 from datetime import datetime
 from . import speedGauge_bp
 from flask_app import utils
+from flask_app.models.users import Users
 from . import SpeedgaugeApi
 
 @speedGauge_bp.route("/", methods=["GET", "POST"])
 def speedGauge():
     if "user_id" not in session:
-        # TODO: In the next phase, this should redirect to the auth blueprint's login page
         return redirect(url_for("home"))
 
     user_id = session["user_id"]
-    utils_obj = utils.Utils() 
-    driver_id = utils_obj.retrieve_driver_id(user_id)
+    user = Users.query.filter_by(id=user_id).first() # Retrieve the user object
 
-    sg_api = SpeedgaugeApi.Api(driver_id)
+    if not user or user.admin_level < 1: # Check if user exists and has sufficient admin_level
+        return redirect(url_for("no_speedgauge")) # Redirect to the custom page
+
+    sg_api = SpeedgaugeApi.Api(user_id) # Pass user_id instead of driver_id
     sg_data = sg_api.build_speedgauge_report()
 
     # build list of dates

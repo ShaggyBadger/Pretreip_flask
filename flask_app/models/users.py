@@ -13,11 +13,7 @@ class Users(db.Model):
     # user.password = generate_password_hash(plain_password)
     password = Column(String(255), nullable=False)
     creation_timestamp = Column(DateTime, server_default=func.now())
-    first_name = Column(String(255))
-    last_name = Column(String(255))
-    driver_id = Column(String(255))
     admin_level = Column(Integer, nullable=False, server_default='0')
-    dot_number = db.Column(String(255))
     role = db.Column(String(50), nullable=False, server_default='standard')
 
     # FIX: Use string for class name to prevent circular import

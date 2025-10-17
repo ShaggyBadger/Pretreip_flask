@@ -13,11 +13,7 @@ class Utils:
             self,
             username,
             password,
-            first_name=None,
-            last_name=None,
-            driver_id=None,
             admin_level=0,
-            dot_number=None,
             role='standard'
             ):
         # Check if user already exists
@@ -33,11 +29,7 @@ class Utils:
             new_user = Users(
                 username=username,
                 password=hashed_password,
-                first_name=first_name,
-                last_name=last_name,
-                driver_id=driver_id,
                 admin_level=admin_level,
-                dot_number=dot_number,
                 role=role
             )
 

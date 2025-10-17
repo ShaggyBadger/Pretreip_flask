@@ -7,20 +7,11 @@ def register():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
-        driver_id = request.form.get('driver_id')
-        dot_number = request.form.get('dot_number')
-
-        # Determine role based on DOT number
-        authorized_dots = current_app.config.get('AUTHORIZED_DOT_NUMBERS', [])
-        role = 'swto' if dot_number in authorized_dots else 'standard'
 
         utils_obj = utils.Utils()
         user = utils_obj.register_user(
             username=email,
-            password=password,
-            driver_id=driver_id,
-            dot_number=dot_number,
-            role=role
+            password=password
         )
 
         if user is None:
@@ -31,7 +22,6 @@ def register():
             # user object is already available
             session['user_id'] = user.id
             session['username'] = user.username
-            session['role'] = user.role
             session['admin_level'] = user.admin_level
             return redirect(url_for('home'))
 
@@ -51,7 +41,6 @@ def login():
             print(f"DEBUG: User admin_level after login: {user.admin_level}")
             session['user_id'] = user.id
             session['username'] = user.username
-            session['role'] = user.role
             session['admin_level'] = user.admin_level
             return redirect(url_for('home'))
         else:

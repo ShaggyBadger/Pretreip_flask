@@ -2,7 +2,7 @@ import os
 import urllib.parse
 from flask import Flask
 from datetime import timedelta
-from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
+from flask_app.settings import SECRET_KEY
 from flask_app.extensions import db, migrate
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -29,7 +29,7 @@ def create_app():
     app.jinja_env.filters['nl2br'] = nl2br
     app.jinja_env.filters['from_json'] = from_json
     app.config["SECRET_KEY"] = SECRET_KEY
-    app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
+
     app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
     'https://thejoshproject.xyz',
     'https://www.thejoshproject.xyz'
