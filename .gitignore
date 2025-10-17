@@ -4,6 +4,9 @@ secretKey.py
 # Ignore the virtual environment directory
 venvFiles/
 
+# Ignore the .gemini directory
+.gemini/
+
 # Ignore vs code settings
 .vscode
 
@@ -35,5 +38,9 @@ Thumbs.db
 *xlsx
 
 
-
+# other stuff
+eslint.config.mjs
+package-lock.json
+node_modules/
+package.json
 

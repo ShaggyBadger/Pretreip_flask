@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Unauthorized Access{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h1>Unauthorized Access</h1>
+        </div>
+        <div class="card-body">
+            <p class="lead">You are not authorized to edit the template: <strong>{{ template.name }}</strong>.</p>
+            <p>Only the owner of a template or an administrator can make changes to it.</p>
+            <a href="{{ url_for('pretrip_bp.manage_templates') }}" class="btn btn-primary mt-3">Back to Manage Templates</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -15,7 +15,6 @@
 
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav ml-auto">
-
       <li class="nav-item">
         <a class="nav-link" href="/">Home</a>
       </li>
@@ -40,9 +39,16 @@
         >
           Admin
         </a>
-        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="adminDropdown">
+        <ul
+          class="dropdown-menu dropdown-menu-dark dropdown-menu-end"
+          aria-labelledby="adminDropdown"
+        >
           <li>
-            <a class="dropdown-item" href="#" onclick="loadAdminSection(event, '/admin/manage_users')">
+            <a
+              class="dropdown-item"
+              href="#"
+              onclick="loadAdminSection(event, '/admin/manage_users')"
+            >
               <i class="bi bi-people me-2"></i> Manage Users
             </a>
           </li>
@@ -57,8 +63,20 @@
             </a>
           </li>
           <li>
-            <a class="dropdown-item" href="#" onclick="loadAdminSection(event, '/admin/upload_speedgauge')">
+            <a
+              class="dropdown-item"
+              href="#"
+              onclick="loadAdminSection(event, '/admin/upload_speedgauge')"
+            >
               <i class="bi bi-speedometer2 me-2"></i> SpeedGauge Files
+            </a>
+          </li>
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('admin.add_pretrip_model') }}"
+            >
+              <i class="bi-journal-text me-2"></i> New Pretrip Model
             </a>
           </li>
         </ul>

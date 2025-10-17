@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Pretrip Inspection: {{ template.name }}</h2>
+    <p>{{ template.description }}</p>
+    <hr>
+
+    <form id="inspectionForm" action="{{ url_for('pretrip.submit_inspection') }}" method="POST">
+        <input type="hidden" name="template_id" value="{{ template.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {% for section_name, items in sorted_sections %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4>{{ section_name }}</h4>
+            </div>
+            <div class="card-body">
+                {% for item in items %}
+                <div class="mb-3 p-3 border rounded">
+                    <h5>{{ item.name }}</h5>
+                    <p class="text-muted">{{ item.details }}</p>
+
+                    <input type="hidden" name="item_id_{{ item.id }}" value="{{ item.id }}">
+
+                    <div class="form-group mb-2 form-check">
+                        <input type="checkbox" class="form-check-input" id="has_problem_{{ item.id }}" name="has_problem_{{ item.id }}" onchange="toggleProblemDetails({{ item.id }})">
+                        <label class="form-check-label" for="has_problem_{{ item.id }}">Mark if problem found</label>
+                    </div>
+
+                    <div id="problem_details_{{ item.id }}" style="display: none;">
+                        <div class="form-group mb-2">
+                            <label for="status_{{ item.id }}">Severity:</label>
+                            <select class="form-control" id="status_{{ item.id }}" name="status_{{ item.id }}">
+                                <option value="defect">Defect</option>
+                                <option value="action_required">Action Required</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="notes_{{ item.id }}">Notes (Problem):</label>
+                            <textarea class="form-control" id="notes_{{ item.id }}" name="notes_{{ item.id }}" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    {% if item.date_field_required %}
+                    <div class="form-group mb-2">
+                        <label for="date_value_{{ item.id }}">Date:</label>
+                        <input type="date" class="form-control" id="date_value_{{ item.id }}" name="date_value_{{ item.id }}">
+                    </div>
+                    {% endif %}
+
+                    {% if item.numeric_field_required %}
+                    <div class="form-group mb-2">
+                        <label for="numeric_value_{{ item.id }}">Numeric Value:</label>
+                        <input type="number" class="form-control" id="numeric_value_{{ item.id }}" name="numeric_value_{{ item.id }}" step="any">
+                    </div>
+                    {% endif %}
+
+                    {% if item.boolean_field_required %}
+                    <div class="form-group mb-2 form-check">
+                        <input type="checkbox" class="form-check-input" id="boolean_value_{{ item.id }}" name="boolean_value_{{ item.id }}" value="True">
+                        <label class="form-check-label" for="boolean_value_{{ item.id }}">Check if True</label>
+                    </div>
+                    {% endif %}
+
+                    {% if item.text_field_required %}
+                    <div class="form-group mb-2">
+                        <label for="text_value_{{ item.id }}">Text Input:</label>
+                        <textarea class="form-control" id="text_value_{{ item.id }}" name="text_value_{{ item.id }}" rows="3"></textarea>
+                    </div>
+                    {% endif %}
+
+
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-success mt-3" id="submitInspectionBtn">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" id="submitSpinner" style="display: none;"></span>
+            <span id="submitButtonText">Submit Inspection</span>
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function toggleProblemDetails(itemId) {
+        const problemCheckbox = document.getElementById(`has_problem_${itemId}`);
+        const problemDetailsDiv = document.getElementById(`problem_details_${itemId}`);
+        const statusSelect = document.getElementById(`status_${itemId}`);
+        const notesTextarea = document.getElementById(`notes_${itemId}`);
+
+        if (problemCheckbox.checked) {
+            problemDetailsDiv.style.display = 'block';
+            statusSelect.setAttribute('required', 'required');
+            notesTextarea.setAttribute('required', 'required');
+        } else {
+            problemDetailsDiv.style.display = 'none';
+            statusSelect.removeAttribute('required');
+            notesTextarea.removeAttribute('required');
+            // Optionally clear values when hiding
+            statusSelect.value = 'defect'; // Reset to default defect
+            notesTextarea.value = '';
+        }
+    }
+
+    // Initialize on page load for any pre-checked boxes (if applicable)
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name^="has_problem_"]').forEach(checkbox => {
+            const itemId = checkbox.id.replace('has_problem_', '');
+            toggleProblemDetails(itemId); // Call to set initial state
+        });
+
+        const inspectionForm = document.getElementById('inspectionForm');
+        const submitButton = document.getElementById('submitInspectionBtn');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const submitButtonText = document.getElementById('submitButtonText');
+
+        inspectionForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            submitButton.disabled = true; // Disable button
+            submitSpinner.style.display = 'inline-block'; // Show spinner
+            submitButtonText.textContent = 'Submitting...'; // Change text
+
+            const formData = new FormData(inspectionForm);
+            try {
+                const response = await fetch(inspectionForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrf_token') // Include CSRF token in headers
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success' && result.redirect_url) {
+                    window.location.href = result.redirect_url; // Redirect on success
+                } else {
+                    alert('Error submitting inspection: ' + result.message); // Display error
+                }
+            } catch (error) {
+                alert('An unexpected error occurred: ' + error.message);
+            } finally {
+                submitButton.disabled = false; // Re-enable button
+                submitSpinner.style.display = 'none'; // Hide spinner
+                submitButtonText.textContent = 'Submit Inspection'; // Revert text
+            }
+        });
+    });
+</script>
+{% endblock %}

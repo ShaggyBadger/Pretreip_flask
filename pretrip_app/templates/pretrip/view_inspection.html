@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Inspection Details (ID: {{ inspection.id }})</h2>
+    <hr>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h4>Inspection Overview</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Template:</strong> {{ inspection.template.name if inspection.template else 'N/A' }}</p>
+            <p><strong>Inspector:</strong> {{ inspection.user.username if inspection.user else 'N/A' }}</p>
+            <p><strong>Date:</strong> {{ inspection.inspection_datetime.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p><strong>Notes:</strong> {{ inspection.notes if inspection.notes else 'No notes' }}</p>
+        </div>
+    </div>
+
+    <h3>Inspection Items</h3>
+    {% if inspection.results %}
+        {% set sorted_results = inspection.results | sort(attribute='item.display_order') %}
+        {% set items_by_section = {} %}
+        {% for result in sorted_results %}
+            {% set item_snapshot = result.item_snapshot | from_json %}
+            {% set section_name = item_snapshot.section if item_snapshot.section else 'Uncategorized' %}
+            {% if section_name not in items_by_section %}
+                {% set _ = items_by_section.update({section_name: []}) %}
+            {% endif %}
+            {% set _ = items_by_section[section_name].append(result) %}
+        {% endfor %}
+
+        {% for section_name, results_in_section in items_by_section.items() %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4>{{ section_name }}</h4>
+            </div>
+            <div class="card-body">
+                {% for result in results_in_section %}
+                {% set item_snapshot = result.item_snapshot | from_json %}
+                <div class="mb-3 p-3 border rounded">
+                    <h5>{{ item_snapshot.name }}</h5>
+                    <p class="text-muted">{{ item_snapshot.details }}</p>
+
+                    <p><strong>Status:</strong>
+                        {% if result.severity == 'ok' %}
+                            <span class="badge bg-success">OK</span>
+                        {% elif result.severity == 'defect' %}
+                            <span class="badge bg-warning text-dark">Defect</span>
+                        {% elif result.severity == 'action_required' %}
+                            <span class="badge bg-danger">Action Required</span>
+                        {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                        {% endif %}
+                    </p>
+
+                    {% if result.date_value %}
+                    <p><strong>Date Value:</strong> {{ result.date_value.strftime('%Y-%m-%d') }}</p>
+                    {% endif %}
+
+                    {% if result.numeric_value is not none %}
+                    <p><strong>Numeric Value:</strong> {{ result.numeric_value }}</p>
+                    {% endif %}
+
+                    {% if result.boolean_value is not none %}
+                    <p><strong>Boolean Value:</strong> {{ 'Yes' if result.boolean_value else 'No' }}</p>
+                    {% endif %}
+
+                    {% if result.text_value %}
+                    <p><strong>Text Value:</strong> {{ result.text_value }}</p>
+                    {% endif %}
+
+                    {% if result.notes %}
+                    <p><strong>Notes:</strong> {{ result.notes }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        No results found for this inspection.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

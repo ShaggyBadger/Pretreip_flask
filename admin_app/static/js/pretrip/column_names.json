@@ -1,0 +1,14 @@
+{
+  "required_columns": [
+    "equipment",
+    "section",
+    "inspection_item",
+    "details",
+    "pass_fail",
+    "notes",
+    "numeric_required",
+    "numeric",
+    "date_required",
+    "date"
+  ]
+}

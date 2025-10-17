@@ -6,6 +6,8 @@ from flask_app.settings import SECRET_KEY, AUTHORIZED_DOT_NUMBERS
 from flask_app.extensions import db, migrate
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
+from markupsafe import Markup
+import json # Added for from_json filter
 
 # make tracebacks more better
 from rich.traceback import install
@@ -14,10 +16,18 @@ from rich.console import Console
 from rich.traceback import Traceback
 
 console = Console()
-install(show_locals=True)
+install(show_locals=False)
+
+def nl2br(value):
+    return Markup(value).replace('\n', '<br>\n')
+
+def from_json(value):
+    return json.loads(value)
 
 def create_app():
     app = Flask(__name__)
+    app.jinja_env.filters['nl2br'] = nl2br
+    app.jinja_env.filters['from_json'] = from_json
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["AUTHORIZED_DOT_NUMBERS"] = AUTHORIZED_DOT_NUMBERS
     app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
@@ -66,6 +76,9 @@ def create_app():
     from flask_app.models.users import Users
     _ = Users.__table__
 
+    from flask_app.blueprints import register_blueprints
+    register_blueprints(app)
+
     return app
 
 # Create the Flask app instance for global use
@@ -74,7 +87,7 @@ app = create_app()
 # make tracebacks beuatiful again
 def log_exception(sender, exception, **extra):
     tb = Traceback.from_exception(
-        type(exception), exception, exception.__traceback__, show_locals=True
+        type(exception), exception, exception.__traceback__, show_locals=False
     )
     console.print(tb)
 
