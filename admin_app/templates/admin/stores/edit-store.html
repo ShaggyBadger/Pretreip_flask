@@ -181,7 +181,9 @@
       <button
         type="button"
         class="btn btn-success"
-        onclick="(openAddTankDiv())"
+        data-bs-toggle="modal"
+        data-bs-target="#addTankModal"
+        onclick="openAddTankModal()"
       >
         Add Tank
       </button>
@@ -194,70 +196,63 @@
   </form>
 </div>
 
-<!-- Hidden container for adding tanks -->
-<div
-  id="add-tank-container"
-  style="display: none; border: 1px solid #ccc; padding: 1rem; margin: 1rem 0"
->
-  <div class="mb-2">
-    <label for="tank-select" class="form-label text-light">Select Tank:</label>
-    <select id="tank-select" class="form-select"></select>
-  </div>
-
-  <div class="mb-2">
-    <label for="fuel-select" class="form-label text-light"
-      >Select Fuel Type:</label
-    >
-    <select id="fuel-select" class="form-select"></select>
-  </div>
-
-  <div class="mt-2">
-    <button
-      type="button"
-      class="btn btn-success me-2"
-      onclick="confirmAddTank()"
-    >
-      Add to List
-    </button>
-    <button type="button" class="btn btn-secondary" onclick="closeAddTankDiv()">
-      Cancel
-    </button>
+<!-- Add Tank Modal -->
+<div class="modal fade" id="addTankModal" tabindex="-1" aria-labelledby="addTankModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTankModalLabel">Add Tank to Store</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <input type="text" id="tank-search-input" class="form-control" placeholder="Search tanks...">
+        </div>
+        <table class="table table-bordered table-dark text-light" id="available-tanks-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Capacity</th>
+              <th>Max Depth</th>
+              <th>Fuel Type</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
   </div>
 </div>
+
 
 <!-- existing mapped tanks passed from Flask (store-specific mappings) -->
 <script id="tanks-data" type="application/json">
   {{ tanks_list | tojson }}
 </script>
 
+{% endblock %}
+
+{% block scripts %}
 <script>
   // --------- State ----------
   const container = document.getElementById("tank-container");
-
-  // `tanks` is the current list shown in the table (may include newly added rows)
-  // It is initialized from the Flask-passed `tanks_list` (should be list of dicts with keys like tank_id, name, fuel_type, capacity, etc)
-  let tanks = JSON.parse(
-    document.getElementById("tanks-data").textContent || "[]"
-  );
-
-  // We'll also keep a temporary local copy of available tanks returned by the API (for the select)
-  let availableTanks = []; // items from /admin/api/get_tanks -> data.tank_list
-  let availableFuelTypes = []; // items from /admin/api/get_tanks -> data.fuel_type_list
+  let tanks = JSON.parse(document.getElementById("tanks-data").textContent || "[]");
+  let availableTanks = [];
+  let availableFuelTypes = [];
+  const addTankModal = new bootstrap.Modal(document.getElementById('addTankModal'));
 
   // --------- Rendering helpers ----------
   function createHeaderRow() {
     const tr = document.createElement("tr");
     tr.classList.add("text-light", "bg-dark");
-    const headers = [
-      "Delete",
-      "Fuel Type",
-      "Name",
-      "Capacity",
-      "Max Depth",
-      "Misc Info",
-      "Description",
-    ];
-    headers.forEach((h) => {
+    const headers = ["Delete", "Fuel Type", "Name", "Capacity", "Max Depth", "Misc Info", "Description"];
+    headers.forEach(h => {
       const th = document.createElement("th");
       th.textContent = h;
       tr.appendChild(th);
@@ -265,220 +260,154 @@
     return tr;
   }
 
-  // render rows into a tbody element (table body)
   function renderTankRows(tbody, tanksArray) {
-    tbody.innerHTML = ""; // clear body
+    tbody.innerHTML = "";
     for (let i = 0; i < tanksArray.length; i++) {
       const tank = tanksArray[i];
       const row = document.createElement("tr");
-
-      // store the tank mapping id (if present) on the DOM for later reference
-      // we use data attributes; tank.tank_id is expected for mapping entries
       if (tank.tank_id !== undefined) {
         row.dataset.tankId = tank.tank_id;
       }
-      // Add row cells - delete button leftmost (delete by index intentionally)
       row.innerHTML = `
         <td style="width: 1%;">
           <button type="button" class="btn btn-danger btn-sm" onclick="deleteTank(${i})">Delete</button>
         </td>
-        <td>${escapeHtml(tank.fuel_type || "")}</td>
-        <td>${escapeHtml(tank.name || "")}</td>
-        <td>${escapeHtml(
-          tank.capacity !== undefined ? String(tank.capacity) : ""
-        )}</td>
-        <td>${escapeHtml(
-          tank.max_depth !== undefined ? String(tank.max_depth) : ""
-        )}</td>
-        <td>${escapeHtml(tank.misc_info || "")}</td>
-        <td>${escapeHtml(tank.description || "")}</td>
+        <td>${escapeHtml(tank.fuel_type || "")}<
+        /td>
+        <td>${escapeHtml(tank.name || "")}<
+        /td>
+        <td>${escapeHtml(tank.capacity !== undefined ? String(tank.capacity) : "")}<
+        /td>
+        <td>${escapeHtml(tank.max_depth !== undefined ? String(tank.max_depth) : "")}<
+        /td>
+        <td>${escapeHtml(tank.misc_info || "")}<
+        /td>
+        <td>${escapeHtml(tank.description || "")}<
+        /td>
       `;
       tbody.appendChild(row);
     }
   }
 
-  // master render function that builds the table
   function renderTanks() {
-    container.innerHTML = ""; // Clear container
-
-    // table with heading and body
+    container.innerHTML = "";
     const table = document.createElement("table");
-    // choose classes to match your dark theme; adjust as desired
     table.className = "table table-bordered table-dark text-light";
-
-    // thead
     const thead = document.createElement("thead");
     thead.className = "table-secondary text-light";
     thead.appendChild(createHeaderRow());
     table.appendChild(thead);
-
-    // tbody
     const tbody = document.createElement("tbody");
     renderTankRows(tbody, tanks);
     table.appendChild(tbody);
-
     container.appendChild(table);
   }
 
-  // safe HTML escaper for small text insertions
   function escapeHtml(unsafe) {
     if (unsafe === null || unsafe === undefined) return "";
-    return String(unsafe)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
+    return String(unsafe).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   }
 
   // --------- Actions ----------
   function deleteTank(index) {
-    // removes the specific row by index from the current `tanks` array
     tanks.splice(index, 1);
     renderTanks();
   }
 
-  function openAddTankDiv() {
-    const addDiv = document.getElementById("add-tank-container");
-    addDiv.style.display = "block";
-
-    // fetch the available tanks + fuel types from the server
+  function openAddTankModal() {
     fetch("/admin/api/get_tanks")
-      .then((resp) => {
-        if (!resp.ok)
-          throw new Error("Network response was not ok: " + resp.status);
-        return resp.json();
+      .then(resp => resp.json())
+      .then(data => {
+        availableTanks = data.tank_list || [];
+        availableFuelTypes = data.fuel_type_list || [];
+        populateAvailableTanksTable(availableTanks);
       })
-      .then((data) => {
-        console.log("API /admin/api/get_tanks returned:", data);
-
-        // adapt to your route shape: the route returns { tank_list: [...], fuel_type_list: [...] }
-        availableTanks = Array.isArray(data.tank_list) ? data.tank_list : [];
-        availableFuelTypes = Array.isArray(data.fuel_type_list)
-          ? data.fuel_type_list
-          : [];
-
-        // populate selects
-        const tankSelect = document.getElementById("tank-select");
-        const fuelSelect = document.getElementById("fuel-select");
-        tankSelect.innerHTML = "";
-        fuelSelect.innerHTML = "";
-
-        // add a placeholder option
-        const placeholderTankOpt = document.createElement("option");
-        placeholderTankOpt.value = "";
-        placeholderTankOpt.textContent = "-- select tank --";
-        placeholderTankOpt.disabled = true;
-        placeholderTankOpt.selected = true;
-        tankSelect.appendChild(placeholderTankOpt);
-
-        availableTanks.forEach((t) => {
-          const opt = document.createElement("option");
-          opt.value = t.id;
-          // include misc_info & description directly in the visible option label
-          opt.textContent =
-            `${t.name} — Cap: ${t.capacity || ""}, Max: ${t.max_depth || ""}` +
-            `${t.misc_info ? " — " + t.misc_info : ""}` +
-            `${t.description ? " — " + t.description : ""}`;
-
-          // keep metadata for later use
-          opt.dataset.name = t.name || "";
-          opt.dataset.capacity = t.capacity || "";
-          opt.dataset.maxDepth = t.max_depth || "";
-          opt.dataset.miscInfo = t.misc_info || "";
-          opt.dataset.description = t.description || "";
-
-          tankSelect.appendChild(opt);
-        });
-
-        // fuel select: placeholder + values
-        const placeholderFuelOpt = document.createElement("option");
-        placeholderFuelOpt.value = "";
-        placeholderFuelOpt.textContent = "-- select fuel --";
-        placeholderFuelOpt.disabled = true;
-        placeholderFuelOpt.selected = true;
-        fuelSelect.appendChild(placeholderFuelOpt);
-
-        availableFuelTypes.forEach((f) => {
-          const opt = document.createElement("option");
-          opt.value = f;
-          opt.textContent = f;
-          fuelSelect.appendChild(opt);
-        });
-      })
-      .catch((err) => {
-        console.error("Error fetching tank options:", err);
-        // keep the add div visible, but you may want to show an error to the user
-      });
+      .catch(err => console.error("Error fetching tanks:", err));
   }
 
-  function confirmAddTank() {
-    const tankSelect = document.getElementById("tank-select");
-    const fuelSelect = document.getElementById("fuel-select");
+  function populateAvailableTanksTable(tanksToDisplay) {
+    const tableBody = document.querySelector("#available-tanks-table tbody");
+    tableBody.innerHTML = "";
+    tanksToDisplay.forEach(tank => {
+      const row = document.createElement("tr");
+      
+      const fuelTypeSelect = document.createElement('select');
+      fuelTypeSelect.className = 'form-select';
+      availableFuelTypes.forEach(fuel => {
+          const option = document.createElement('option');
+          option.value = fuel;
+          option.textContent = fuel;
+          fuelTypeSelect.appendChild(option);
+      });
 
-    if (!tankSelect.value) {
-      alert("Please select a tank.");
-      return;
+      row.innerHTML = `
+        <td>${escapeHtml(tank.name)}</td>
+        <td>${escapeHtml(tank.capacity)}</td>
+        <td>${escapeHtml(tank.max_depth)}</td>
+      `;
+
+      const fuelTd = document.createElement('td');
+      fuelTd.appendChild(fuelTypeSelect);
+      row.appendChild(fuelTd);
+
+      const actionTd = document.createElement('td');
+      const selectBtn = document.createElement('button');
+      selectBtn.className = 'btn btn-primary btn-sm';
+      selectBtn.textContent = 'Select';
+      selectBtn.onclick = () => selectTankFromModal(tank, fuelTypeSelect.value);
+      actionTd.appendChild(selectBtn);
+      row.appendChild(actionTd);
+
+      tableBody.appendChild(row);
+    });
+  }
+
+  document.getElementById('tank-search-input').addEventListener('keyup', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filteredTanks = availableTanks.filter(tank => 
+      tank.name.toLowerCase().includes(searchTerm) ||
+      String(tank.capacity).includes(searchTerm) ||
+      String(tank.max_depth).includes(searchTerm)
+    );
+    populateAvailableTanksTable(filteredTanks);
+  });
+
+  function selectTankFromModal(tank, fuelType) {
+    if (!fuelType) {
+        alert("Please select a fuel type.");
+        return;
     }
-    if (!fuelSelect.value) {
-      alert("Please select a fuel type.");
-      return;
-    }
 
-    const selected = tankSelect.selectedOptions[0];
-
-    // Build new mapping row (use tank_id to reference TankData.id; keep same keys you use elsewhere)
     const newTank = {
-      // use the `tank_id` key for consistency with your mapping objects
-      tank_id: selected.value,
-      name: selected.dataset.name || selected.textContent,
-      fuel_type: fuelSelect.value,
-      capacity: selected.dataset.capacity || "",
-      max_depth: selected.dataset.maxDepth || "",
-      misc_info: selected.dataset.miscInfo || "",
-      description: selected.dataset.description || "",
+      tank_id: tank.id,
+      name: tank.name,
+      fuel_type: fuelType,
+      capacity: tank.capacity,
+      max_depth: tank.max_depth,
+      misc_info: tank.misc_info,
+      description: tank.description,
     };
 
-    // add to in-memory array and re-render
     tanks.push(newTank);
     renderTanks();
-
-    // close the add div
-    closeAddTankDiv();
+    addTankModal.hide();
   }
 
-  function closeAddTankDiv() {
-    const addDiv = document.getElementById("add-tank-container");
-    addDiv.style.display = "none";
-
-    // optional: clear selects so memory is clean on next open
-    const tankSelect = document.getElementById("tank-select");
-    const fuelSelect = document.getElementById("fuel-select");
-    if (tankSelect) tankSelect.innerHTML = "";
-    if (fuelSelect) fuelSelect.innerHTML = "";
-  }
-
-  // initial render from server-provided list
+  // Initial render
   renderTanks();
-</script>
 
-<script>
-  // assume `tanks` is the in-memory array you already maintain
-  const editForm = document.querySelector(
-    'form[action="{{ url_for("admin.submit_store_edit") }}"]'
-  );
-
+  // Form submission logic
+  const editForm = document.querySelector('form[action="{{ url_for("admin.submit_store_edit") }}"]');
   if (editForm) {
     editForm.addEventListener("submit", function (e) {
-      // put the current tanks array into the hidden input as a JSON string
       const tanksInput = document.getElementById("tanks-json");
       if (tanksInput) {
-        // convert to JSON; this will be a string value in the form payload
-        tanksInput.value = JSON.stringify(tanks);
+        console.log("Submitting tanks:", tanks);
+        const jsonString = JSON.stringify(tanks);
+        console.log("JSON string:", jsonString);
+        tanksInput.value = jsonString;
       }
-      // allow the form to submit normally after value is set
     });
   }
 </script>
-
 {% endblock %}

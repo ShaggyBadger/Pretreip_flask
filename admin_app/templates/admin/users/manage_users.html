@@ -124,7 +124,7 @@
     let userId = event.target.getAttribute("user_id");
 
     // set the url to submit this POST request to
-    let editUserUrl = "{{ url_for('admin.edit_user') }}";
+    let editUserUrl = "{{ url_for('admin.display_edit_user_form') }}";
 
     let formData = new FormData();
     formData.append("user_id", userId);

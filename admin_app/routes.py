@@ -163,7 +163,7 @@ def select_tank():
     if request.method == "POST":
         choice = request.form.get("action")
         if choice == "new":
-            return redirect(url_for("admin.edit_tank", tank_id=None))
+            return redirect(url_for("admin.create_tank"))
         elif choice == "edit":
             tank_id = request.form.get("tank_id")
             return redirect(url_for("admin.edit_tank", tank_id=tank_id))
@@ -173,6 +173,86 @@ def select_tank():
     query = query.order_by(TankData.name.asc())
     existing_tanks = query.all()
     return render_template("admin/tanks/select.html", tanks=existing_tanks)
+
+@admin_bp.route('/tanks/create', methods=['GET', 'POST'])
+def create_tank():
+    if request.method == 'POST':
+        # Get form data, converting empty strings for integer fields to None
+        capacity_str = request.form.get('capacity')
+        max_depth_str = request.form.get('max_depth')
+
+        try:
+            capacity = int(capacity_str) if capacity_str else None
+            max_depth = int(max_depth_str) if max_depth_str else None
+        except (ValueError, TypeError):
+            flash('Capacity and Max Depth must be numbers.', 'error')
+            return redirect(url_for('admin.create_tank'))
+
+        # Create a new TankData object from form data
+        new_tank = TankData(
+            name=request.form.get('name'),
+            manufacturer=request.form.get('manufacturer'),
+            model=request.form.get('model'),
+            capacity=capacity,
+            max_depth=max_depth,
+            misc_info=request.form.get('misc_info'),
+            chart_source=request.form.get('chart_source'),
+            description=request.form.get('description')
+        )
+        db.session.add(new_tank)
+        db.session.commit()
+
+        # Process the uploaded CSV file
+        file = request.files.get("csv_file")
+        if not file or file.filename == '':
+            flash('No CSV file provided', 'error')
+            return redirect(url_for('admin.create_tank'))
+
+        ext = Path(file.filename).suffix.lower()
+        if ext == '.csv':
+            df = pd.read_csv(file, encoding="utf-8")
+        elif ext in ['.xls', '.xlsx']:
+            df = pd.read_excel(file)
+        else:
+            flash('Unsupported file type. Please upload a CSV or Excel file.', 'error')
+            return redirect(url_for('admin.create_tank'))
+
+        df.columns = [col.lower() for col in df.columns]
+        column_map = {"inches": "inch", "gallons": "gallon"}
+        df.rename(columns=column_map, inplace=True)
+
+        if "inch" not in df.columns or "gallon" not in df.columns:
+            flash('CSV/Excel file must have \'inch\'/\'inches\' and \'gallon\'/\'gallons\' columns.', 'error')
+            return redirect(url_for('admin.create_tank'))
+
+        records = df[["inch", "gallon"]].to_dict(orient="records")
+        
+        for record in records:
+            new_row = TankCharts(
+                tank_type_id=new_tank.id,
+                inches=record.get('inch'),
+                gallons=record.get('gallon'),
+                tank_name=new_tank.name
+            )
+            db.session.add(new_row)
+        
+        db.session.commit()
+
+        # Update the TankData object with max_depth and capacity from the chart
+        # if they were not provided in the form
+        query = TankCharts.query.filter(TankCharts.tank_type_id == new_tank.id).order_by(TankCharts.inches.desc())
+        chart = query.first()
+        if chart:
+            if not new_tank.capacity:
+                new_tank.capacity = chart.gallons
+            if not new_tank.max_depth:
+                new_tank.max_depth = chart.inches
+            db.session.commit()
+
+        flash('Tank created successfully!', 'success')
+        return redirect(url_for('admin.select_tank'))
+
+    return render_template('admin/tanks/create_tank.html')
 
 @admin_bp.route('/tanks/no-tank-charts-edit', methods=["GET"])
 def no_tank_charts_edit():
@@ -212,6 +292,21 @@ def upload_tank_chart_csv():
             "admin/tanks/bad-file-type.html",
             error="Unsupported file type. Please upload a CSV or Excel file."
             )
+
+    # Standardize column names
+    df.columns = [col.lower() for col in df.columns]
+    column_map = {
+        "inches": "inch",
+        "gallons": "gallon"
+    }
+    df.rename(columns=column_map, inplace=True)
+
+    # Check if required columns are present
+    if "inch" not in df.columns or "gallon" not in df.columns:
+        return render_template(
+            "admin/tanks/bad-file-type.html",
+            error="CSV/Excel file must have 'inch'/'inches' and 'gallon'/'gallons' columns."
+        )
 
     # records is a list of dictionaries
     # each dict has 2 keys: inch, gallon
@@ -283,8 +378,24 @@ def edit_tank():
             return redirect(url_for('admin.no_tank_charts_edit', tank_id=tank.id))
 
         return render_template("admin/tanks/edit.html", charts=charts, tank=tank)
-    else:
-        abort(404)
+    
+    if request.method == "GET":
+        tank_id = request.args.get("tank_id")
+        if not tank_id:
+            abort(404)
+        
+        query = TankData.query
+        query = query.filter_by(id=tank_id)
+        tank = query.first()
+        if not tank:
+            abort(404)
+
+        charts = tank.tank_charts
+
+        if not charts:
+            return redirect(url_for('admin.no_tank_charts_edit', tank_id=tank.id))
+
+        return render_template("admin/tanks/edit.html", charts=charts, tank=tank)
 
 @admin_bp.route('/tanks/edit-submit', methods=["POST"])
 def edit_tankChart_success():
