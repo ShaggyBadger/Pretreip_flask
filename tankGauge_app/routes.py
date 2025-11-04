@@ -9,6 +9,18 @@ from rich.traceback import install
 from rich import print
 install()
 
+@pretrip_bp.before_request # Ensure user is logged in before accessing any pretrip routes
+def require_login():
+    # Allow certain routes to bypass login check if needed (e.g., public API endpoints)
+    # For now, all tankGauge routes require login.
+
+    if 'user_id' not in session:
+        # Check if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'status': 'error', 'message': 'Authentication required.'}), 401
+        else:
+            flash('You must be logged in to access this page.')
+            return redirect(url_for('auth_bp.login'))
 
 @tankGauge_bp.route('/')
 def home():
@@ -288,3 +300,7 @@ def estimate_delivery_values():
                 'gal': None
             }
         )
+
+@tankGauge_bp.route('/add-store', methods=['GET'])
+def add_store():
+  return render_template('tankGauge/add-store.html')
