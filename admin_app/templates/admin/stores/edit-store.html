@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block navbar %} {% include
+"admin/base/nav-menu.html" %} {% endblock %} {% block content %}
 
 <div class="container mt-4">
   <div class="mb-4 text-center">
@@ -197,18 +198,37 @@
 </div>
 
 <!-- Add Tank Modal -->
-<div class="modal fade" id="addTankModal" tabindex="-1" aria-labelledby="addTankModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="addTankModal"
+  tabindex="-1"
+  aria-labelledby="addTankModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addTankModalLabel">Add Tank to Store</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <input type="text" id="tank-search-input" class="form-control" placeholder="Search tanks...">
+          <input
+            type="text"
+            id="tank-search-input"
+            class="form-control"
+            placeholder="Search tanks..."
+          />
         </div>
-        <table class="table table-bordered table-dark text-light" id="available-tanks-table">
+        <table
+          class="table table-bordered table-dark text-light"
+          id="available-tanks-table"
+        >
           <thead>
             <tr>
               <th>Name</th>
@@ -224,36 +244,47 @@
         </table>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
       </div>
     </div>
   </div>
 </div>
-
 
 <!-- existing mapped tanks passed from Flask (store-specific mappings) -->
 <script id="tanks-data" type="application/json">
   {{ tanks_list | tojson }}
 </script>
 
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
   // --------- State ----------
-  const container = document.getElementById("tank-container");
-  let tanks = JSON.parse(document.getElementById("tanks-data").textContent || "[]");
+  const container = document.getElementById('tank-container');
+  let tanks = JSON.parse(
+    document.getElementById('tanks-data').textContent || '[]',
+  );
   let availableTanks = [];
   let availableFuelTypes = [];
-  const addTankModal = new bootstrap.Modal(document.getElementById('addTankModal'));
+  const addTankModal = new bootstrap.Modal(
+    document.getElementById('addTankModal'),
+  );
 
   // --------- Rendering helpers ----------
   function createHeaderRow() {
-    const tr = document.createElement("tr");
-    tr.classList.add("text-light", "bg-dark");
-    const headers = ["Delete", "Fuel Type", "Name", "Capacity", "Max Depth", "Misc Info", "Description"];
-    headers.forEach(h => {
-      const th = document.createElement("th");
+    const tr = document.createElement('tr');
+    tr.classList.add('text-light', 'bg-dark');
+    const headers = [
+      'Delete',
+      'Fuel Type',
+      'Name',
+      'Capacity',
+      'Max Depth',
+      'Misc Info',
+      'Description',
+    ];
+    headers.forEach((h) => {
+      const th = document.createElement('th');
       th.textContent = h;
       tr.appendChild(th);
     });
@@ -261,10 +292,10 @@
   }
 
   function renderTankRows(tbody, tanksArray) {
-    tbody.innerHTML = "";
+    tbody.innerHTML = '';
     for (let i = 0; i < tanksArray.length; i++) {
       const tank = tanksArray[i];
-      const row = document.createElement("tr");
+      const row = document.createElement('tr');
       if (tank.tank_id !== undefined) {
         row.dataset.tankId = tank.tank_id;
       }
@@ -272,17 +303,21 @@
         <td style="width: 1%;">
           <button type="button" class="btn btn-danger btn-sm" onclick="deleteTank(${i})">Delete</button>
         </td>
-        <td>${escapeHtml(tank.fuel_type || "")}<
+        <td>${escapeHtml(tank.fuel_type || '')}<
         /td>
-        <td>${escapeHtml(tank.name || "")}<
+        <td>${escapeHtml(tank.name || '')}<
         /td>
-        <td>${escapeHtml(tank.capacity !== undefined ? String(tank.capacity) : "")}<
+        <td>${escapeHtml(
+          tank.capacity !== undefined ? String(tank.capacity) : '',
+        )}<
         /td>
-        <td>${escapeHtml(tank.max_depth !== undefined ? String(tank.max_depth) : "")}<
+        <td>${escapeHtml(
+          tank.max_depth !== undefined ? String(tank.max_depth) : '',
+        )}<
         /td>
-        <td>${escapeHtml(tank.misc_info || "")}<
+        <td>${escapeHtml(tank.misc_info || '')}<
         /td>
-        <td>${escapeHtml(tank.description || "")}<
+        <td>${escapeHtml(tank.description || '')}<
         /td>
       `;
       tbody.appendChild(row);
@@ -290,22 +325,27 @@
   }
 
   function renderTanks() {
-    container.innerHTML = "";
-    const table = document.createElement("table");
-    table.className = "table table-bordered table-dark text-light";
-    const thead = document.createElement("thead");
-    thead.className = "table-secondary text-light";
+    container.innerHTML = '';
+    const table = document.createElement('table');
+    table.className = 'table table-bordered table-dark text-light';
+    const thead = document.createElement('thead');
+    thead.className = 'table-secondary text-light';
     thead.appendChild(createHeaderRow());
     table.appendChild(thead);
-    const tbody = document.createElement("tbody");
+    const tbody = document.createElement('tbody');
     renderTankRows(tbody, tanks);
     table.appendChild(tbody);
     container.appendChild(table);
   }
 
   function escapeHtml(unsafe) {
-    if (unsafe === null || unsafe === undefined) return "";
-    return String(unsafe).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+    if (unsafe === null || unsafe === undefined) return '';
+    return String(unsafe)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
   // --------- Actions ----------
@@ -315,29 +355,29 @@
   }
 
   function openAddTankModal() {
-    fetch("/admin/api/get_tanks")
-      .then(resp => resp.json())
-      .then(data => {
+    fetch('/admin/api/get_tanks')
+      .then((resp) => resp.json())
+      .then((data) => {
         availableTanks = data.tank_list || [];
         availableFuelTypes = data.fuel_type_list || [];
         populateAvailableTanksTable(availableTanks);
       })
-      .catch(err => console.error("Error fetching tanks:", err));
+      .catch((err) => console.error('Error fetching tanks:', err));
   }
 
   function populateAvailableTanksTable(tanksToDisplay) {
-    const tableBody = document.querySelector("#available-tanks-table tbody");
-    tableBody.innerHTML = "";
-    tanksToDisplay.forEach(tank => {
-      const row = document.createElement("tr");
-      
+    const tableBody = document.querySelector('#available-tanks-table tbody');
+    tableBody.innerHTML = '';
+    tanksToDisplay.forEach((tank) => {
+      const row = document.createElement('tr');
+
       const fuelTypeSelect = document.createElement('select');
       fuelTypeSelect.className = 'form-select';
-      availableFuelTypes.forEach(fuel => {
-          const option = document.createElement('option');
-          option.value = fuel;
-          option.textContent = fuel;
-          fuelTypeSelect.appendChild(option);
+      availableFuelTypes.forEach((fuel) => {
+        const option = document.createElement('option');
+        option.value = fuel;
+        option.textContent = fuel;
+        fuelTypeSelect.appendChild(option);
       });
 
       row.innerHTML = `
@@ -362,20 +402,23 @@
     });
   }
 
-  document.getElementById('tank-search-input').addEventListener('keyup', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const filteredTanks = availableTanks.filter(tank => 
-      tank.name.toLowerCase().includes(searchTerm) ||
-      String(tank.capacity).includes(searchTerm) ||
-      String(tank.max_depth).includes(searchTerm)
-    );
-    populateAvailableTanksTable(filteredTanks);
-  });
+  document
+    .getElementById('tank-search-input')
+    .addEventListener('keyup', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filteredTanks = availableTanks.filter(
+        (tank) =>
+          tank.name.toLowerCase().includes(searchTerm) ||
+          String(tank.capacity).includes(searchTerm) ||
+          String(tank.max_depth).includes(searchTerm),
+      );
+      populateAvailableTanksTable(filteredTanks);
+    });
 
   function selectTankFromModal(tank, fuelType) {
     if (!fuelType) {
-        alert("Please select a fuel type.");
-        return;
+      alert('Please select a fuel type.');
+      return;
     }
 
     const newTank = {
@@ -397,14 +440,16 @@
   renderTanks();
 
   // Form submission logic
-  const editForm = document.querySelector('form[action="{{ url_for("admin.submit_store_edit") }}"]');
+  const editForm = document.querySelector(
+    'form[action="{{ url_for("admin.submit_store_edit") }}"]',
+  );
   if (editForm) {
-    editForm.addEventListener("submit", function (e) {
-      const tanksInput = document.getElementById("tanks-json");
+    editForm.addEventListener('submit', function (e) {
+      const tanksInput = document.getElementById('tanks-json');
       if (tanksInput) {
-        console.log("Submitting tanks:", tanks);
+        console.log('Submitting tanks:', tanks);
         const jsonString = JSON.stringify(tanks);
-        console.log("JSON string:", jsonString);
+        console.log('JSON string:', jsonString);
         tanksInput.value = jsonString;
       }
     });

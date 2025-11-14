@@ -1,3 +1,6 @@
+{% extends "base.html" %} {% block title %}Upload Speedgauge{% endblock %} {%
+block navbar %} {% include "admin/base/nav-menu.html" %} {% endblock %} {% block
+content %}
 <div class="card bg-dark text-light">
   <div class="card-header">
     <h4 class="mb-0">Upload SpeedGauge CSV File</h4>
@@ -8,7 +11,7 @@
       data will be added to the system.
     </p>
     <form
-      id="speedgauge-upload-form" 
+      id="speedgauge-upload-form"
       action="/admin/upload_speedgauge"
       method="post"
       enctype="multipart/form-data"
@@ -30,3 +33,4 @@
     </form>
   </div>
 </div>
+{% endblock %}
